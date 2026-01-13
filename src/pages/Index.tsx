@@ -128,9 +128,9 @@ export default function Index() {
 
       {/* Hero Section with Background Image */}
       <section 
-        className="relative overflow-hidden border-b-2 border-primary/20"
+        className="relative overflow-hidden border-b border-white/10"
         style={{
-          backgroundImage: 'linear-gradient(to right, hsl(222 47% 4% / 0.75), hsl(222 47% 6% / 0.55), hsl(222 47% 8% / 0.25)), url(/images/hero-basketball.jpeg)',
+          backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, transparent 60%), url(/images/hero-basketball.jpeg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 20%',
         }}
