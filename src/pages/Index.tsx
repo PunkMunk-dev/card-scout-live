@@ -114,7 +114,7 @@ export default function Index() {
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+          <h1 className="text-xl font-bold font-display flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-primary animate-float" />
             AI Card Finder
           </h1>
@@ -126,9 +126,26 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Search Section */}
-      <section className="border-b border-border/50 bg-card/30">
-        <div className="container py-8">
+      {/* Hero Section with Background Image */}
+      <section 
+        className="relative border-b border-border/50 overflow-hidden"
+        style={{
+          backgroundImage: 'url(/images/hero-basketball.jpeg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+        }}
+      >
+        {/* Dark gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40" />
+        
+        {/* Hero content */}
+        <div className="container py-16 relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold font-display text-white mb-4">
+            Find Your Cards
+          </h2>
+          <p className="text-gray-300 mb-8 max-w-md">
+            AI-powered search for the best sports card deals
+          </p>
           <SearchBar 
             onSearch={handleSearch} 
             onClear={handleClear}
