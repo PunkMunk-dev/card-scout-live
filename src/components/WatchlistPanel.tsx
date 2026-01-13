@@ -28,19 +28,23 @@ export function WatchlistPanel({ watchlist, onRemove, onClear }: WatchlistPanelP
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="relative">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="relative bg-card border-border text-foreground hover:border-[hsl(var(--border-hover))] hover:bg-card transition-all duration-150"
+        >
           <Heart className="h-4 w-4 mr-2" />
           Watchlist
           {watchlist.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
               {watchlist.length}
             </span>
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md">
+      <SheetContent className="w-full sm:max-w-md bg-background border-border">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+          <SheetTitle className="flex items-center gap-2 text-foreground">
             <Heart className="h-5 w-5" />
             Watchlist ({watchlist.length} items)
           </SheetTitle>
@@ -48,7 +52,7 @@ export function WatchlistPanel({ watchlist, onRemove, onClear }: WatchlistPanelP
 
         {watchlist.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <Heart className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <Heart className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <p className="text-muted-foreground">Your watchlist is empty</p>
             <p className="text-sm text-muted-foreground/70 mt-1">
               Click the heart icon on any card to add it here
@@ -61,7 +65,7 @@ export function WatchlistPanel({ watchlist, onRemove, onClear }: WatchlistPanelP
                 variant="ghost"
                 size="sm"
                 onClick={onClear}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors duration-150"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear All
@@ -73,9 +77,9 @@ export function WatchlistPanel({ watchlist, onRemove, onClear }: WatchlistPanelP
                 {watchlist.map((item) => (
                   <div
                     key={item.itemId}
-                    className="flex gap-3 p-3 rounded-lg border border-border/50 bg-card/50 hover:bg-card transition-colors"
+                    className="flex gap-3 p-3 rounded-xl border border-border bg-card hover:border-[hsl(var(--border-hover))] transition-all duration-150"
                   >
-                    <div className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
@@ -90,10 +94,10 @@ export function WatchlistPanel({ watchlist, onRemove, onClear }: WatchlistPanelP
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium line-clamp-2 leading-snug">
+                      <h4 className="text-sm font-medium line-clamp-2 leading-snug text-foreground">
                         {item.title}
                       </h4>
-                      <p className="text-sm font-bold text-price mt-1">
+                      <p className="text-sm font-bold text-primary mt-1">
                         {formatPrice(item.price.value, item.price.currency)}
                       </p>
                     </div>
@@ -102,7 +106,7 @@ export function WatchlistPanel({ watchlist, onRemove, onClear }: WatchlistPanelP
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 hover:text-destructive"
+                        className="h-8 w-8 hover:text-destructive transition-colors duration-150"
                         onClick={() => onRemove(item.itemId)}
                       >
                         <X className="h-4 w-4" />
@@ -110,7 +114,7 @@ export function WatchlistPanel({ watchlist, onRemove, onClear }: WatchlistPanelP
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-8 w-8 transition-colors duration-150"
                         asChild
                       >
                         <a
