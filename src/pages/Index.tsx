@@ -112,7 +112,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-white/5 bg-black backdrop-blur-md sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
           <h1 className="text-lg font-medium font-display flex items-center gap-2.5 text-foreground tracking-tight">
             <CreditCard className="h-5 w-5 text-primary" />
@@ -128,9 +128,9 @@ export default function Index() {
 
       {/* Hero Section with Background Image */}
       <section 
-        className="relative overflow-hidden border-b border-white/10"
+        className="relative overflow-hidden"
         style={{
-          backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, transparent 60%), url(/images/hero-basketball.jpeg)',
+          backgroundImage: 'linear-gradient(to bottom, transparent 70%, rgba(0,0,0,1) 100%), linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, transparent 60%), url(/images/hero-basketball.jpeg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 20%',
         }}
