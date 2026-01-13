@@ -7,8 +7,10 @@ import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
+import { WatchlistPanel } from "@/components/WatchlistPanel";
 import { Button } from "@/components/ui/button";
 import { searchEbay } from "@/lib/ebay-api";
+import { useWatchlist } from "@/hooks/useWatchlist";
 import type { EbayItem, SortOption, BuyingOption } from "@/types/ebay";
 
 export default function Index() {
@@ -24,6 +26,9 @@ export default function Index() {
   const [sort, setSort] = useState<SortOption>("best");
   const [buyingOption, setBuyingOption] = useState<BuyingOption>("ALL");
   const [includeLots, setIncludeLots] = useState(false);
+
+  // Watchlist
+  const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
 
   const performSearch = useCallback(async (searchQuery: string, page: number = 1, append: boolean = false) => {
     if (page === 1) {
@@ -66,6 +71,14 @@ export default function Index() {
     performSearch(newQuery, 1, false);
   };
 
+  const handleClear = () => {
+    setQuery("");
+    setItems([]);
+    setTotal(0);
+    setNextPage(null);
+    setHasSearched(false);
+  };
+
   const handleLoadMore = () => {
     if (nextPage && query) {
       performSearch(query, nextPage, true);
@@ -100,17 +113,27 @@ export default function Index() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container py-4">
-          <h1 className="text-2xl font-bold font-display text-center">
+        <div className="container py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold font-display">
             eBay Card Search
           </h1>
+          <WatchlistPanel
+            watchlist={watchlist}
+            onRemove={removeFromWatchlist}
+            onClear={clearWatchlist}
+          />
         </div>
       </header>
 
       {/* Search Section */}
       <section className="border-b border-border/50 bg-card/30">
         <div className="container py-8">
-          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+          <SearchBar 
+            onSearch={handleSearch} 
+            onClear={handleClear}
+            isLoading={isLoading} 
+            showClear={hasSearched}
+          />
         </div>
       </section>
 
@@ -134,7 +157,11 @@ export default function Index() {
         ) : hasSearched && items.length > 0 ? (
           <div className="space-y-6">
             <ResultsHeader query={query} total={total} showing={items.length} />
-            <ListingGrid items={items} />
+            <ListingGrid 
+              items={items}
+              isInWatchlist={isInWatchlist}
+              onToggleWatchlist={toggleWatchlist}
+            />
             
             {nextPage && (
               <div className="flex justify-center pt-8">
