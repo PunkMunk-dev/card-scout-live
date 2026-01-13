@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -114,7 +114,8 @@ export default function Index() {
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold font-display">
+          <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
             AI Card Finder
           </h1>
           <WatchlistPanel
