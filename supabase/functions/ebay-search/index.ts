@@ -1,0 +1,225 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface SearchRequest {
+  query: string;
+  page?: number;
+  limit?: number;
+  sort?: 'best' | 'price_asc' | 'end_soonest' | 'newly_listed';
+  includeLots?: boolean;
+  buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
+}
+
+interface EbayItem {
+  itemId: string;
+  title: string;
+  price: { value: string; currency: string };
+  shipping?: { value: string; currency: string };
+  condition: string;
+  buyingOption: 'AUCTION' | 'FIXED_PRICE' | 'UNKNOWN';
+  endDate?: string;
+  imageUrl?: string;
+  itemUrl?: string;
+  seller?: string;
+}
+
+const JUNK_KEYWORDS = [
+  'box', 'boxes', 'case', 'break', 'breaker', 'lot', 'lots', 
+  'pack', 'packs', 'sealed', 'hobby box', 'blaster', 'mega', 'complete set'
+];
+
+function isJunkTitle(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  return JUNK_KEYWORDS.some(keyword => {
+    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    return regex.test(lowerTitle);
+  });
+}
+
+function getSortParam(sort: string): string {
+  switch (sort) {
+    case 'price_asc':
+      return 'price';
+    case 'end_soonest':
+      return 'endingSoonest';
+    case 'newly_listed':
+      return 'newlyListed';
+    case 'best':
+    default:
+      return 'bestMatch';
+  }
+}
+
+async function getEbayToken(): Promise<string> {
+  const clientId = Deno.env.get('EBAY_CLIENT_ID');
+  const clientSecret = Deno.env.get('EBAY_CLIENT_SECRET');
+  const oauthBase = Deno.env.get('EBAY_OAUTH_BASE') || 'https://api.ebay.com';
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Missing eBay API credentials');
+  }
+
+  const credentials = btoa(`${clientId}:${clientSecret}`);
+  
+  const response = await fetch(`${oauthBase}/identity/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${credentials}`,
+    },
+    body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('eBay OAuth error:', errorText);
+    throw new Error(`Failed to get eBay token: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+async function searchEbay(
+  token: string,
+  query: string,
+  limit: number,
+  offset: number,
+  sort: string
+): Promise<{ items: any[]; total: number }> {
+  const browseBase = Deno.env.get('EBAY_BROWSE_BASE') || 'https://api.ebay.com';
+  const marketplaceId = Deno.env.get('EBAY_MARKETPLACE_ID') || 'EBAY_US';
+
+  const params = new URLSearchParams({
+    q: query,
+    limit: limit.toString(),
+    offset: offset.toString(),
+    sort: sort,
+  });
+
+  const url = `${browseBase}/buy/browse/v1/item_summary/search?${params}`;
+  
+  console.log('Searching eBay:', url);
+
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-EBAY-C-MARKETPLACE-ID': marketplaceId,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('eBay Browse API error:', errorText);
+    throw new Error(`eBay search failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return {
+    items: data.itemSummaries || [],
+    total: data.total || 0,
+  };
+}
+
+function normalizeItem(item: any): EbayItem {
+  const buyingOptions = item.buyingOptions || [];
+  let buyingOption: 'AUCTION' | 'FIXED_PRICE' | 'UNKNOWN' = 'UNKNOWN';
+  
+  if (buyingOptions.includes('AUCTION')) {
+    buyingOption = 'AUCTION';
+  } else if (buyingOptions.includes('FIXED_PRICE')) {
+    buyingOption = 'FIXED_PRICE';
+  }
+
+  const price = item.price || {};
+  const shippingCost = item.shippingOptions?.[0]?.shippingCost;
+
+  return {
+    itemId: item.itemId,
+    title: item.title,
+    price: {
+      value: price.value || '0',
+      currency: price.currency || 'USD',
+    },
+    shipping: shippingCost ? {
+      value: shippingCost.value || '0',
+      currency: shippingCost.currency || 'USD',
+    } : undefined,
+    condition: item.condition || 'Unknown',
+    buyingOption,
+    endDate: item.itemEndDate,
+    imageUrl: item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl,
+    itemUrl: item.itemWebUrl,
+    seller: item.seller?.username,
+  };
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const body: SearchRequest = await req.json();
+    const {
+      query,
+      page = 1,
+      limit = 24,
+      sort = 'best',
+      includeLots = false,
+      buyingOptions = 'ALL',
+    } = body;
+
+    if (!query || query.trim() === '') {
+      return new Response(
+        JSON.stringify({ error: 'Query is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const clampedLimit = Math.min(Math.max(limit, 1), 50);
+    const offset = (page - 1) * clampedLimit;
+
+    const token = await getEbayToken();
+    const sortParam = getSortParam(sort);
+    const { items: rawItems, total } = await searchEbay(token, query, clampedLimit, offset, sortParam);
+
+    let normalizedItems = rawItems.map(normalizeItem);
+
+    // Filter junk titles if not including lots
+    if (!includeLots) {
+      normalizedItems = normalizedItems.filter(item => !isJunkTitle(item.title));
+    }
+
+    // Apply buying options filter
+    if (buyingOptions !== 'ALL') {
+      normalizedItems = normalizedItems.filter(item => item.buyingOption === buyingOptions);
+    }
+
+    const hasMore = offset + rawItems.length < total;
+
+    return new Response(
+      JSON.stringify({
+        query,
+        page,
+        limit: clampedLimit,
+        total,
+        nextPage: hasMore ? page + 1 : null,
+        items: normalizedItems,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Edge function error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
