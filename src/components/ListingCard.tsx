@@ -30,14 +30,12 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
     }
   };
 
-  const totalPrice = parseFloat(item.price.value) + (item.shipping ? parseFloat(item.shipping.value) : 0);
-
   return (
     <Card 
-      className="group overflow-hidden border-border/40 shadow-card hover:shadow-cardHover transition-all duration-300 animate-fadeIn"
+      className="group overflow-hidden bg-card border-border hover:border-[hsl(var(--border-hover))] transition-all duration-200 animate-fadeIn"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      <div className="aspect-square relative bg-muted overflow-hidden">
+      <div className="aspect-square relative bg-secondary overflow-hidden">
         {item.imageUrl ? (
           <img
             src={item.imageUrl}
@@ -74,8 +72,8 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
             }}
             className={cn(
               "absolute top-3 right-3 p-2 rounded-full transition-all duration-200",
-              "bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm",
-              isInWatchlist && "text-[#4B9CD3]"
+              "bg-card/90 backdrop-blur-sm hover:bg-card shadow-sm border border-border",
+              isInWatchlist && "text-primary"
             )}
             aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
           >
@@ -90,13 +88,13 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
       </div>
 
       <CardContent className="p-4 space-y-3">
-        <h3 className="font-medium text-sm line-clamp-2 leading-snug min-h-[2.5rem]">
+        <h3 className="font-medium text-sm line-clamp-2 leading-snug min-h-[2.5rem] text-foreground">
           {item.title}
         </h3>
 
         <div className="space-y-1">
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold font-display text-price">
+            <span className="text-xl font-bold font-display text-primary">
               {formatPrice(item.price.value, item.price.currency)}
             </span>
             {item.buyingOption === 'AUCTION' && (
@@ -105,7 +103,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
           </div>
           
           {item.shipping && (
-            <p className="text-sm text-shipping">
+            <p className="text-sm text-muted-foreground">
               {parseFloat(item.shipping.value) === 0 
                 ? 'Free shipping' 
                 : `+ ${formatPrice(item.shipping.value, item.shipping.currency)} shipping`}
@@ -126,7 +124,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
         <Button
           variant="outline"
           size="sm"
-          className="w-full mt-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+          className="w-full mt-2 border-border hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-150"
           asChild
         >
           <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">

@@ -19,6 +19,7 @@ export default {
       },
       colors: {
         border: "hsl(var(--border))",
+        "border-hover": "hsl(var(--border-hover))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
@@ -71,6 +72,8 @@ export default {
         },
         price: "hsl(var(--price))",
         shipping: "hsl(var(--shipping))",
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
       },
       borderRadius: {
         lg: "var(--radius)",
