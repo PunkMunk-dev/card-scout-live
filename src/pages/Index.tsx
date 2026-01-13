@@ -130,7 +130,7 @@ export default function Index() {
       <section 
         className="relative overflow-hidden"
         style={{
-          backgroundImage: 'linear-gradient(to bottom, transparent 70%, rgba(0,0,0,1) 100%), linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, transparent 60%), url(/images/hero-basketball.jpeg)',
+          backgroundImage: 'url(/images/hero-basketball-dark.jpeg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 20%',
         }}
