@@ -11,6 +11,10 @@ export interface EbayItem {
   seller?: string;
 }
 
+export interface WatchlistItem extends EbayItem {
+  addedAt: number;
+}
+
 export interface SearchResponse {
   query: string;
   page: number;

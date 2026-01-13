@@ -1,16 +1,19 @@
-import { ExternalLink, Clock, Gavel, ShoppingCart } from "lucide-react";
+import { ExternalLink, Clock, Gavel, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface ListingCardProps {
   item: EbayItem;
   index: number;
+  isInWatchlist?: boolean;
+  onToggleWatchlist?: (item: EbayItem) => void;
 }
 
-export function ListingCard({ item, index }: ListingCardProps) {
+export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: ListingCardProps) {
   const formatPrice = (value: string, currency: string) => {
     const num = parseFloat(value);
     return new Intl.NumberFormat('en-US', {
@@ -61,6 +64,29 @@ export function ListingCard({ item, index }: ListingCardProps) {
             </Badge>
           ) : null}
         </div>
+
+        {onToggleWatchlist && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleWatchlist(item);
+            }}
+            className={cn(
+              "absolute top-3 right-3 p-2 rounded-full transition-all duration-200",
+              "bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm",
+              isInWatchlist && "text-accent"
+            )}
+            aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <Heart 
+              className={cn(
+                "h-5 w-5 transition-all duration-200",
+                isInWatchlist ? "fill-current" : "hover:scale-110"
+              )} 
+            />
+          </button>
+        )}
       </div>
 
       <CardContent className="p-4 space-y-3">
