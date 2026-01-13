@@ -115,7 +115,7 @@ export default function Index() {
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold font-display">
-            eBay Card Search
+            AI Card Finder
           </h1>
           <WatchlistPanel
             watchlist={watchlist}
