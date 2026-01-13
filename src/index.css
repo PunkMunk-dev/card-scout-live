@@ -6,36 +6,36 @@
 
 @layer base {
   :root {
-    /* Premium Dark Slate Theme - Brighter */
-    --background: 222 40% 13%;
-    --foreground: 220 14% 96%;
+    /* Sharp & Bold - Pure Black Theme */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 224 40% 16%;
-    --card-foreground: 220 14% 96%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 224 40% 16%;
-    --popover-foreground: 220 14% 96%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 100%;
 
     /* Primary accent - Premium Blue */
     --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 7%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 220 30% 20%;
-    --secondary-foreground: 220 14% 96%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 30% 20%;
-    --muted-foreground: 220 13% 65%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 220 30% 20%;
-    --accent-foreground: 220 14% 96%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 24%;
-    --input: 220 25% 22%;
+    --border: 0 0% 15%;
+    --input: 0 0% 8%;
     --ring: 217 91% 60%;
-    --border-hover: 220 22% 32%;
+    --border-hover: 0 0% 25%;
 
     --radius: 1rem;
 
@@ -45,67 +45,67 @@
     --buy-now: 142 71% 45%;
     --buy-now-foreground: 0 0% 100%;
     --price: 217 91% 60%;
-    --shipping: 220 13% 60%;
+    --shipping: 0 0% 65%;
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
-    --text-muted: 220 13% 55%;
+    --text-muted: 0 0% 55%;
 
     /* Sidebar */
-    --sidebar-background: 222 40% 13%;
-    --sidebar-foreground: 220 14% 96%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 222 47% 7%;
-    --sidebar-accent: 220 30% 20%;
-    --sidebar-accent-foreground: 220 14% 96%;
-    --sidebar-border: 220 25% 24%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15%;
     --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
-    /* Same as root - this is a dark-first theme */
-    --background: 222 47% 11%;
-    --foreground: 220 13% 91%;
+    /* Same as root - pure black theme */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 222 41% 9%;
-    --card-foreground: 220 13% 91%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222 41% 9%;
-    --popover-foreground: 220 13% 91%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 220 13% 91%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 218 11% 65%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 220 13% 91%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --border: 0 0% 15%;
+    --input: 0 0% 8%;
     --ring: 217 91% 60%;
-    --border-hover: 217 25% 27%;
+    --border-hover: 0 0% 25%;
 
     --auction: 38 92% 55%;
     --auction-foreground: 38 100% 10%;
     --buy-now: 142 71% 45%;
     --buy-now-foreground: 0 0% 100%;
     --price: 217 91% 60%;
-    --shipping: 218 11% 65%;
+    --shipping: 0 0% 65%;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 220 13% 91%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 220 13% 91%;
-    --sidebar-border: 217 33% 17%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15%;
     --sidebar-ring: 217 91% 60%;
   }
 }
