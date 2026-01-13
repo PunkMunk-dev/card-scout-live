@@ -127,11 +127,12 @@ export default function Index() {
 
       {/* Hero Section with Background Image */}
       <section 
-        className="relative overflow-hidden"
+        className="relative overflow-hidden bg-[#f5b5c5]"
         style={{
           backgroundImage: 'url(/images/hero-lebron.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 20%',
+          backgroundSize: 'contain',
+          backgroundPosition: 'right center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         {/* Hero content */}
