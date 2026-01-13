@@ -127,7 +127,7 @@ export default function Index() {
 
       {/* Hero Section with Background Image */}
       <section 
-        className="relative overflow-hidden bg-[#f5b5c5]"
+        className="relative overflow-hidden bg-black"
         style={{
           backgroundImage: 'url(/images/hero-lebron.png)',
           backgroundSize: 'contain',
@@ -139,7 +139,7 @@ export default function Index() {
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 40%, transparent 70%)',
+            background: 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, transparent 75%)',
           }}
         />
         
