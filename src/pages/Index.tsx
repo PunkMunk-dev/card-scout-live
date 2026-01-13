@@ -135,6 +135,14 @@ export default function Index() {
           backgroundRepeat: 'no-repeat',
         }}
       >
+        {/* Dark gradient overlay for text readability */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 40%, transparent 70%)',
+          }}
+        />
+        
         {/* Hero content */}
         <div className="container py-20 md:py-24 relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold font-display text-white mb-4 tracking-tight drop-shadow-lg">
