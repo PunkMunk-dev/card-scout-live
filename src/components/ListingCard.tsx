@@ -75,7 +75,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
             className={cn(
               "absolute top-3 right-3 p-2 rounded-full transition-all duration-200",
               "bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm",
-              isInWatchlist && "text-accent"
+              isInWatchlist && "text-[#4B9CD3]"
             )}
             aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
           >
