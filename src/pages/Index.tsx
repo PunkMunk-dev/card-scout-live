@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Loader2, CreditCard } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -114,8 +114,7 @@ export default function Index() {
       {/* Header */}
       <header className="border-b border-white/5 bg-black backdrop-blur-md sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
-          <h1 className="text-lg font-medium font-display flex items-center gap-2.5 text-foreground tracking-tight">
-            <CreditCard className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-medium font-display text-foreground tracking-tight">
             AI Card Finder
           </h1>
           <WatchlistPanel
@@ -130,7 +129,7 @@ export default function Index() {
       <section 
         className="relative overflow-hidden"
         style={{
-          backgroundImage: 'url(/images/hero-basketball-dark.jpeg)',
+          backgroundImage: 'url(/images/hero-lebron.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 20%',
         }}
