@@ -25,22 +25,22 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBar
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-[720px] mx-auto">
-      <div className="flex gap-3">
+    <form onSubmit={handleSubmit} className="w-full max-w-[680px] mx-auto">
+      <div className="flex gap-3 shadow-xl shadow-black/25 rounded-2xl">
         <div className="relative flex-1 group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60 transition-colors group-focus-within:text-primary" />
           <input
             type="text"
-            placeholder="Paste full card name (e.g., 2023 Bowman Chrome Sapphire #67 Shohei Ohtani)"
+            placeholder="Search cards (e.g., 2023 Bowman Chrome Shohei Ohtani)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full h-14 pl-14 pr-12 text-base bg-card border border-border rounded-2xl text-foreground placeholder:text-muted-foreground/60 transition-all duration-200 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="w-full h-[52px] pl-14 pr-12 text-[15px] bg-card border border-border/60 rounded-l-2xl text-foreground placeholder:text-muted-foreground/50 transition-all duration-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
           />
           {(query || showClear) && (
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-secondary transition-colors duration-150 text-muted-foreground hover:text-foreground"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-secondary/80 transition-colors duration-150 text-muted-foreground/60 hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -49,7 +49,7 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBar
         <Button 
           type="submit" 
           disabled={isLoading || !query.trim()}
-          className="h-14 px-8 font-semibold rounded-xl bg-primary text-primary-foreground hover:brightness-110 transition-all duration-150 disabled:opacity-50"
+          className="h-[52px] px-7 font-medium rounded-r-2xl rounded-l-none bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-150 disabled:opacity-40"
         >
           {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin" />

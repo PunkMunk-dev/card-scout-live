@@ -112,10 +112,10 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-background sticky top-0 z-50">
-        <div className="container py-5 flex items-center justify-between">
-          <h1 className="text-xl font-medium font-display flex items-center gap-2 text-foreground">
-            <CreditCard className="h-5 w-5 text-primary animate-float" />
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="container py-4 flex items-center justify-between">
+          <h1 className="text-lg font-medium font-display flex items-center gap-2.5 text-foreground tracking-tight">
+            <CreditCard className="h-5 w-5 text-primary" />
             AI Card Finder
           </h1>
           <WatchlistPanel
@@ -128,19 +128,19 @@ export default function Index() {
 
       {/* Hero Section with Background Image */}
       <section 
-        className="relative border-b border-border overflow-hidden"
+        className="relative overflow-hidden"
         style={{
-          backgroundImage: 'linear-gradient(to right, hsl(222 47% 4% / 0.92), hsl(222 47% 11% / 0.85)), url(/images/hero-basketball.jpeg)',
+          backgroundImage: 'linear-gradient(to right, hsl(222 47% 5% / 0.94), hsl(222 47% 7% / 0.88), hsl(222 47% 7% / 0.75)), url(/images/hero-basketball.jpeg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center right',
         }}
       >
         {/* Hero content */}
-        <div className="container py-16 md:py-20 relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground mb-3">
+        <div className="container py-20 md:py-24 relative z-10">
+          <h2 className="text-4xl md:text-5xl font-bold font-display text-foreground mb-4 tracking-tight">
             Find Your Cards
           </h2>
-          <p className="text-muted-foreground mb-10 max-w-md">
+          <p className="text-muted-foreground text-lg mb-12 max-w-lg">
             AI-powered search for the best sports card deals
           </p>
           <SearchBar 
@@ -151,9 +151,6 @@ export default function Index() {
           />
         </div>
       </section>
-
-      {/* Divider between hero and results */}
-      <div className="h-px bg-border" />
 
       {/* Main Content */}
       <main className="container py-6">
