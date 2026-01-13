@@ -128,19 +128,19 @@ export default function Index() {
 
       {/* Hero Section with Background Image */}
       <section 
-        className="relative overflow-hidden"
+        className="relative overflow-hidden border-b-2 border-primary/20"
         style={{
-          backgroundImage: 'linear-gradient(to right, hsl(222 47% 5% / 0.94), hsl(222 47% 7% / 0.88), hsl(222 47% 7% / 0.75)), url(/images/hero-basketball.jpeg)',
+          backgroundImage: 'linear-gradient(to right, hsl(222 47% 4% / 0.75), hsl(222 47% 6% / 0.55), hsl(222 47% 8% / 0.25)), url(/images/hero-basketball.jpeg)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center right',
+          backgroundPosition: 'center 20%',
         }}
       >
         {/* Hero content */}
         <div className="container py-20 md:py-24 relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold font-display text-foreground mb-4 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-bold font-display text-white mb-4 tracking-tight drop-shadow-lg">
             Find Your Cards
           </h2>
-          <p className="text-muted-foreground text-lg mb-12 max-w-lg">
+          <p className="text-white/80 text-lg mb-12 max-w-lg drop-shadow-md">
             AI-powered search for the best sports card deals
           </p>
           <SearchBar 
