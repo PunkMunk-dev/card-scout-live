@@ -22,64 +22,64 @@ export function SearchFilters({
   onIncludeLotsChange,
 }: SearchFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-6 py-4">
-      <div className="flex items-center gap-3">
-        <Label htmlFor="sort" className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-          Sort by
+    <div className="flex flex-wrap items-center gap-4 py-2.5 border-b border-border/30">
+      <div className="flex items-center gap-2">
+        <Label htmlFor="sort" className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+          Sort
         </Label>
         <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)}>
-          <SelectTrigger id="sort" className="w-44 bg-card border-border hover:border-[hsl(var(--border-hover))] transition-colors duration-150">
+          <SelectTrigger id="sort" className="h-8 w-36 text-xs bg-card border-border hover:border-[hsl(var(--border-hover))] transition-colors duration-150">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            <SelectItem value="best">Best Match</SelectItem>
-            <SelectItem value="price_asc">Lowest Price</SelectItem>
-            <SelectItem value="end_soonest">Ending Soon</SelectItem>
-            <SelectItem value="newly_listed">Newly Listed</SelectItem>
+            <SelectItem value="best" className="text-xs">Best Match</SelectItem>
+            <SelectItem value="price_asc" className="text-xs">Lowest Price</SelectItem>
+            <SelectItem value="end_soonest" className="text-xs">Ending Soon</SelectItem>
+            <SelectItem value="newly_listed" className="text-xs">Newly Listed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Label className="text-sm font-medium text-muted-foreground">
-          Buying Format
+      <div className="flex items-center gap-2">
+        <Label className="text-xs font-medium text-muted-foreground">
+          Format
         </Label>
         <ToggleGroup 
           type="single" 
           value={buyingOption} 
           onValueChange={(v) => v && onBuyingOptionChange(v as BuyingOption)}
-          className="bg-secondary p-1 rounded-xl"
+          className="bg-secondary p-0.5 rounded-lg"
         >
           <ToggleGroupItem 
             value="ALL" 
-            className="px-4 py-2 text-sm rounded-lg data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
+            className="px-2.5 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
           >
             All
           </ToggleGroupItem>
           <ToggleGroupItem 
             value="AUCTION" 
-            className="px-4 py-2 text-sm rounded-lg data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
+            className="px-2.5 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
           >
             Auction
           </ToggleGroupItem>
           <ToggleGroupItem 
             value="FIXED_PRICE" 
-            className="px-4 py-2 text-sm rounded-lg data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
+            className="px-2.5 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
           >
-            Buy It Now
+            Buy Now
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
-      <div className="flex items-center gap-3 ml-auto">
+      <div className="flex items-center gap-2 ml-auto">
         <Switch
           id="include-lots"
           checked={includeLots}
           onCheckedChange={onIncludeLotsChange}
-          className="data-[state=checked]:bg-primary"
+          className="data-[state=checked]:bg-primary scale-90"
         />
-        <Label htmlFor="include-lots" className="text-sm font-medium cursor-pointer text-foreground">
-          Include lots/boxes
+        <Label htmlFor="include-lots" className="text-xs font-medium cursor-pointer text-foreground">
+          Include lots
         </Label>
       </div>
     </div>
