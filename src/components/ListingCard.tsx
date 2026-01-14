@@ -1,5 +1,6 @@
 import { ExternalLink, Clock, Gavel, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
 import { formatDistanceToNow } from "date-fns";
@@ -29,42 +30,41 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
     }
   };
 
+  const totalPrice = parseFloat(item.price.value) + (item.shipping ? parseFloat(item.shipping.value) : 0);
+
   return (
     <Card 
-      className="group overflow-hidden bg-card border-border rounded-2xl card-hover"
-      style={{ animationDelay: `${index * 30}ms` }}
+      className="group overflow-hidden border-border/40 shadow-card hover:shadow-cardHover transition-all duration-300 animate-fadeIn"
+      style={{ animationDelay: `${index * 50}ms` }}
     >
-      {/* Image container */}
-      <div className="aspect-square relative bg-[hsl(var(--image-bg))] overflow-hidden border-b border-border/50">
+      <div className="aspect-square relative bg-muted overflow-hidden">
         {item.imageUrl ? (
           <img
             src={item.imageUrl}
             alt={item.title}
-            className="w-full h-full object-contain p-2 group-hover:scale-[1.02] transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             No Image
           </div>
         )}
         
-        {/* Badge */}
-        <div className="absolute top-2.5 left-2.5">
+        <div className="absolute top-3 left-3">
           {item.buyingOption === 'AUCTION' ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md bg-secondary text-warning border border-border">
-              <Gavel className="h-2.5 w-2.5" />
+            <Badge className="bg-auction text-auction-foreground font-semibold shadow-sm">
+              <Gavel className="h-3 w-3 mr-1" />
               Auction
-            </span>
+            </Badge>
           ) : item.buyingOption === 'FIXED_PRICE' ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md bg-secondary text-success border border-border">
-              <ShoppingCart className="h-2.5 w-2.5" />
-              Buy Now
-            </span>
+            <Badge className="bg-buyNow text-buyNow-foreground font-semibold shadow-sm">
+              <ShoppingCart className="h-3 w-3 mr-1" />
+              Buy It Now
+            </Badge>
           ) : null}
         </div>
 
-        {/* Watchlist button */}
         {onToggleWatchlist && (
           <button
             onClick={(e) => {
@@ -73,41 +73,39 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
               onToggleWatchlist(item);
             }}
             className={cn(
-              "absolute top-2.5 right-2.5 p-1.5 rounded-md transition-all duration-150",
-              "bg-card/80 backdrop-blur-sm hover:bg-card border border-border hover:border-border-hover",
-              isInWatchlist ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              "absolute top-3 right-3 p-2 rounded-full transition-all duration-200",
+              "bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm",
+              isInWatchlist && "text-[#4B9CD3]"
             )}
             aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
           >
             <Heart 
               className={cn(
-                "h-4 w-4 transition-all duration-150",
-                isInWatchlist && "fill-current"
+                "h-5 w-5 transition-all duration-200",
+                isInWatchlist ? "fill-current" : "hover:scale-110"
               )} 
             />
           </button>
         )}
       </div>
 
-      <CardContent className="p-3.5 space-y-2.5">
-        {/* Title */}
-        <h3 className="font-medium text-xs line-clamp-2 leading-relaxed min-h-[2.25rem] text-foreground">
+      <CardContent className="p-4 space-y-3">
+        <h3 className="font-medium text-sm line-clamp-2 leading-snug min-h-[2.5rem]">
           {item.title}
         </h3>
 
-        {/* Price */}
-        <div className="space-y-0.5">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-bold text-primary">
+        <div className="space-y-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-xl font-bold font-display text-price">
               {formatPrice(item.price.value, item.price.currency)}
             </span>
             {item.buyingOption === 'AUCTION' && (
-              <span className="text-[10px] text-muted-foreground">bid</span>
+              <span className="text-xs text-muted-foreground">current bid</span>
             )}
           </div>
           
           {item.shipping && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-sm text-shipping">
               {parseFloat(item.shipping.value) === 0 
                 ? 'Free shipping' 
                 : `+ ${formatPrice(item.shipping.value, item.shipping.currency)} shipping`}
@@ -115,27 +113,25 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
           )}
         </div>
 
-        {/* Metadata */}
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-          <span className="truncate max-w-[55%]">{item.condition}</span>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="truncate max-w-[60%]">{item.condition}</span>
           {item.endDate && item.buyingOption === 'AUCTION' && (
-            <span className="flex items-center gap-1 text-warning font-medium">
-              <Clock className="h-2.5 w-2.5" />
+            <span className="flex items-center gap-1 text-auction font-medium">
+              <Clock className="h-3 w-3" />
               {getTimeRemaining(item.endDate)}
             </span>
           )}
         </div>
 
-        {/* CTA Button */}
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-8 text-xs border-border hover:border-border-hover hover:bg-secondary transition-all duration-150"
+          className="w-full mt-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
           asChild
         >
           <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
             View on eBay
-            <ExternalLink className="h-3 w-3 ml-1.5" />
+            <ExternalLink className="h-3.5 w-3.5 ml-2" />
           </a>
         </Button>
       </CardContent>

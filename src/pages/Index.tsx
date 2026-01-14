@@ -112,9 +112,9 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-background sticky top-0 z-50">
-        <div className="container py-3 flex items-center justify-between">
-          <h1 className="text-sm font-medium text-foreground tracking-tight">
+      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold font-display">
             AI Card Finder
           </h1>
           <WatchlistPanel
@@ -125,16 +125,9 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="bg-background border-b border-border">
-        {/* Hero content */}
-        <div className="container py-12 md:py-14">
-          <h2 className="text-2xl md:text-3xl font-semibold font-display text-foreground mb-2 tracking-tight">
-            Find Your Cards
-          </h2>
-          <p className="text-muted-foreground text-sm mb-8 max-w-md">
-            AI-powered search for the best sports card deals
-          </p>
+      {/* Search Section */}
+      <section className="border-b border-border/50 bg-card/30">
+        <div className="container py-8">
           <SearchBar 
             onSearch={handleSearch} 
             onClear={handleClear}
@@ -145,7 +138,7 @@ export default function Index() {
       </section>
 
       {/* Main Content */}
-      <main className="container py-5">
+      <main className="container py-6">
         {hasSearched && (
           <SearchFilters
             sort={sort}
@@ -158,11 +151,11 @@ export default function Index() {
         )}
 
         {isLoading ? (
-          <div className="mt-5">
+          <div className="mt-6">
             <LoadingGrid />
           </div>
         ) : hasSearched && items.length > 0 ? (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <ResultsHeader query={query} total={total} showing={items.length} />
             <ListingGrid 
               items={items}
@@ -171,13 +164,13 @@ export default function Index() {
             />
             
             {nextPage && (
-              <div className="flex justify-center pt-6">
+              <div className="flex justify-center pt-8">
                 <Button
                   variant="outline"
-                  size="default"
+                  size="lg"
                   onClick={handleLoadMore}
                   disabled={isLoadingMore}
-                  className="min-w-40 border-border hover:border-border-hover transition-all duration-150"
+                  className="min-w-48"
                 >
                   {isLoadingMore ? (
                     <>

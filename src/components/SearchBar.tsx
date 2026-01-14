@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, Loader2, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 interface SearchBarProps {
@@ -25,22 +26,22 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBar
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-[640px]">
-      <div className="flex gap-0 rounded-2xl overflow-hidden border border-border focus-within:border-primary transition-colors duration-150">
-        <div className="relative flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-          <input
+    <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
             type="text"
-            placeholder="Search cards (e.g., 2023 Bowman Chrome Shohei Ohtani)"
+            placeholder="Paste full card name (e.g., 2023 Bowman Chrome Sapphire #67 Shohei Ohtani Angels)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full h-[54px] pl-11 pr-10 text-sm bg-card text-foreground placeholder:text-muted-foreground transition-all duration-150 focus:outline-none"
+            className="pl-12 pr-10 h-14 text-base bg-card border-border/50 shadow-sm focus-visible:ring-primary/30"
           />
           {(query || showClear) && (
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-secondary transition-colors duration-150 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -49,10 +50,10 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBar
         <Button 
           type="submit" 
           disabled={isLoading || !query.trim()}
-          className="h-[54px] px-6 font-medium rounded-none bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-150 disabled:opacity-40"
+          className="h-14 px-8 font-semibold"
         >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             "Search"
           )}

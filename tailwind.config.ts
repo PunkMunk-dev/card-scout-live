@@ -19,7 +19,6 @@ export default {
       },
       colors: {
         border: "hsl(var(--border))",
-        "border-hover": "hsl(var(--border-hover))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
@@ -72,8 +71,6 @@ export default {
         },
         price: "hsl(var(--price))",
         shipping: "hsl(var(--shipping))",
-        success: "hsl(var(--success))",
-        warning: "hsl(var(--warning))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -94,12 +91,8 @@ export default {
           "100%": { backgroundPosition: "200% 0" },
         },
         fadeIn: {
-          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-3px)" },
         },
       },
       animation: {
@@ -107,7 +100,6 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite linear",
         fadeIn: "fadeIn 0.3s ease-out forwards",
-        float: "float 2s ease-in-out infinite",
       },
       boxShadow: {
         card: "0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.04)",
