@@ -9,6 +9,10 @@ export interface EbayItem {
   imageUrl?: string;
   itemUrl?: string;
   seller?: string;
+  // Sold item fields
+  isSold?: boolean;
+  soldPrice?: { value: string; currency: string };
+  soldDate?: string;
 }
 
 export interface WatchlistItem extends EbayItem {
@@ -24,6 +28,15 @@ export interface SearchResponse {
   items: EbayItem[];
 }
 
+export interface SoldSearchResponse {
+  query: string;
+  total: number;
+  items: EbayItem[];
+  averagePrice?: number;
+  minPrice?: number;
+  maxPrice?: number;
+}
+
 export interface SearchParams {
   query: string;
   page?: number;
@@ -31,6 +44,7 @@ export interface SearchParams {
   sort?: 'best' | 'price_asc' | 'end_soonest' | 'newly_listed';
   includeLots?: boolean;
   buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
+  showSold?: boolean;
 }
 
 export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'newly_listed';

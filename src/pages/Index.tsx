@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -8,8 +7,7 @@ import { LoadingGrid } from "@/components/LoadingGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
-import { Button } from "@/components/ui/button";
-import { searchEbay } from "@/lib/ebay-api";
+import { searchEbay, searchEbaySold } from "@/lib/ebay-api";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import type { EbayItem, SortOption, BuyingOption } from "@/types/ebay";
 
@@ -26,6 +24,12 @@ export default function Index() {
   const [sort, setSort] = useState<SortOption>("best");
   const [buyingOption, setBuyingOption] = useState<BuyingOption>("ALL");
   const [includeLots, setIncludeLots] = useState(false);
+  const [showSold, setShowSold] = useState(false);
+
+  // Sold price stats
+  const [averagePrice, setAveragePrice] = useState<number | undefined>();
+  const [minPrice, setMinPrice] = useState<number | undefined>();
+  const [maxPrice, setMaxPrice] = useState<number | undefined>();
 
   // Watchlist
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
@@ -38,23 +42,45 @@ export default function Index() {
     }
 
     try {
-      const response = await searchEbay({
-        query: searchQuery,
-        page,
-        limit: 24,
-        sort,
-        includeLots,
-        buyingOptions: buyingOption,
-      });
+      if (showSold) {
+        // Search sold listings
+        const response = await searchEbaySold({
+          query: searchQuery,
+          limit: 50,
+          includeLots,
+        });
 
-      if (append) {
-        setItems(prev => [...prev, ...response.items]);
-      } else {
         setItems(response.items);
+        setTotal(response.total);
+        setNextPage(null); // RapidAPI doesn't support pagination
+        setAveragePrice(response.averagePrice);
+        setMinPrice(response.minPrice);
+        setMaxPrice(response.maxPrice);
+      } else {
+        // Search active listings
+        const response = await searchEbay({
+          query: searchQuery,
+          page,
+          limit: 24,
+          sort,
+          includeLots,
+          buyingOptions: buyingOption,
+        });
+
+        if (append) {
+          setItems(prev => [...prev, ...response.items]);
+        } else {
+          setItems(response.items);
+        }
+        
+        setTotal(response.total);
+        setNextPage(response.nextPage);
+        // Clear sold stats when searching active
+        setAveragePrice(undefined);
+        setMinPrice(undefined);
+        setMaxPrice(undefined);
       }
       
-      setTotal(response.total);
-      setNextPage(response.nextPage);
       setHasSearched(true);
     } catch (error) {
       console.error('Search error:', error);
@@ -63,7 +89,7 @@ export default function Index() {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, [sort, includeLots, buyingOption]);
+  }, [sort, includeLots, buyingOption, showSold]);
 
   const handleSearch = (newQuery: string) => {
     setQuery(newQuery);
@@ -77,6 +103,9 @@ export default function Index() {
     setTotal(0);
     setNextPage(null);
     setHasSearched(false);
+    setAveragePrice(undefined);
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
   };
 
   const handleLoadMore = () => {
@@ -87,7 +116,7 @@ export default function Index() {
 
   const handleSortChange = (newSort: SortOption) => {
     setSort(newSort);
-    if (query && hasSearched) {
+    if (query && hasSearched && !showSold) {
       setItems([]);
       performSearch(query, 1, false);
     }
@@ -95,7 +124,7 @@ export default function Index() {
 
   const handleBuyingOptionChange = (newOption: BuyingOption) => {
     setBuyingOption(newOption);
-    if (query && hasSearched) {
+    if (query && hasSearched && !showSold) {
       setItems([]);
       performSearch(query, 1, false);
     }
@@ -109,13 +138,21 @@ export default function Index() {
     }
   };
 
+  const handleShowSoldChange = (show: boolean) => {
+    setShowSold(show);
+    if (query && hasSearched) {
+      setItems([]);
+      performSearch(query, 1, false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background bg-grid-pattern">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold font-display">
-            AI Card Finder
+          <h1 className="text-2xl font-bold font-display text-foreground">
+            <span className="text-primary">AI</span> Card Finder
           </h1>
           <WatchlistPanel
             watchlist={watchlist}
@@ -126,14 +163,19 @@ export default function Index() {
       </header>
 
       {/* Search Section */}
-      <section className="border-b border-border/50 bg-card/30">
+      <section className="border-b border-border bg-card/50">
         <div className="container py-8">
-          <SearchBar 
-            onSearch={handleSearch} 
-            onClear={handleClear}
-            isLoading={isLoading} 
-            showClear={hasSearched}
-          />
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full" />
+            <div className="relative">
+              <SearchBar 
+                onSearch={handleSearch} 
+                onClear={handleClear}
+                isLoading={isLoading} 
+                showClear={hasSearched}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -147,6 +189,8 @@ export default function Index() {
             onBuyingOptionChange={handleBuyingOptionChange}
             includeLots={includeLots}
             onIncludeLotsChange={handleIncludeLotsChange}
+            showSold={showSold}
+            onShowSoldChange={handleShowSoldChange}
           />
         )}
 
@@ -163,6 +207,10 @@ export default function Index() {
               hasMore={!!nextPage}
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
+              showSold={showSold}
+              averagePrice={averagePrice}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
             />
             <ListingGrid 
               items={items}

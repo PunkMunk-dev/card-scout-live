@@ -35,13 +35,13 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBar
             placeholder="Paste full card name (e.g., 2023 Bowman Chrome Sapphire #67 Shohei Ohtani Angels)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-12 pr-10 h-14 text-base bg-card border-border/50 shadow-sm focus-visible:ring-primary/30"
+            className="pl-12 pr-10 h-14 text-base bg-card border-border shadow-sm focus-visible:ring-primary/50 focus-visible:border-primary"
           />
           {(query || showClear) && (
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -50,7 +50,7 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBar
         <Button 
           type="submit" 
           disabled={isLoading || !query.trim()}
-          className="h-14 px-8 font-semibold"
+          className="h-14 px-8 font-semibold glow-sm hover:glow-md transition-shadow"
         >
           {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
