@@ -32,8 +32,12 @@ export function SearchFilters({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="best">Best Match</SelectItem>
-            <SelectItem value="price_asc">Lowest Price</SelectItem>
+            {buyingOption === "ALL" && (
+              <>
+                <SelectItem value="best">Best Match</SelectItem>
+                <SelectItem value="price_asc">Lowest Price</SelectItem>
+              </>
+            )}
             <SelectItem value="end_soonest">Ending Soon</SelectItem>
             <SelectItem value="newly_listed">Newly Listed</SelectItem>
           </SelectContent>
