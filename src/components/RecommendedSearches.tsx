@@ -1,5 +1,6 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import type { PlayerRecommendation } from "@/data/playerRecommendations";
 
 interface RecommendedSearchesProps {
@@ -21,6 +22,11 @@ const sportLabels: Record<string, string> = {
   basketball: "🏀 Basketball",
   hockey: "🏒 Hockey",
   wnba: "🏀 WNBA",
+};
+
+const handleCopy = (text: string) => {
+  navigator.clipboard.writeText(text);
+  toast.success("Copied to clipboard!");
 };
 
 export function RecommendedSearches({ recommendation, onSearchClick }: RecommendedSearchesProps) {
@@ -45,16 +51,27 @@ export function RecommendedSearches({ recommendation, onSearchClick }: Recommend
       
       <div className="flex flex-wrap gap-2">
         {recommendation.searches.map((search, index) => (
-          <button
-            key={index}
-            onClick={() => onSearchClick(search)}
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-full 
-                       bg-primary/10 text-primary border border-primary/20
-                       hover:bg-primary/20 hover:border-primary/30
-                       transition-colors duration-200 cursor-pointer"
-          >
-            {search}
-          </button>
+          <div key={index} className="inline-flex items-center">
+            <button
+              onClick={() => onSearchClick(search)}
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-l-full 
+                         bg-primary/10 text-primary border border-primary/20 border-r-0
+                         hover:bg-primary/20 hover:border-primary/30
+                         transition-colors duration-200 cursor-pointer"
+            >
+              {search}
+            </button>
+            <button
+              onClick={() => handleCopy(search)}
+              className="inline-flex items-center px-2 py-1.5 rounded-r-full 
+                         bg-primary/10 text-primary border border-primary/20
+                         hover:bg-primary/20 hover:border-primary/30
+                         transition-colors duration-200 cursor-pointer"
+              title="Copy to clipboard"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          </div>
         ))}
       </div>
     </div>
