@@ -241,10 +241,13 @@ serve(async (req) => {
     }
 
     const clampedLimit = Math.min(Math.max(limit, 1), 50);
-    const offset = (page - 1) * clampedLimit;
     
     // Request more items to compensate for client-side filtering
     const requestLimit = Math.min(clampedLimit * 2, 50);
+    
+    // IMPORTANT: eBay requires offset to be a multiple of limit
+    // So we must calculate offset using requestLimit, not clampedLimit
+    const offset = (page - 1) * requestLimit;
 
     const token = await getEbayToken();
     const sortParam = getSortParam(sort);
