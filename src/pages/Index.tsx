@@ -112,9 +112,9 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-white/5 bg-black backdrop-blur-md sticky top-0 z-50">
-        <div className="container py-2.5 flex items-center justify-between">
-          <h1 className="text-base font-medium font-display text-foreground tracking-tight">
+      <header className="border-b border-border bg-background sticky top-0 z-50">
+        <div className="container py-3 flex items-center justify-between">
+          <h1 className="text-sm font-medium text-foreground tracking-tight">
             AI Card Finder
           </h1>
           <WatchlistPanel
@@ -125,30 +125,39 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section with Background Image */}
+      {/* Hero Section */}
       <section 
-        className="relative overflow-hidden bg-black"
+        className="relative overflow-hidden"
         style={{
-          backgroundImage: 'url(/images/hero-lebron.png)',
-          backgroundSize: 'contain',
-          backgroundPosition: 'right center',
-          backgroundRepeat: 'no-repeat',
+          background: 'linear-gradient(135deg, hsl(222 60% 3%) 0%, hsl(222 47% 11%) 100%)',
         }}
       >
-        {/* Dark gradient overlay for text readability */}
+        {/* Background image with heavy overlay */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'url(/images/hero-lebron.png)',
+            backgroundSize: 'contain',
+            backgroundPosition: 'right center',
+            backgroundRepeat: 'no-repeat',
+            opacity: 0.3,
+          }}
+        />
+        
+        {/* Dark gradient overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, transparent 75%)',
+            background: 'linear-gradient(to right, hsl(222 47% 11% / 0.95) 0%, hsl(222 47% 11% / 0.8) 50%, hsl(222 47% 11% / 0.6) 100%)',
           }}
         />
         
         {/* Hero content */}
-        <div className="container py-12 md:py-16 relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold font-display text-white mb-2 tracking-tight drop-shadow-lg">
+        <div className="container py-14 md:py-16 relative z-10">
+          <h2 className="text-2xl md:text-3xl font-semibold font-display text-foreground mb-2 tracking-tight">
             Find Your Cards
           </h2>
-          <p className="text-white/70 text-base mb-8 max-w-lg drop-shadow-md">
+          <p className="text-muted-foreground text-sm mb-8 max-w-md">
             AI-powered search for the best sports card deals
           </p>
           <SearchBar 
@@ -161,7 +170,7 @@ export default function Index() {
       </section>
 
       {/* Main Content */}
-      <main className="container py-6">
+      <main className="container py-5">
         {hasSearched && (
           <SearchFilters
             sort={sort}
@@ -174,11 +183,11 @@ export default function Index() {
         )}
 
         {isLoading ? (
-          <div className="mt-6">
+          <div className="mt-5">
             <LoadingGrid />
           </div>
         ) : hasSearched && items.length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <ResultsHeader query={query} total={total} showing={items.length} />
             <ListingGrid 
               items={items}
@@ -187,13 +196,13 @@ export default function Index() {
             />
             
             {nextPage && (
-              <div className="flex justify-center pt-8">
+              <div className="flex justify-center pt-6">
                 <Button
                   variant="outline"
-                  size="lg"
+                  size="default"
                   onClick={handleLoadMore}
                   disabled={isLoadingMore}
-                  className="min-w-48 border-border hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-150"
+                  className="min-w-40 border-border hover:border-border-hover transition-all duration-150"
                 >
                   {isLoadingMore ? (
                     <>

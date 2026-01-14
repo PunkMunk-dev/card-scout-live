@@ -6,12 +6,12 @@ interface ResultsHeaderProps {
 
 export function ResultsHeader({ query, total, showing }: ResultsHeaderProps) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-border">
+    <div className="flex items-center justify-between py-3 border-b border-border">
       <div>
-        <h2 className="text-lg font-semibold font-display text-foreground">
+        <h2 className="text-sm font-medium text-foreground">
           Results for "<span className="text-primary">{query}</span>"
         </h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           Showing {showing.toLocaleString()} of {total.toLocaleString()} listings
         </p>
       </div>
