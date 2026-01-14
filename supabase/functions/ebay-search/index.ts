@@ -231,9 +231,13 @@ serve(async (req) => {
       normalizedItems = normalizedItems.filter(item => item.buyingOption === buyingOptions);
     }
 
-    // Filter for graded items when sort is 'graded'
+    // Filter graded vs raw cards based on sort option
     if (sort === 'graded') {
+      // Show only graded cards when "Graded" sort is selected
       normalizedItems = normalizedItems.filter(item => isGradedItem(item.title));
+    } else {
+      // By default, show only raw/ungraded cards
+      normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     }
 
     const hasMore = offset + rawItems.length < total;

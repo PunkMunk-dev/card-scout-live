@@ -31,15 +31,20 @@ export function SearchFilters({
           <SelectTrigger id="sort" className="w-44 bg-card">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+        <SelectContent>
             {buyingOption === "ALL" && (
               <>
                 <SelectItem value="best">Best Match</SelectItem>
                 <SelectItem value="price_asc">Lowest Price</SelectItem>
+                <SelectItem value="graded">Graded</SelectItem>
               </>
             )}
-            <SelectItem value="end_soonest">Ending Soon</SelectItem>
-            <SelectItem value="graded">Graded</SelectItem>
+            {buyingOption === "AUCTION" && (
+              <>
+                <SelectItem value="end_soonest">Ending Soon</SelectItem>
+                <SelectItem value="graded">Graded</SelectItem>
+              </>
+            )}
           </SelectContent>
         </Select>
       </div>
