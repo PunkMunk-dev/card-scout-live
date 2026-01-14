@@ -107,14 +107,14 @@ export default function Index() {
     
     let newSort = sort;
     if (newOption === "AUCTION") {
-      // When switching to Auction, default to "Ending Soon" unless already on "graded"
+      // When switching to Auction, default to "Raw Cards - Ending Soon" unless already on "graded"
       if (sort !== "graded") {
-        newSort = "end_soonest";
+        newSort = "raw";
         setSort(newSort);
       }
     } else if (newOption === "ALL") {
-      // When switching to All, default to "Best Match" if on "Ending Soon"
-      if (sort === "end_soonest") {
+      // When switching to All, default to "Best Match" if on auction-specific sorts
+      if (sort === "end_soonest" || sort === "raw") {
         newSort = "best";
         setSort(newSort);
       }
