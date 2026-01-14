@@ -34,7 +34,7 @@ export default function Index() {
     searchQuery: string, 
     page: number = 1, 
     append: boolean = false,
-    overrides?: { sort?: SortOption; buyingOption?: BuyingOption }
+    overrides?: { sort?: SortOption; buyingOption?: BuyingOption; includeLots?: boolean }
   ) => {
     if (page === 1) {
       setIsLoading(true);
@@ -48,12 +48,16 @@ export default function Index() {
         page,
         limit: 24,
         sort: overrides?.sort ?? sort,
-        includeLots,
+        includeLots: overrides?.includeLots ?? includeLots,
         buyingOptions: overrides?.buyingOption ?? buyingOption,
       });
 
       if (append) {
-        setItems(prev => [...prev, ...response.items]);
+        setItems(prev => {
+          const existingIds = new Set(prev.map(item => item.itemId));
+          const newItems = response.items.filter(item => !existingIds.has(item.itemId));
+          return [...prev, ...newItems];
+        });
       } else {
         setItems(response.items);
       }
@@ -126,7 +130,7 @@ export default function Index() {
     setIncludeLots(include);
     if (query && hasSearched) {
       setItems([]);
-      performSearch(query, 1, false);
+      performSearch(query, 1, false, { includeLots: include });
     }
   };
 

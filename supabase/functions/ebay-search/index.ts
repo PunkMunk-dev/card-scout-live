@@ -278,6 +278,11 @@ serve(async (req) => {
         fallbackItems = fallbackItems.filter(item => !isJunkTitle(item.title));
         fallbackItems = fallbackItems.filter(item => isGradedItem(item.title));
         
+        // Apply buying options filter to fallback results
+        if (buyingOptions !== 'ALL') {
+          fallbackItems = fallbackItems.filter(item => item.buyingOption === buyingOptions);
+        }
+        
         normalizedItems = fallbackItems;
       }
     } else {
