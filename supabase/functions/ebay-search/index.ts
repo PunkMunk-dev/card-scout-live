@@ -40,6 +40,23 @@ function isJunkTitle(title: string): boolean {
   });
 }
 
+function extractKeyTerms(query: string): string[] {
+  const stopWords = ['the', 'a', 'an', 'and', 'or', 'of', 'in', 'for', 'to', 'with'];
+  return query
+    .toLowerCase()
+    .replace(/[#\-]/g, ' ')
+    .split(/\s+/)
+    .filter(term => term.length > 1 && !stopWords.includes(term));
+}
+
+function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
+  if (keyTerms.length === 0) return true;
+  const lowerTitle = title.toLowerCase();
+  const matchCount = keyTerms.filter(term => lowerTitle.includes(term)).length;
+  // Require at least 50% of key terms to be present
+  return matchCount >= Math.ceil(keyTerms.length * 0.5);
+}
+
 function getSortParam(sort: string): string {
   switch (sort) {
     case 'price_asc':
@@ -190,6 +207,12 @@ serve(async (req) => {
     const { items: rawItems, total } = await searchEbay(token, query, clampedLimit, offset, sortParam);
 
     let normalizedItems = rawItems.map(normalizeItem);
+
+    // Filter items that don't match the search query well
+    const keyTerms = extractKeyTerms(query);
+    normalizedItems = normalizedItems.filter(item => 
+      titleMatchesQuery(item.title, keyTerms)
+    );
 
     // Filter junk titles if not including lots
     if (!includeLots) {
