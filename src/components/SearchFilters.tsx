@@ -11,6 +11,8 @@ interface SearchFiltersProps {
   onBuyingOptionChange: (option: BuyingOption) => void;
   includeLots: boolean;
   onIncludeLotsChange: (include: boolean) => void;
+  showSold: boolean;
+  onShowSoldChange: (show: boolean) => void;
 }
 
 export function SearchFilters({
@@ -20,6 +22,8 @@ export function SearchFilters({
   onBuyingOptionChange,
   includeLots,
   onIncludeLotsChange,
+  showSold,
+  onShowSoldChange,
 }: SearchFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-6 py-4">
@@ -27,8 +31,8 @@ export function SearchFilters({
         <Label htmlFor="sort" className="text-sm font-medium text-muted-foreground whitespace-nowrap">
           Sort by
         </Label>
-        <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)}>
-          <SelectTrigger id="sort" className="w-44 bg-card">
+        <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)} disabled={showSold}>
+          <SelectTrigger id="sort" className="w-44 bg-card border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -49,6 +53,7 @@ export function SearchFilters({
           value={buyingOption} 
           onValueChange={(v) => v && onBuyingOptionChange(v as BuyingOption)}
           className="bg-secondary/50 p-1 rounded-lg"
+          disabled={showSold}
         >
           <ToggleGroupItem 
             value="ALL" 
@@ -69,6 +74,19 @@ export function SearchFilters({
             Buy It Now
           </ToggleGroupItem>
         </ToggleGroup>
+      </div>
+
+      {/* Sold Toggle */}
+      <div className="flex items-center gap-3">
+        <Switch
+          id="show-sold"
+          checked={showSold}
+          onCheckedChange={onShowSoldChange}
+          className="data-[state=checked]:bg-sold"
+        />
+        <Label htmlFor="show-sold" className="text-sm font-medium cursor-pointer">
+          Sold
+        </Label>
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
