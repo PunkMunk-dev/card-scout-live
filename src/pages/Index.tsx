@@ -126,34 +126,9 @@ export default function Index() {
       </header>
 
       {/* Hero Section */}
-      <section 
-        className="relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, hsl(222 60% 3%) 0%, hsl(222 47% 11%) 100%)',
-        }}
-      >
-        {/* Background image with heavy overlay */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'url(/images/hero-lebron.png)',
-            backgroundSize: 'contain',
-            backgroundPosition: 'right center',
-            backgroundRepeat: 'no-repeat',
-            opacity: 0.3,
-          }}
-        />
-        
-        {/* Dark gradient overlay */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'linear-gradient(to right, hsl(222 47% 11% / 0.95) 0%, hsl(222 47% 11% / 0.8) 50%, hsl(222 47% 11% / 0.6) 100%)',
-          }}
-        />
-        
+      <section className="bg-background border-b border-border">
         {/* Hero content */}
-        <div className="container py-14 md:py-16 relative z-10">
+        <div className="container py-12 md:py-14">
           <h2 className="text-2xl md:text-3xl font-semibold font-display text-foreground mb-2 tracking-tight">
             Find Your Cards
           </h2>
