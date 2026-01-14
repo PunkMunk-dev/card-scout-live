@@ -41,7 +41,7 @@ export function SearchFilters({
             )}
             {buyingOption === "AUCTION" && (
               <>
-                <SelectItem value="raw">Raw Cards - Ending Soon</SelectItem>
+                <SelectItem value="raw">Raw Cards</SelectItem>
                 <SelectItem value="graded">Graded Cards</SelectItem>
               </>
             )}

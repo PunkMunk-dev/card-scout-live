@@ -103,8 +103,9 @@ function getSortParam(sort: string): string {
     case 'price_asc':
       return 'price';
     case 'end_soonest':
+      return 'endingSoonest';
     case 'raw':
-      return 'endingSoonest'; // Raw cards sorted by ending soon
+      return 'bestMatch'; // Show all raw cards by best match
     case 'graded':
       return 'bestMatch'; // Use bestMatch, then filter for graded items
     case 'best':
