@@ -9,7 +9,7 @@ interface SearchRequest {
   query: string;
   page?: number;
   limit?: number;
-  sort?: 'best' | 'price_asc' | 'end_soonest' | 'graded';
+  sort?: 'best' | 'price_asc' | 'end_soonest' | 'graded' | 'raw';
   includeLots?: boolean;
   buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
 }
@@ -103,7 +103,8 @@ function getSortParam(sort: string): string {
     case 'price_asc':
       return 'price';
     case 'end_soonest':
-      return 'endingSoonest';
+    case 'raw':
+      return 'endingSoonest'; // Raw cards sorted by ending soon
     case 'graded':
       return 'bestMatch'; // Use bestMatch, then filter for graded items
     case 'best':
@@ -293,8 +294,11 @@ serve(async (req) => {
         
         normalizedItems = fallbackItems;
       }
+    } else if (sort === 'raw') {
+      // "Raw Cards - Ending Soon" - explicitly filter for ungraded cards only
+      normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     } else {
-      // By default, show only raw/ungraded cards
+      // For other sorts (best, price_asc, end_soonest), show only raw/ungraded cards by default
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     }
     
