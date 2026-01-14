@@ -95,10 +95,19 @@ export default function Index() {
 
   const handleBuyingOptionChange = (newOption: BuyingOption) => {
     setBuyingOption(newOption);
-    // If switching to Auction and current sort is not valid for auctions, reset to end_soonest
-    if (newOption === "AUCTION" && (sort === "best" || sort === "price_asc")) {
-      setSort("end_soonest");
+    
+    if (newOption === "AUCTION") {
+      // When switching to Auction, default to "Ending Soon" unless already on "graded"
+      if (sort !== "graded") {
+        setSort("end_soonest");
+      }
+    } else if (newOption === "ALL") {
+      // When switching to All, default to "Best Match" if on "Ending Soon"
+      if (sort === "end_soonest") {
+        setSort("best");
+      }
     }
+    
     if (query && hasSearched) {
       setItems([]);
       performSearch(query, 1, false);
