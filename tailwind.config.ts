@@ -69,10 +69,6 @@ export default {
           DEFAULT: "hsl(var(--buy-now))",
           foreground: "hsl(var(--buy-now-foreground))",
         },
-        sold: {
-          DEFAULT: "hsl(var(--sold))",
-          foreground: "hsl(var(--sold-foreground))",
-        },
         price: "hsl(var(--price))",
         shipping: "hsl(var(--shipping))",
       },

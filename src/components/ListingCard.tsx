@@ -1,9 +1,9 @@
-import { ExternalLink, Clock, Gavel, ShoppingCart, Heart, CheckCircle } from "lucide-react";
+import { ExternalLink, Clock, Gavel, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface ListingCardProps {
@@ -30,23 +30,11 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
     }
   };
 
-  const formatSoldDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMM d, yyyy');
-    } catch {
-      return 'Unknown date';
-    }
-  };
-
   const totalPrice = parseFloat(item.price.value) + (item.shipping ? parseFloat(item.shipping.value) : 0);
 
   return (
     <Card 
-      className={cn(
-        "group overflow-hidden border-border shadow-card hover:shadow-cardHover transition-all duration-300 animate-fadeIn",
-        "hover:border-primary/50 hover:glow-sm",
-        item.isSold && "border-sold/30"
-      )}
+      className="group overflow-hidden border-border/40 shadow-card hover:shadow-cardHover transition-all duration-300 animate-fadeIn"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="aspect-square relative bg-muted overflow-hidden">
@@ -64,12 +52,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
         )}
         
         <div className="absolute top-3 left-3">
-          {item.isSold ? (
-            <Badge className="bg-sold text-sold-foreground font-semibold shadow-sm">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Sold
-            </Badge>
-          ) : item.buyingOption === 'AUCTION' ? (
+          {item.buyingOption === 'AUCTION' ? (
             <Badge className="bg-auction text-auction-foreground font-semibold shadow-sm">
               <Gavel className="h-3 w-3 mr-1" />
               Auction
@@ -82,7 +65,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
           ) : null}
         </div>
 
-        {onToggleWatchlist && !item.isSold && (
+        {onToggleWatchlist && (
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -92,7 +75,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
             className={cn(
               "absolute top-3 right-3 p-2 rounded-full transition-all duration-200",
               "bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm",
-              isInWatchlist && "text-primary"
+              isInWatchlist && "text-[#4B9CD3]"
             )}
             aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
           >
@@ -113,23 +96,15 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
 
         <div className="space-y-1">
           <div className="flex items-baseline gap-2">
-            <span className={cn(
-              "text-xl font-bold font-display",
-              item.isSold ? "text-sold" : "text-price"
-            )}>
-              {item.isSold && item.soldPrice 
-                ? formatPrice(item.soldPrice.value, item.soldPrice.currency)
-                : formatPrice(item.price.value, item.price.currency)
-              }
+            <span className="text-xl font-bold font-display text-price">
+              {formatPrice(item.price.value, item.price.currency)}
             </span>
-            {item.isSold ? (
-              <span className="text-xs text-muted-foreground">sold price</span>
-            ) : item.buyingOption === 'AUCTION' && (
+            {item.buyingOption === 'AUCTION' && (
               <span className="text-xs text-muted-foreground">current bid</span>
             )}
           </div>
           
-          {!item.isSold && item.shipping && (
+          {item.shipping && (
             <p className="text-sm text-shipping">
               {parseFloat(item.shipping.value) === 0 
                 ? 'Free shipping' 
@@ -140,12 +115,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="truncate max-w-[60%]">{item.condition}</span>
-          {item.isSold && item.soldDate ? (
-            <span className="flex items-center gap-1 text-sold font-medium">
-              <CheckCircle className="h-3 w-3" />
-              {formatSoldDate(item.soldDate)}
-            </span>
-          ) : item.endDate && item.buyingOption === 'AUCTION' && (
+          {item.endDate && item.buyingOption === 'AUCTION' && (
             <span className="flex items-center gap-1 text-auction font-medium">
               <Clock className="h-3 w-3" />
               {getTimeRemaining(item.endDate)}
@@ -153,19 +123,17 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
           )}
         </div>
 
-        {item.itemUrl && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full mt-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors border-border"
-            asChild
-          >
-            <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
-              View on eBay
-              <ExternalLink className="h-3.5 w-3.5 ml-2" />
-            </a>
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full mt-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+          asChild
+        >
+          <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
+            View on eBay
+            <ExternalLink className="h-3.5 w-3.5 ml-2" />
+          </a>
+        </Button>
       </CardContent>
     </Card>
   );

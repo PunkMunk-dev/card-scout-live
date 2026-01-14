@@ -6,106 +6,101 @@
 
 @layer base {
   :root {
-    /* Dark tech/futuristic theme */
-    --background: 220 35% 5%;        /* #080C14 */
-    --foreground: 210 40% 98%;       /* #F8FAFC */
+    /* Deep navy base for trust and professionalism */
+    --background: 220 20% 97%;
+    --foreground: 220 40% 13%;
 
-    --card: 222 47% 11%;             /* #111827 */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 13%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 13%;
 
-    /* Electric blue primary */
-    --primary: 217 91% 53%;          /* #2563EB */
+    /* Navy primary - trustworthy, professional */
+    --primary: 220 60% 25%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 28% 17%;        /* #1E293B */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 220 40% 20%;
 
-    --muted: 222 47% 11%;
-    --muted-foreground: 215 16% 65%; /* #94A3B8 */
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 15% 45%;
 
-    --accent: 217 91% 60%;           /* #3B82F6 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 220 20% 90%;
+    --accent-foreground: 220 40% 20%;
 
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 28% 17%;           /* #1E293B */
-    --input: 222 47% 11%;
-    --ring: 217 91% 60%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 220 60% 40%;
 
     --radius: 0.625rem;
 
-    /* Semantic colors */
-    --auction: 38 92% 50%;           /* Gold/orange */
-    --auction-foreground: 38 100% 10%;
-    --buy-now: 168 76% 42%;          /* Teal */
+    /* Custom semantic colors */
+    --auction: 38 92% 50%;
+    --auction-foreground: 38 100% 15%;
+    --buy-now: 168 76% 36%;
     --buy-now-foreground: 0 0% 100%;
-    --sold: 142 76% 36%;             /* Green for sold items */
-    --sold-foreground: 0 0% 100%;
-    --price: 217 91% 70%;            /* Light blue */
-    --shipping: 215 16% 55%;         /* Blue-gray */
+    --price: 220 60% 25%;
+    --shipping: 220 15% 45%;
 
     /* Sidebar */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 28% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 28% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    /* Same as root - always dark theme */
-    --background: 220 35% 5%;
-    --foreground: 210 40% 98%;
+    --background: 220 30% 8%;
+    --foreground: 220 15% 95%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 25% 12%;
+    --card-foreground: 220 15% 95%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 25% 12%;
+    --popover-foreground: 220 15% 95%;
 
-    --primary: 217 91% 53%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 220 60% 60%;
+    --primary-foreground: 220 40% 10%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 15% 90%;
 
-    --muted: 222 47% 11%;
-    --muted-foreground: 215 16% 65%;
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 15% 60%;
 
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 220 20% 20%;
+    --accent-foreground: 220 15% 95%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 28% 17%;
-    --input: 222 47% 11%;
-    --ring: 217 91% 60%;
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 220 60% 50%;
 
     --auction: 38 92% 55%;
     --auction-foreground: 38 100% 10%;
     --buy-now: 168 76% 45%;
     --buy-now-foreground: 0 0% 100%;
-    --sold: 142 76% 40%;
-    --sold-foreground: 0 0% 100%;
-    --price: 217 91% 70%;
-    --shipping: 215 16% 55%;
+    --price: 220 60% 70%;
+    --shipping: 220 15% 55%;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 53%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 28% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 28% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -127,24 +122,5 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-
-  .glow-sm {
-    box-shadow: 0 0 10px hsl(217 91% 53% / 0.3);
-  }
-
-  .glow-md {
-    box-shadow: 0 0 20px hsl(217 91% 53% / 0.4);
-  }
-
-  .glow-lg {
-    box-shadow: 0 0 30px hsl(217 91% 53% / 0.5);
-  }
-
-  .bg-grid-pattern {
-    background-image: 
-      linear-gradient(to right, hsl(215 28% 17% / 0.3) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(215 28% 17% / 0.3) 1px, transparent 1px);
-    background-size: 40px 40px;
   }
 }
