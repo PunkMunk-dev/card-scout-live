@@ -34,7 +34,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
 
   return (
     <Card 
-      className="group overflow-hidden border-border/40 shadow-card hover:shadow-cardHover transition-all duration-300 animate-fadeIn"
+      className="group overflow-hidden bg-card/70 backdrop-blur-xl border-border/30 shadow-card hover:shadow-cardHover transition-all duration-300 animate-fadeIn"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="aspect-square relative bg-muted overflow-hidden">
