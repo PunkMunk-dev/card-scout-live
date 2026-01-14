@@ -77,9 +77,23 @@ function extractKeyTerms(query: string): string[] {
 function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
   if (keyTerms.length === 0) return true;
   const lowerTitle = title.toLowerCase();
-  const matchCount = keyTerms.filter(term => lowerTitle.includes(term)).length;
-  // Require at least 50% of key terms to be present
-  return matchCount >= Math.ceil(keyTerms.length * 0.5);
+  
+  // Separate terms into name terms (likely player name) and other terms
+  const nameLikeTerms = keyTerms.filter(term => 
+    term.length > 2 && !/^\d+$/.test(term) // Not a number
+  );
+  const otherTerms = keyTerms.filter(term => 
+    term.length <= 2 || /^\d+$/.test(term)
+  );
+  
+  // ALL name-like terms must be present (player name, brand, set)
+  const allNameTermsMatch = nameLikeTerms.every(term => lowerTitle.includes(term));
+  
+  // At least 50% of other terms (numbers, short words) should match
+  const otherMatchCount = otherTerms.filter(term => lowerTitle.includes(term)).length;
+  const otherTermsMatch = otherTerms.length === 0 || otherMatchCount >= Math.ceil(otherTerms.length * 0.5);
+  
+  return allNameTermsMatch && otherTermsMatch;
 }
 
 function getSortParam(sort: string): string {
