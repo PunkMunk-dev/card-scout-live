@@ -62,12 +62,6 @@ export function SearchFilters({
           >
             Auction
           </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="FIXED_PRICE" 
-            className="px-4 py-2 text-sm data-[state=on]:bg-card data-[state=on]:shadow-sm rounded-md"
-          >
-            Buy It Now
-          </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
