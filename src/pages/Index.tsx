@@ -30,7 +30,12 @@ export default function Index() {
   // Watchlist
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
 
-  const performSearch = useCallback(async (searchQuery: string, page: number = 1, append: boolean = false) => {
+  const performSearch = useCallback(async (
+    searchQuery: string, 
+    page: number = 1, 
+    append: boolean = false,
+    overrides?: { sort?: SortOption; buyingOption?: BuyingOption }
+  ) => {
     if (page === 1) {
       setIsLoading(true);
     } else {
@@ -42,9 +47,9 @@ export default function Index() {
         query: searchQuery,
         page,
         limit: 24,
-        sort,
+        sort: overrides?.sort ?? sort,
         includeLots,
-        buyingOptions: buyingOption,
+        buyingOptions: overrides?.buyingOption ?? buyingOption,
       });
 
       if (append) {
@@ -89,28 +94,31 @@ export default function Index() {
     setSort(newSort);
     if (query && hasSearched) {
       setItems([]);
-      performSearch(query, 1, false);
+      performSearch(query, 1, false, { sort: newSort });
     }
   };
 
   const handleBuyingOptionChange = (newOption: BuyingOption) => {
     setBuyingOption(newOption);
     
+    let newSort = sort;
     if (newOption === "AUCTION") {
       // When switching to Auction, default to "Ending Soon" unless already on "graded"
       if (sort !== "graded") {
-        setSort("end_soonest");
+        newSort = "end_soonest";
+        setSort(newSort);
       }
     } else if (newOption === "ALL") {
       // When switching to All, default to "Best Match" if on "Ending Soon"
       if (sort === "end_soonest") {
-        setSort("best");
+        newSort = "best";
+        setSort(newSort);
       }
     }
     
     if (query && hasSearched) {
       setItems([]);
-      performSearch(query, 1, false);
+      performSearch(query, 1, false, { sort: newSort, buyingOption: newOption });
     }
   };
 
