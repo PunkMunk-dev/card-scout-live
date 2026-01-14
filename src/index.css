@@ -43,7 +43,7 @@
     /* Custom semantic colors */
     --auction: 0 84% 60%;
     --auction-foreground: 0 0% 100%;
-    --buy-now: 145 82% 45%;
+    --buy-now: 145 50% 48%;
     --buy-now-foreground: 0 0% 100%;
     --price: 224 90% 50%;
     --shipping: 224 15% 45%;
@@ -96,7 +96,7 @@
 
     --auction: 0 72% 55%;
     --auction-foreground: 0 0% 100%;
-    --buy-now: 145 82% 50%;
+    --buy-now: 145 45% 52%;
     --buy-now-foreground: 0 0% 100%;
     --price: 224 90% 75%;
     --shipping: 224 15% 55%;
