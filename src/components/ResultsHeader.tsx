@@ -24,22 +24,22 @@ export function ResultsHeader({
         {total.toLocaleString()} listings
       </p>
       
-      {hasMore && (
-        <Button
-          variant="outline"
-          onClick={onLoadMore}
-          disabled={isLoadingMore}
-        >
-          {isLoadingMore ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            "Load More"
-          )}
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        onClick={onLoadMore}
+        disabled={isLoadingMore || !hasMore}
+      >
+        {isLoadingMore ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Loading...
+          </>
+        ) : hasMore ? (
+          "Load More"
+        ) : (
+          "All Loaded"
+        )}
+      </Button>
     </div>
   );
 }
