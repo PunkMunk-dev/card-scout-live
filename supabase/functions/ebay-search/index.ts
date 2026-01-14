@@ -9,7 +9,7 @@ interface SearchRequest {
   query: string;
   page?: number;
   limit?: number;
-  sort?: 'best' | 'price_asc' | 'end_soonest' | 'newly_listed';
+  sort?: 'best' | 'price_asc' | 'end_soonest' | 'graded';
   includeLots?: boolean;
   buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
 }
@@ -31,6 +31,13 @@ const JUNK_KEYWORDS = [
   'box', 'boxes', 'case', 'break', 'breaker', 'lot', 'lots', 
   'pack', 'packs', 'sealed', 'hobby box', 'blaster', 'mega', 'complete set'
 ];
+
+const GRADED_KEYWORDS = ['psa', 'bgs', 'sgc', 'cgc', 'beckett', 'graded'];
+
+function isGradedItem(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  return GRADED_KEYWORDS.some(keyword => lowerTitle.includes(keyword));
+}
 
 function isJunkTitle(title: string): boolean {
   const lowerTitle = title.toLowerCase();
@@ -63,8 +70,8 @@ function getSortParam(sort: string): string {
       return 'price';
     case 'end_soonest':
       return 'endingSoonest';
-    case 'newly_listed':
-      return 'newlyListed';
+    case 'graded':
+      return 'bestMatch'; // Use bestMatch, then filter for graded items
     case 'best':
     default:
       return 'bestMatch';
@@ -222,6 +229,11 @@ serve(async (req) => {
     // Apply buying options filter
     if (buyingOptions !== 'ALL') {
       normalizedItems = normalizedItems.filter(item => item.buyingOption === buyingOptions);
+    }
+
+    // Filter for graded items when sort is 'graded'
+    if (sort === 'graded') {
+      normalizedItems = normalizedItems.filter(item => isGradedItem(item.title));
     }
 
     const hasMore = offset + rawItems.length < total;

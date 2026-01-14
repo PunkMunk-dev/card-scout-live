@@ -28,10 +28,10 @@ export interface SearchParams {
   query: string;
   page?: number;
   limit?: number;
-  sort?: 'best' | 'price_asc' | 'end_soonest' | 'newly_listed';
+  sort?: 'best' | 'price_asc' | 'end_soonest' | 'graded';
   includeLots?: boolean;
   buyingOptions?: 'ALL' | 'AUCTION';
 }
 
-export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'newly_listed';
+export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'graded';
 export type BuyingOption = 'ALL' | 'AUCTION';

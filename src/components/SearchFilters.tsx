@@ -39,7 +39,7 @@ export function SearchFilters({
               </>
             )}
             <SelectItem value="end_soonest">Ending Soon</SelectItem>
-            <SelectItem value="newly_listed">Newly Listed</SelectItem>
+            <SelectItem value="graded">Graded</SelectItem>
           </SelectContent>
         </Select>
       </div>
