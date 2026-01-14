@@ -303,6 +303,15 @@ serve(async (req) => {
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     }
     
+    // Re-sort by price after filtering to ensure correct order
+    if (sort === 'price_asc') {
+      normalizedItems.sort((a, b) => {
+        const priceA = parseFloat(a.price.value);
+        const priceB = parseFloat(b.price.value);
+        return priceA - priceB;
+      });
+    }
+    
     // Limit results to the originally requested amount after all filtering
     normalizedItems = normalizedItems.slice(0, clampedLimit);
 
