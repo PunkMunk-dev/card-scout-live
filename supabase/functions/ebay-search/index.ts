@@ -29,7 +29,7 @@ interface EbayItem {
 
 const JUNK_KEYWORDS = [
   'box', 'boxes', 'case', 'cases', 'break', 'breaker', 'breakers',
-  'lot', 'lots', 'pack', 'packs', 'sealed', 'hobby box', 'hobby', 
+  'lot', 'lots', 'pack', 'packs', 'sealed', 'hobby box',
   'blaster', 'mega', 'complete set', 'set break', 'random', 
   'mystery', 'repack', 'bundle', 'collection', 'bulk', 'mixer',
   'wax', 'cello', 'rack', 'jumbo', 'fat pack', 'hanger'
@@ -86,14 +86,16 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
     term.length <= 2 || /^\d+$/.test(term)
   );
   
-  // ALL name-like terms must be present (player name, brand, set)
-  const allNameTermsMatch = nameLikeTerms.every(term => lowerTitle.includes(term));
+  // Require at least 70% of name-like terms to match (more flexible)
+  const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
+  const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
+  const nameTermsMatch = nameMatchRatio >= 0.7;
   
   // At least 50% of other terms (numbers, short words) should match
   const otherMatchCount = otherTerms.filter(term => lowerTitle.includes(term)).length;
   const otherTermsMatch = otherTerms.length === 0 || otherMatchCount >= Math.ceil(otherTerms.length * 0.5);
   
-  return allNameTermsMatch && otherTermsMatch;
+  return nameTermsMatch && otherTermsMatch;
 }
 
 function getSortParam(sort: string): string {
@@ -240,10 +242,13 @@ serve(async (req) => {
 
     const clampedLimit = Math.min(Math.max(limit, 1), 50);
     const offset = (page - 1) * clampedLimit;
+    
+    // Request more items to compensate for client-side filtering
+    const requestLimit = Math.min(clampedLimit * 2, 50);
 
     const token = await getEbayToken();
     const sortParam = getSortParam(sort);
-    const { items: rawItems, total } = await searchEbay(token, query, clampedLimit, offset, sortParam);
+    const { items: rawItems, total } = await searchEbay(token, query, requestLimit, offset, sortParam);
 
     let normalizedItems = rawItems.map(normalizeItem);
 
@@ -289,6 +294,9 @@ serve(async (req) => {
       // By default, show only raw/ungraded cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     }
+    
+    // Limit results to the originally requested amount after all filtering
+    normalizedItems = normalizedItems.slice(0, clampedLimit);
 
     const hasMore = offset + rawItems.length < total;
 
