@@ -9,7 +9,7 @@ interface ListingGridProps {
 
 export function ListingGrid({ items, isInWatchlist, onToggleWatchlist }: ListingGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {items.map((item, index) => (
         <ListingCard 
           key={item.itemId} 

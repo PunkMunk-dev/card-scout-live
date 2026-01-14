@@ -6,36 +6,36 @@
 
 @layer base {
   :root {
-    /* Sharp & Bold - Pure Black Theme */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    /* Institutional Luxury Dark Theme */
+    --background: 222 47% 11%;
+    --foreground: 220 13% 91%;
 
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 100%;
+    --card: 222 41% 12%;
+    --card-foreground: 220 13% 91%;
 
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222 41% 12%;
+    --popover-foreground: 220 13% 91%;
 
     /* Primary accent - Premium Blue */
     --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 220 13% 91%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 218 11% 65%;
 
-    --accent: 0 0% 10%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 220 13% 91%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 8%;
+    --border: 217 33% 17%;
+    --input: 222 41% 12%;
     --ring: 217 91% 60%;
-    --border-hover: 0 0% 25%;
+    --border-hover: 217 19% 27%;
 
     --radius: 1rem;
 
@@ -45,67 +45,72 @@
     --buy-now: 142 71% 45%;
     --buy-now-foreground: 0 0% 100%;
     --price: 217 91% 60%;
-    --shipping: 0 0% 65%;
+    --shipping: 218 11% 65%;
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
-    --text-muted: 0 0% 55%;
+    --text-muted: 218 11% 45%;
+
+    /* Image container */
+    --image-bg: 222 50% 8%;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 220 13% 91%;
     --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 220 13% 91%;
+    --sidebar-border: 217 33% 17%;
     --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
-    /* Same as root - pure black theme */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    /* Same as root */
+    --background: 222 47% 11%;
+    --foreground: 220 13% 91%;
 
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 100%;
+    --card: 222 41% 12%;
+    --card-foreground: 220 13% 91%;
 
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 222 41% 12%;
+    --popover-foreground: 220 13% 91%;
 
     --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 220 13% 91%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 218 11% 65%;
 
-    --accent: 0 0% 10%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 220 13% 91%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 8%;
+    --border: 217 33% 17%;
+    --input: 222 41% 12%;
     --ring: 217 91% 60%;
-    --border-hover: 0 0% 25%;
+    --border-hover: 217 19% 27%;
 
     --auction: 38 92% 55%;
     --auction-foreground: 38 100% 10%;
     --buy-now: 142 71% 45%;
     --buy-now-foreground: 0 0% 100%;
     --price: 217 91% 60%;
-    --shipping: 0 0% 65%;
+    --shipping: 218 11% 65%;
 
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 0 0% 100%;
+    --image-bg: 222 50% 8%;
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 220 13% 91%;
     --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 220 13% 91%;
+    --sidebar-border: 217 33% 17%;
     --sidebar-ring: 217 91% 60%;
   }
 }
@@ -134,21 +139,31 @@
 @layer components {
   /* Premium focus states */
   .premium-focus {
-    @apply transition-all duration-200;
+    @apply transition-all duration-150;
   }
   
   .premium-focus:focus-visible {
-    @apply ring-2 ring-primary/50 ring-offset-2 ring-offset-background outline-none;
-    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15);
+    @apply ring-2 ring-primary/30 ring-offset-2 ring-offset-background outline-none;
   }
 
   /* Smooth hover transitions */
   .hover-lift {
-    @apply transition-all duration-200;
+    @apply transition-all duration-150;
   }
   
   .hover-lift:hover {
     @apply -translate-y-0.5;
-    box-shadow: 0 8px 24px -8px hsl(var(--primary) / 0.2);
+    box-shadow: 0 4px 12px -4px hsl(var(--background) / 0.5);
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-150;
+  }
+
+  .card-hover:hover {
+    @apply -translate-y-0.5;
+    border-color: hsl(var(--border-hover));
+    box-shadow: 0 4px 16px -4px hsl(222 47% 5% / 0.4);
   }
 }

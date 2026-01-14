@@ -22,13 +22,13 @@ export function SearchFilters({
   onIncludeLotsChange,
 }: SearchFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-4 py-2.5 border-b border-border/30">
+    <div className="flex flex-wrap items-center gap-5 py-3 border-b border-border">
       <div className="flex items-center gap-2">
-        <Label htmlFor="sort" className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+        <Label htmlFor="sort" className="text-xs text-muted-foreground whitespace-nowrap">
           Sort
         </Label>
         <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)}>
-          <SelectTrigger id="sort" className="h-8 w-36 text-xs bg-card border-border hover:border-[hsl(var(--border-hover))] transition-colors duration-150">
+          <SelectTrigger id="sort" className="h-8 w-32 text-xs bg-card border-border hover:border-border-hover transition-colors duration-150">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
@@ -41,30 +41,30 @@ export function SearchFilters({
       </div>
 
       <div className="flex items-center gap-2">
-        <Label className="text-xs font-medium text-muted-foreground">
+        <Label className="text-xs text-muted-foreground">
           Format
         </Label>
         <ToggleGroup 
           type="single" 
           value={buyingOption} 
           onValueChange={(v) => v && onBuyingOptionChange(v as BuyingOption)}
-          className="bg-secondary p-0.5 rounded-lg"
+          className="bg-secondary/50 p-0.5 rounded-lg border border-border"
         >
           <ToggleGroupItem 
             value="ALL" 
-            className="px-2.5 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
+            className="px-3 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:border data-[state=on]:border-primary/50 data-[state=on]:text-foreground text-muted-foreground transition-all duration-150"
           >
             All
           </ToggleGroupItem>
           <ToggleGroupItem 
             value="AUCTION" 
-            className="px-2.5 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
+            className="px-3 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:border data-[state=on]:border-primary/50 data-[state=on]:text-foreground text-muted-foreground transition-all duration-150"
           >
             Auction
           </ToggleGroupItem>
           <ToggleGroupItem 
             value="FIXED_PRICE" 
-            className="px-2.5 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:shadow-sm transition-all duration-150"
+            className="px-3 py-1 text-xs rounded-md data-[state=on]:bg-card data-[state=on]:border data-[state=on]:border-primary/50 data-[state=on]:text-foreground text-muted-foreground transition-all duration-150"
           >
             Buy Now
           </ToggleGroupItem>
@@ -76,9 +76,9 @@ export function SearchFilters({
           id="include-lots"
           checked={includeLots}
           onCheckedChange={onIncludeLotsChange}
-          className="data-[state=checked]:bg-primary scale-90"
+          className="scale-75 data-[state=checked]:bg-primary data-[state=unchecked]:bg-secondary"
         />
-        <Label htmlFor="include-lots" className="text-xs font-medium cursor-pointer text-foreground">
+        <Label htmlFor="include-lots" className="text-xs cursor-pointer text-muted-foreground">
           Include lots
         </Label>
       </div>
