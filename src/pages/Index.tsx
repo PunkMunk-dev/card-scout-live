@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/SearchBar";
@@ -8,11 +8,9 @@ import { LoadingGrid } from "@/components/LoadingGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
-import { RecommendedSearches } from "@/components/RecommendedSearches";
 import { Button } from "@/components/ui/button";
 import { searchEbay } from "@/lib/ebay-api";
 import { useWatchlist } from "@/hooks/useWatchlist";
-import { findPlayerRecommendations } from "@/data/playerRecommendations";
 import type { EbayItem, SortOption, BuyingOption } from "@/types/ebay";
 
 export default function Index() {
@@ -166,15 +164,6 @@ export default function Index() {
               isLoadingMore={isLoadingMore}
               onLoadMore={handleLoadMore}
             />
-            {(() => {
-              const recommendation = findPlayerRecommendations(query);
-              return recommendation ? (
-                <RecommendedSearches 
-                  recommendation={recommendation} 
-                  onSearchClick={handleSearch}
-                />
-              ) : null;
-            })()}
             <ListingGrid 
               items={items}
               isInWatchlist={isInWatchlist}
