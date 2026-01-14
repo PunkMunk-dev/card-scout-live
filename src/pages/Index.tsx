@@ -156,33 +156,19 @@ export default function Index() {
           </div>
         ) : hasSearched && items.length > 0 ? (
           <div className="space-y-6">
-            <ResultsHeader query={query} total={total} showing={items.length} />
+            <ResultsHeader 
+              query={query} 
+              total={total} 
+              showing={items.length}
+              hasMore={!!nextPage}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={handleLoadMore}
+            />
             <ListingGrid 
               items={items}
               isInWatchlist={isInWatchlist}
               onToggleWatchlist={toggleWatchlist}
             />
-            
-            {nextPage && (
-              <div className="flex justify-center pt-8">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handleLoadMore}
-                  disabled={isLoadingMore}
-                  className="min-w-48"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    "Load More"
-                  )}
-                </Button>
-              </div>
-            )}
           </div>
         ) : hasSearched ? (
           <EmptyState query={query} />
