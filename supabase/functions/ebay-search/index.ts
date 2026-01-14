@@ -28,9 +28,27 @@ interface EbayItem {
 }
 
 const JUNK_KEYWORDS = [
-  'box', 'boxes', 'case', 'break', 'breaker', 'lot', 'lots', 
-  'pack', 'packs', 'sealed', 'hobby box', 'blaster', 'mega', 'complete set'
+  'box', 'boxes', 'case', 'cases', 'break', 'breaker', 'breakers',
+  'lot', 'lots', 'pack', 'packs', 'sealed', 'hobby box', 'hobby', 
+  'blaster', 'mega', 'complete set', 'set break', 'random', 
+  'mystery', 'repack', 'bundle', 'collection', 'bulk', 'mixer',
+  'wax', 'cello', 'rack', 'jumbo', 'fat pack', 'hanger'
 ];
+
+function extractCoreTerm(query: string): string {
+  // Remove year patterns, card numbers, special characters
+  // Keep the main subject (usually player/character name)
+  const cleaned = query
+    .replace(/\d{4}/g, '')  // Remove years
+    .replace(/#\d+/g, '')   // Remove card numbers
+    .replace(/[^\w\s]/g, ' ') // Remove special chars
+    .split(/\s+/)
+    .filter(term => term.length > 2)
+    .slice(0, 2)  // Keep first 2 meaningful words (likely the name)
+    .join(' ');
+  
+  return cleaned.trim() || query;
+}
 
 const GRADED_KEYWORDS = ['psa', 'bgs', 'sgc', 'cgc', 'beckett', 'graded'];
 
@@ -221,10 +239,8 @@ serve(async (req) => {
       titleMatchesQuery(item.title, keyTerms)
     );
 
-    // Filter junk titles if not including lots
-    if (!includeLots) {
-      normalizedItems = normalizedItems.filter(item => !isJunkTitle(item.title));
-    }
+    // ALWAYS filter out junk titles (boxes, lots, packs, etc.) - no exceptions
+    normalizedItems = normalizedItems.filter(item => !isJunkTitle(item.title));
 
     // Apply buying options filter
     if (buyingOptions !== 'ALL') {
@@ -235,6 +251,21 @@ serve(async (req) => {
     if (sort === 'graded') {
       // Show only graded cards when "Graded" sort is selected
       normalizedItems = normalizedItems.filter(item => isGradedItem(item.title));
+      
+      // Fallback: if no graded cards found for exact query, search for similar graded cards
+      if (normalizedItems.length === 0) {
+        const fallbackQuery = extractCoreTerm(query) + ' graded';
+        console.log('No graded cards found, trying fallback query:', fallbackQuery);
+        
+        const { items: fallbackRaw } = await searchEbay(token, fallbackQuery, clampedLimit, 0, 'bestMatch');
+        let fallbackItems = fallbackRaw.map(normalizeItem);
+        
+        // Apply same filters to fallback results
+        fallbackItems = fallbackItems.filter(item => !isJunkTitle(item.title));
+        fallbackItems = fallbackItems.filter(item => isGradedItem(item.title));
+        
+        normalizedItems = fallbackItems;
+      }
     } else {
       // By default, show only raw/ungraded cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
