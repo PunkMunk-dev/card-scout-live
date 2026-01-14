@@ -71,6 +71,10 @@ export default {
         },
         price: "hsl(var(--price))",
         shipping: "hsl(var(--shipping))",
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
