@@ -2,7 +2,9 @@ import { ExternalLink, Clock, Gavel, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GemScoreBadge } from "@/components/GemScoreBadge";
 import type { EbayItem } from "@/types/ebay";
+import type { GemScoreState } from "@/types/gemScore";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -11,9 +13,10 @@ interface ListingCardProps {
   index: number;
   isInWatchlist?: boolean;
   onToggleWatchlist?: (item: EbayItem) => void;
+  gemScoreState?: GemScoreState;
 }
 
-export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: ListingCardProps) {
+export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist, gemScoreState }: ListingCardProps) {
   const formatPrice = (value: string, currency: string) => {
     const num = parseFloat(value);
     return new Intl.NumberFormat('en-US', {
@@ -65,28 +68,34 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
           ) : null}
         </div>
 
-        {onToggleWatchlist && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleWatchlist(item);
-            }}
-            className={cn(
-              "absolute top-3 right-3 p-2 rounded-full transition-all duration-200",
-              "bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm",
-              isInWatchlist && "text-[#4B9CD3]"
-            )}
-            aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
-          >
-            <Heart 
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+          {gemScoreState && (
+            <GemScoreBadge state={gemScoreState} />
+          )}
+          
+          {onToggleWatchlist && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleWatchlist(item);
+              }}
               className={cn(
-                "h-5 w-5 transition-all duration-200",
-                isInWatchlist ? "fill-current" : "hover:scale-110"
-              )} 
-            />
-          </button>
-        )}
+                "p-2 rounded-full transition-all duration-200",
+                "bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm",
+                isInWatchlist && "text-[#4B9CD3]"
+              )}
+              aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Heart 
+                className={cn(
+                  "h-5 w-5 transition-all duration-200",
+                  isInWatchlist ? "fill-current" : "hover:scale-110"
+                )} 
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       <CardContent className="p-4 space-y-3">
