@@ -35,7 +35,7 @@ export interface GemScoreResult {
   // Certified grade extraction
   certifiedGrade?: CertifiedGrade;
   // Reference-based comparison (new)
-  analysisMethod?: 'ximilar_only' | 'reference_comparison' | 'certified_extraction' | 'hybrid';
+  analysisMethod?: 'ximilar_only' | 'reference_comparison' | 'certified_extraction' | 'hybrid' | 'cached';
   comparisonResult?: ComparisonResult;
   referenceImagesUsed?: number;
 }
