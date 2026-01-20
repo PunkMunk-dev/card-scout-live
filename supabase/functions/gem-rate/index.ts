@@ -27,7 +27,6 @@ const BRANDS: Record<string, string[]> = {
   'Topps': ['Chrome', 'Bowman Chrome', 'Bowman', 'Heritage', 'Stadium Club', 'Finest', 'Update', 'Series 1', 'Series 2', 'Opening Day', 'Archives', 'Allen & Ginter', 'Gypsy Queen', 'Tribute', 'Tier One', 'Dynasty', 'Definitive', 'Luminaries', 'Triple Threads', 'Museum Collection', 'Inception', 'Fire', 'Gold Label', 'Gallery'],
   'Panini': ['Prizm', 'Select', 'Optic', 'Mosaic', 'Donruss', 'Contenders', 'National Treasures', 'Immaculate', 'Flawless', 'One', 'Noir', 'Origins', 'Chronicles', 'Absolute', 'Certified', 'Score', 'Prestige', 'Phoenix', 'Obsidian', 'Spectra', 'Gold Standard', 'Crown Royale', 'Playoff', 'Classics'],
   'Upper Deck': ['SP Authentic', 'SPx', 'The Cup', 'Exquisite', 'Black Diamond', 'Ice', 'MVP', 'Series 1', 'Series 2', 'O-Pee-Chee', 'Artifacts', 'Premier', 'Ultimate Collection', 'Trilogy', 'Allure', 'Credentials', 'Extended Series'],
-  'Bowman': ['Chrome', '1st', 'Draft', 'Sapphire', 'Sterling', 'Platinum'],
   'Leaf': ['Trinity', 'Metal', 'Valiant', 'Flash', 'Pro Set'],
   'Fleer': ['Ultra', 'Flair', 'Tradition', 'Showcase', 'Mystique', 'Focus'],
   'Donruss': ['Optic', 'Elite', 'Rated Rookie', 'Clearly', 'Diamond Kings'],
@@ -65,6 +64,28 @@ const SPORT_KEYWORDS: Record<string, string[]> = {
   'yugioh': ['yugioh', 'yu-gi-oh', 'konami', 'duel monsters', 'dark magician', 'blue eyes', 'exodia', 'meta deck', 'ghost rare', 'ultimate rare', 'secret rare', 'starlight rare'],
 };
 
+// Product-specific gem rate fallbacks (more accurate than era-only)
+const PRODUCT_GEM_RATES: Record<string, number> = {
+  'Bowman Chrome': 60,
+  'Bowman': 55,
+  'Bowman Draft': 58,
+  'Chrome': 52,
+  'Topps Chrome': 52,
+  'Finest': 50,
+  'Prizm': 42,
+  'Select': 38,
+  'Mosaic': 40,
+  'Optic': 45,
+  'Donruss': 42,
+  'National Treasures': 55,
+  'Flawless': 58,
+  'Immaculate': 52,
+  'SP Authentic': 48,
+  'The Cup': 55,
+  'Upper Deck': 45,
+  'O-Pee-Chee': 40,
+};
+
 function parseCardTitle(title: string): CardMetadata {
   const lowerTitle = title.toLowerCase();
   const result: CardMetadata = {
@@ -96,18 +117,37 @@ function parseCardTitle(title: string): CardMetadata {
     }
   }
   
-  // Detect brand and product
-  for (const [brand, products] of Object.entries(BRANDS)) {
-    if (lowerTitle.includes(brand.toLowerCase())) {
-      result.brand = brand;
-      // Check for specific product
-      for (const product of products) {
-        if (lowerTitle.includes(product.toLowerCase())) {
-          result.product = product;
-          break;
+  // IMPORTANT: Check for Bowman first and normalize to Topps
+  // Bowman is a Topps product line, not a separate brand
+  if (lowerTitle.includes('bowman')) {
+    result.brand = 'Topps';
+    if (lowerTitle.includes('bowman chrome')) {
+      result.product = 'Bowman Chrome';
+    } else if (lowerTitle.includes('bowman draft')) {
+      result.product = 'Bowman Draft';
+    } else if (lowerTitle.includes('bowman sterling')) {
+      result.product = 'Bowman Sterling';
+    } else if (lowerTitle.includes('bowman platinum')) {
+      result.product = 'Bowman Platinum';
+    } else if (lowerTitle.includes('bowman sapphire')) {
+      result.product = 'Bowman Sapphire';
+    } else {
+      result.product = 'Bowman';
+    }
+  } else {
+    // Detect brand and product
+    for (const [brand, products] of Object.entries(BRANDS)) {
+      if (lowerTitle.includes(brand.toLowerCase())) {
+        result.brand = brand;
+        // Check for specific product
+        for (const product of products) {
+          if (lowerTitle.includes(product.toLowerCase())) {
+            result.product = product;
+            break;
+          }
         }
+        break;
       }
-      break;
     }
   }
   
@@ -162,9 +202,6 @@ function parseCardTitle(title: string): CardMetadata {
     } else if (lowerTitle.includes('mosaic')) {
       result.brand = 'Panini';
       result.product = 'Mosaic';
-    } else if (lowerTitle.includes('bowman')) {
-      result.brand = 'Bowman';
-      result.product = lowerTitle.includes('chrome') ? 'Chrome' : '1st';
     }
   }
   
@@ -180,17 +217,85 @@ interface GemRateData {
   qcRating: string;
   qcNotes: string;
   source: string;
-  matchType: 'exact' | 'product' | 'brand' | 'era' | 'default';
+  matchType: 'exact' | 'product' | 'brand' | 'era' | 'scraped' | 'default';
+}
+
+// Check if cached data is stale (older than 7 days)
+function isDataStale(lastUpdated: string | null): boolean {
+  if (!lastUpdated) return true;
+  const updatedDate = new Date(lastUpdated);
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  return updatedDate < sevenDaysAgo;
+}
+
+// Fetch fresh data from PSA pop scraper
+async function fetchPsaPop(
+  metadata: CardMetadata, 
+  title: string, 
+  listingId: string
+): Promise<GemRateData | null> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    if (!supabaseUrl) return null;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-psa-pop`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+      },
+      body: JSON.stringify({ metadata, title, listingId }),
+    });
+
+    const result = await response.json();
+    
+    if (result.success && result.data) {
+      const data = result.data;
+      return {
+        gemRate: data.gemRate,
+        psa9Rate: data.totalGraded > 0 
+          ? Math.round((data.psa9Count / data.totalGraded) * 100)
+          : 25,
+        totalGraded: data.totalGraded,
+        qcRating: data.gemRate >= 50 ? 'excellent' : data.gemRate >= 35 ? 'good' : 'average',
+        qcNotes: `Live data from ${data.source}`,
+        source: data.source,
+        matchType: 'scraped',
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error fetching PSA pop:', error);
+    return null;
+  }
 }
 
 async function lookupGemRate(
   supabase: any,
-  metadata: CardMetadata
+  metadata: CardMetadata,
+  title: string,
+  listingId: string
 ): Promise<GemRateData> {
   const { year, brand, product, setName } = metadata;
   
   // Default fallback rates by era
   const getEraFallback = (cardYear: number | null): GemRateData => {
+    // If we have product info, use product-specific fallback first
+    if (product && PRODUCT_GEM_RATES[product]) {
+      const rate = PRODUCT_GEM_RATES[product];
+      return {
+        gemRate: rate,
+        psa9Rate: 28,
+        totalGraded: 0,
+        qcRating: rate >= 50 ? 'good' : 'average',
+        qcNotes: `${product} typically grades at this rate`,
+        source: 'Product Estimate',
+        matchType: 'product'
+      };
+    }
+    
     if (!cardYear) {
       return {
         gemRate: 35,
@@ -205,8 +310,8 @@ async function lookupGemRate(
     
     if (cardYear >= 2020) {
       return {
-        gemRate: 40,
-        psa9Rate: 32,
+        gemRate: 45,
+        psa9Rate: 30,
         totalGraded: 0,
         qcRating: 'good',
         qcNotes: 'Modern card - generally good quality control',
@@ -215,8 +320,8 @@ async function lookupGemRate(
       };
     } else if (cardYear >= 2010) {
       return {
-        gemRate: 38,
-        psa9Rate: 33,
+        gemRate: 48,
+        psa9Rate: 28,
         totalGraded: 0,
         qcRating: 'good',
         qcNotes: '2010s card - solid quality control era',
@@ -225,7 +330,7 @@ async function lookupGemRate(
       };
     } else if (cardYear >= 2000) {
       return {
-        gemRate: 32,
+        gemRate: 40,
         psa9Rate: 30,
         totalGraded: 0,
         qcRating: 'average',
@@ -235,7 +340,7 @@ async function lookupGemRate(
       };
     } else if (cardYear >= 1990) {
       return {
-        gemRate: 25,
+        gemRate: 30,
         psa9Rate: 30,
         totalGraded: 0,
         qcRating: 'average',
@@ -245,7 +350,7 @@ async function lookupGemRate(
       };
     } else if (cardYear >= 1980) {
       return {
-        gemRate: 20,
+        gemRate: 22,
         psa9Rate: 25,
         totalGraded: 0,
         qcRating: 'poor',
@@ -255,7 +360,7 @@ async function lookupGemRate(
       };
     } else {
       return {
-        gemRate: 12,
+        gemRate: 15,
         psa9Rate: 18,
         totalGraded: 0,
         qcRating: 'poor',
@@ -266,7 +371,7 @@ async function lookupGemRate(
     }
   };
   
-  // If we don't have year or brand, return era fallback
+  // If we don't have year or brand, return product or era fallback
   if (!year && !brand) {
     return getEraFallback(year);
   }
@@ -283,7 +388,7 @@ async function lookupGemRate(
         .ilike('set_name', setName)
         .maybeSingle();
       
-      if (exactMatch) {
+      if (exactMatch && !isDataStale(exactMatch.last_updated)) {
         const row = exactMatch as any;
         return {
           gemRate: parseFloat(row.gem_rate) || 35,
@@ -293,8 +398,8 @@ async function lookupGemRate(
           totalGraded: row.total_graded || 0,
           qcRating: row.qc_rating || 'average',
           qcNotes: row.qc_notes || '',
-          source: row.source || 'Database',
-          matchType: 'exact'
+          source: row.auto_fetched ? 'GemRate.com' : (row.source || 'Database'),
+          matchType: row.auto_fetched ? 'scraped' : 'exact'
         };
       }
     }
@@ -310,7 +415,7 @@ async function lookupGemRate(
         .limit(1)
         .maybeSingle();
       
-      if (productMatch) {
+      if (productMatch && !isDataStale(productMatch.last_updated)) {
         const row = productMatch as any;
         return {
           gemRate: parseFloat(row.gem_rate) || 35,
@@ -320,13 +425,13 @@ async function lookupGemRate(
           totalGraded: row.total_graded || 0,
           qcRating: row.qc_rating || 'average',
           qcNotes: row.qc_notes || '',
-          source: row.source || 'Database',
-          matchType: 'product'
+          source: row.auto_fetched ? 'GemRate.com' : (row.source || 'Database'),
+          matchType: row.auto_fetched ? 'scraped' : 'product'
         };
       }
     }
     
-    // Try any year with same brand + product
+    // Try any year with same brand + product (nearby years)
     if (brand && product) {
       const { data: brandProductMatch } = await supabase
         .from('historical_gem_rates')
@@ -337,7 +442,7 @@ async function lookupGemRate(
         .limit(1)
         .maybeSingle();
       
-      if (brandProductMatch) {
+      if (brandProductMatch && !isDataStale(brandProductMatch.last_updated)) {
         const row = brandProductMatch as any;
         return {
           gemRate: parseFloat(row.gem_rate) || 35,
@@ -347,13 +452,23 @@ async function lookupGemRate(
           totalGraded: row.total_graded || 0,
           qcRating: row.qc_rating || 'average',
           qcNotes: `Based on ${row.year} data - ${row.qc_notes || ''}`,
-          source: row.source || 'Database',
-          matchType: 'brand'
+          source: row.auto_fetched ? 'GemRate.com' : (row.source || 'Database'),
+          matchType: row.auto_fetched ? 'scraped' : 'brand'
         };
       }
     }
     
-    // Fall back to era estimate
+    // No cached data found or data is stale - try to fetch fresh data
+    console.log('No fresh cached data found, attempting to scrape...');
+    const scrapedData = await fetchPsaPop(metadata, title, listingId);
+    
+    if (scrapedData) {
+      console.log('Successfully scraped population data');
+      return scrapedData;
+    }
+    
+    // Fall back to product-specific or era estimate
+    console.log('Scraping failed, using fallback estimate');
     return getEraFallback(year);
     
   } catch (error) {
@@ -389,8 +504,8 @@ Deno.serve(async (req) => {
     const metadata = parseCardTitle(title);
     console.log('Parsed metadata:', metadata);
     
-    // Look up historical gem rate
-    const rateData = await lookupGemRate(supabase, metadata);
+    // Look up historical gem rate (with scraper fallback)
+    const rateData = await lookupGemRate(supabase, metadata, title, listingId || 'unknown');
     console.log('Rate data:', rateData);
     
     // Apply modifiers based on card specifics
