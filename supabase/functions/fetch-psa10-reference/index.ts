@@ -29,7 +29,7 @@ function extractCardIdentifier(title: string): string {
   let cleaned = lowerTitle
     // Remove hashtags and special chars
     .replace(/#\w+/g, '')
-    .replace(/[^\\w\\s]/g, ' ')
+    .replace(/[^\w\s]/g, ' ')
     // Remove year patterns at start (keep for searching)
     .replace(/\s+/g, ' ')
     .trim();
