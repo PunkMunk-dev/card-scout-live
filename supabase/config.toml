@@ -3,8 +3,11 @@ project_id = "yoebdmrpmftlwbwyzzjq"
 [functions.ebay-search]
 verify_jwt = false
 
-[functions.card-gem-score]
+[functions.gem-rate]
 verify_jwt = false
 
-[functions.fetch-psa10-reference]
+[functions.fetch-psa-pop]
+verify_jwt = false
+
+[functions.firecrawl-scrape]
 verify_jwt = false
