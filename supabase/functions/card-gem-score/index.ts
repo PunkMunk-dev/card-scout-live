@@ -110,14 +110,16 @@ interface GradeExtractionResult {
  * Extract final grade from Ximilar response
  */
 function extractFinalGrade(record: any): GradeExtractionResult {
-  const possibleFields = ['final', 'final_grade', 'grade', 'best_grade'];
+  const possibleFields = ['final', 'final_grade', 'grade', 'best_grade', 'overall_grade'];
   
+  // Check top-level fields
   for (const field of possibleFields) {
     if (typeof record[field] === 'number') {
       return { grade: record[field], source: field };
     }
   }
   
+  // Check nested grades object
   if (record.grades && typeof record.grades === 'object') {
     for (const field of possibleFields) {
       if (typeof record.grades[field] === 'number') {
@@ -139,6 +141,28 @@ function extractFinalGrade(record: any): GradeExtractionResult {
       };
     }
   }
+  
+  // Check _objects array (common Ximilar format)
+  if (record._objects && Array.isArray(record._objects)) {
+    for (const obj of record._objects) {
+      for (const field of possibleFields) {
+        if (typeof obj[field] === 'number') {
+          return { grade: obj[field], source: `_objects.${field}` };
+        }
+      }
+      // Check nested grades in _objects
+      if (obj.grades && typeof obj.grades === 'object') {
+        for (const field of possibleFields) {
+          if (typeof obj.grades[field] === 'number') {
+            return { grade: obj.grades[field], source: `_objects.grades.${field}` };
+          }
+        }
+      }
+    }
+  }
+  
+  // Log for debugging
+  console.log('Grade extraction failed - response keys:', Object.keys(record));
   
   return { grade: null, source: 'none' };
 }
@@ -604,6 +628,11 @@ Deno.serve(async (req) => {
     const frontResult = await gradeImage(ximilarToken, imageUrl);
     
     if (frontResult.grade === null) {
+      console.error('Ximilar grade extraction failed:', {
+        listingId,
+        imageUrl,
+        rawResponse: JSON.stringify(frontResult.rawResponse, null, 2)
+      });
       const errorMsg = 'Could not determine grade from response';
       
       await supabase.from('gem_scores').upsert({
