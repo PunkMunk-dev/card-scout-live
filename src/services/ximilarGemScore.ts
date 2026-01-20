@@ -101,7 +101,10 @@ export async function getGemScore({
       psa10Likelihood: data.psa10Likelihood || 'Low',
       confidence: data.confidence || 0,
       subgrades: data.subgrades || null,
-      error: data.error || undefined
+      error: data.error || undefined,
+      rawGrade: data.rawGrade,
+      cached: data.cached || false,
+      gradeSource: data.gradeSource
     };
     
     // Cache the result
