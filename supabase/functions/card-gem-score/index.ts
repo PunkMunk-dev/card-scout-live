@@ -11,6 +11,9 @@ const EXCLUDED_KEYWORDS = [
   'blaster', 'hobby box', 'break', 'bundle', 'set'
 ];
 
+// Keywords that indicate card is in a holder/slab (affects grading accuracy)
+const HOLDER_KEYWORDS = ['slab', 'slabbed', 'case', 'holder', 'one-touch', 'mag', 'magnetic'];
+
 // Cache TTL in days
 const CACHE_TTL_DAYS = 14;
 
@@ -23,10 +26,41 @@ function shouldSkipListing(title: string): boolean {
 }
 
 /**
+ * Check if a listing title indicates card is in a holder
+ */
+function isCardInHolder(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  return HOLDER_KEYWORDS.some(keyword => lowerTitle.includes(keyword));
+}
+
+/**
  * Clamp a number between min and max
  */
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * Transform eBay image URL to high-resolution version (Phase 2)
+ * eBay URLs use suffixes like s-l500, s-l1600 for different sizes
+ */
+function getHighResImageUrl(url: string): string {
+  if (!url) return url;
+  // Replace common eBay thumbnail sizes with full-size
+  return url
+    .replace(/s-l\d+\./, 's-l1600.')
+    .replace(/s-l\d+_/, 's-l1600_');
+}
+
+/**
+ * Calculate geometric mean (Phase 3)
+ * More accurate than arithmetic mean for grading - penalizes single bad subgrade properly
+ */
+function geometricMean(values: number[]): number {
+  if (values.length === 0) return 0;
+  // Use log-based calculation to avoid overflow with large numbers
+  const logSum = values.reduce((sum, val) => sum + Math.log(val), 0);
+  return Math.exp(logSum / values.length);
 }
 
 interface GradeExtractionResult {
@@ -36,6 +70,7 @@ interface GradeExtractionResult {
 
 /**
  * Extract final grade from Ximilar response with source tracking
+ * Updated to use geometric mean for computed averages (Phase 3)
  */
 function extractFinalGrade(record: any): GradeExtractionResult {
   const possibleFields = ['final', 'final_grade', 'grade', 'best_grade'];
@@ -55,7 +90,7 @@ function extractFinalGrade(record: any): GradeExtractionResult {
       }
     }
     
-    // If subgrades exist, compute average as fallback
+    // If subgrades exist, compute geometric mean as fallback (Phase 3)
     const subgradeFields = ['centering', 'corners', 'edges', 'surface'];
     const subgrades: number[] = [];
     for (const field of subgradeFields) {
@@ -65,8 +100,8 @@ function extractFinalGrade(record: any): GradeExtractionResult {
     }
     if (subgrades.length > 0) {
       return { 
-        grade: subgrades.reduce((a, b) => a + b, 0) / subgrades.length,
-        source: 'computed_average'
+        grade: geometricMean(subgrades),
+        source: 'computed_geometric_mean'
       };
     }
   }
@@ -91,6 +126,7 @@ function extractSubgrades(record: any): Record<string, number> | null {
 
 /**
  * Extract confidence from Ximilar response
+ * Updated to use lower default for uncertainty (Phase 5)
  */
 function extractConfidence(record: any): number {
   if (typeof record.confidence === 'number') {
@@ -107,16 +143,121 @@ function extractConfidence(record: any): number {
       return clamp(record._objects[0].confidence, 0, 1);
     }
   }
-  return 0.65;
+  // Lower default confidence when API doesn't provide one (Phase 5)
+  return 0.50;
 }
 
 /**
- * Calculate PSA-10 likelihood based on gem score and confidence
+ * Calculate PSA-10 likelihood with stricter thresholds (Phase 5)
  */
 function calculatePSA10Likelihood(gemScore: number, confidence: number): 'High' | 'Medium' | 'Low' {
-  if (gemScore >= 90 && confidence >= 0.80) return 'High';
-  if (gemScore >= 80 && confidence >= 0.65) return 'Medium';
+  // Stricter thresholds for more accurate predictions
+  if (gemScore >= 92 && confidence >= 0.85) return 'High';
+  if (gemScore >= 85 && confidence >= 0.70) return 'Medium';
   return 'Low';
+}
+
+/**
+ * Combine grades from front and back images (Phase 1)
+ * Uses 70% front / 30% back weighting as recommended by Ximilar
+ */
+function combineGrades(
+  frontGrade: number,
+  backGrade: number | null,
+  frontSubgrades: Record<string, number> | null,
+  backSubgrades: Record<string, number> | null
+): { combinedGrade: number; combinedSubgrades: Record<string, number> | null } {
+  if (backGrade === null) {
+    return { combinedGrade: frontGrade, combinedSubgrades: frontSubgrades };
+  }
+  
+  const FRONT_WEIGHT = 0.70;
+  const BACK_WEIGHT = 0.30;
+  
+  const combinedGrade = (frontGrade * FRONT_WEIGHT) + (backGrade * BACK_WEIGHT);
+  
+  let combinedSubgrades: Record<string, number> | null = null;
+  if (frontSubgrades) {
+    combinedSubgrades = { ...frontSubgrades };
+    if (backSubgrades) {
+      for (const key of Object.keys(backSubgrades)) {
+        if (frontSubgrades[key] !== undefined) {
+          combinedSubgrades[key] = (frontSubgrades[key] * FRONT_WEIGHT) + (backSubgrades[key] * BACK_WEIGHT);
+        }
+      }
+    }
+  }
+  
+  return { combinedGrade, combinedSubgrades };
+}
+
+/**
+ * Call Ximilar API for a single image
+ */
+async function gradeImage(
+  ximilarToken: string,
+  imageUrl: string
+): Promise<{ grade: number | null; subgrades: Record<string, number> | null; confidence: number; rawResponse: any; source: string }> {
+  const highResUrl = getHighResImageUrl(imageUrl);
+  
+  const response = await fetch('https://api.ximilar.com/card-grader/v2/grade', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Token ${ximilarToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      records: [{ _url: highResUrl }]
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    return {
+      grade: null,
+      subgrades: null,
+      confidence: 0,
+      rawResponse: { status: response.status, body: errorText },
+      source: 'api_error'
+    };
+  }
+
+  const data = await response.json();
+  const record = data.records?.[0] || data.record || data;
+  const { grade, source } = extractFinalGrade(record);
+  
+  return {
+    grade,
+    subgrades: extractSubgrades(record),
+    confidence: extractConfidence(record),
+    rawResponse: data,
+    source
+  };
+}
+
+/**
+ * Detect quality warnings (Phase 4)
+ */
+function detectQualityWarnings(
+  title: string,
+  imagesAnalyzed: number,
+  confidence: number
+): string[] {
+  const warnings: string[] = [];
+  
+  if (isCardInHolder(title)) {
+    warnings.push('card_in_holder');
+  }
+  
+  if (imagesAnalyzed === 1) {
+    warnings.push('single_image');
+  }
+  
+  if (confidence < 0.60) {
+    warnings.push('low_confidence');
+  }
+  
+  return warnings;
 }
 
 Deno.serve(async (req) => {
@@ -126,7 +267,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { listingId, imageUrl, title = '', force = false } = await req.json();
+    const { 
+      listingId, 
+      imageUrl, 
+      additionalImages = [], 
+      title = '', 
+      force = false 
+    } = await req.json();
 
     if (!listingId || !imageUrl) {
       return new Response(
@@ -145,7 +292,9 @@ Deno.serve(async (req) => {
           confidence: 0,
           subgrades: null,
           error: 'Not a single card listing',
-          cached: false
+          cached: false,
+          qualityWarnings: [],
+          imagesAnalyzed: 0
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -191,7 +340,9 @@ Deno.serve(async (req) => {
             error: cached.error,
             cached: true,
             rawGrade,
-            gradeSource
+            gradeSource,
+            qualityWarnings: [],
+            imagesAnalyzed: 1
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -209,29 +360,20 @@ Deno.serve(async (req) => {
           confidence: 0,
           subgrades: null,
           error: 'Ximilar API token not configured',
-          cached: false
+          cached: false,
+          qualityWarnings: [],
+          imagesAnalyzed: 0
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Call Ximilar API
-    const ximilarResponse = await fetch('https://api.ximilar.com/card-grader/v2/grade', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${ximilarToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        records: [{ _url: imageUrl }]
-      })
-    });
-
-    if (!ximilarResponse.ok) {
-      const errorText = await ximilarResponse.text();
-      const errorMsg = `Ximilar API error: ${ximilarResponse.status}`;
+    // Grade front image (primary)
+    const frontResult = await gradeImage(ximilarToken, imageUrl);
+    
+    if (frontResult.grade === null) {
+      const errorMsg = 'Could not determine grade from response';
       
-      // Store error in cache
       await supabase.from('gem_scores').upsert({
         listing_id: listingId,
         image_url: imageUrl,
@@ -240,7 +382,7 @@ Deno.serve(async (req) => {
         confidence: 0,
         subgrades: null,
         error: errorMsg,
-        raw_response: { status: ximilarResponse.status, body: errorText }
+        raw_response: frontResult.rawResponse
       }, { onConflict: 'listing_id,image_url' });
 
       return new Response(
@@ -251,53 +393,46 @@ Deno.serve(async (req) => {
           confidence: 0,
           subgrades: null,
           error: errorMsg,
-          cached: false
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await ximilarResponse.json();
-    const record = data.records?.[0] || data.record || data;
-
-    // Extract final grade with source tracking
-    const { grade: finalGrade, source: gradeSource } = extractFinalGrade(record);
-
-    if (finalGrade === null) {
-      const result = {
-        listing_id: listingId,
-        image_url: imageUrl,
-        gem_score: null,
-        psa10_likelihood: 'Low',
-        confidence: 0,
-        subgrades: null,
-        error: 'Could not determine grade from response',
-        raw_response: data
-      };
-
-      await supabase.from('gem_scores').upsert(result, { onConflict: 'listing_id,image_url' });
-
-      return new Response(
-        JSON.stringify({
-          listingId,
-          gemScore: null,
-          psa10Likelihood: 'Low',
-          confidence: 0,
-          subgrades: null,
-          error: 'Could not determine grade from response',
           cached: false,
           rawGrade: null,
-          gradeSource: 'none'
+          gradeSource: 'none',
+          qualityWarnings: detectQualityWarnings(title, 1, 0),
+          imagesAnalyzed: 1
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Grade back image if available (Phase 1: Multi-image support)
+    let backResult: { grade: number | null; subgrades: Record<string, number> | null; confidence: number } | null = null;
+    let imagesAnalyzed = 1;
+    
+    if (additionalImages.length > 0) {
+      const backImageUrl = additionalImages[0];
+      const backGradeResult = await gradeImage(ximilarToken, backImageUrl);
+      if (backGradeResult.grade !== null) {
+        backResult = backGradeResult;
+        imagesAnalyzed = 2;
+      }
+    }
+
+    // Combine front and back grades
+    const { combinedGrade, combinedSubgrades } = combineGrades(
+      frontResult.grade,
+      backResult?.grade || null,
+      frontResult.subgrades,
+      backResult?.subgrades || null
+    );
+
+    // Average confidence if both images analyzed
+    const combinedConfidence = backResult 
+      ? (frontResult.confidence + backResult.confidence) / 2
+      : frontResult.confidence;
+
     // Calculate scores
-    const gemScore = clamp(Math.round(finalGrade * 10), 0, 100);
-    const confidence = extractConfidence(record);
-    const subgrades = extractSubgrades(record);
-    const psa10Likelihood = calculatePSA10Likelihood(gemScore, confidence);
+    const gemScore = clamp(Math.round(combinedGrade * 10), 0, 100);
+    const psa10Likelihood = calculatePSA10Likelihood(gemScore, combinedConfidence);
+    const qualityWarnings = detectQualityWarnings(title, imagesAnalyzed, combinedConfidence);
 
     // Store in cache
     await supabase.from('gem_scores').upsert({
@@ -305,10 +440,10 @@ Deno.serve(async (req) => {
       image_url: imageUrl,
       gem_score: gemScore,
       psa10_likelihood: psa10Likelihood,
-      confidence,
-      subgrades,
+      confidence: combinedConfidence,
+      subgrades: combinedSubgrades,
       error: null,
-      raw_response: data
+      raw_response: frontResult.rawResponse
     }, { onConflict: 'listing_id,image_url' });
 
     return new Response(
@@ -316,12 +451,14 @@ Deno.serve(async (req) => {
         listingId,
         gemScore,
         psa10Likelihood,
-        confidence,
-        subgrades,
+        confidence: combinedConfidence,
+        subgrades: combinedSubgrades,
         error: null,
         cached: false,
-        rawGrade: finalGrade,
-        gradeSource
+        rawGrade: combinedGrade,
+        gradeSource: backResult ? 'combined_front_back' : frontResult.source,
+        qualityWarnings,
+        imagesAnalyzed
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -335,7 +472,9 @@ Deno.serve(async (req) => {
         psa10Likelihood: 'Low',
         confidence: 0,
         subgrades: null,
-        cached: false
+        cached: false,
+        qualityWarnings: [],
+        imagesAnalyzed: 0
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

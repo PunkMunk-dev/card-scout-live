@@ -46,11 +46,13 @@ function getCacheKey(listingId: string, imageUrl: string): string {
 export async function getGemScore({
   listingId,
   imageUrl,
+  additionalImages = [],
   title = '',
   force = false
 }: {
   listingId: string;
   imageUrl: string;
+  additionalImages?: string[];
   title?: string;
   force?: boolean;
 }): Promise<GemScoreResult> {
@@ -77,7 +79,7 @@ export async function getGemScore({
   
   try {
     const { data, error } = await supabase.functions.invoke('card-gem-score', {
-      body: { listingId, imageUrl, title, force }
+      body: { listingId, imageUrl, additionalImages, title, force }
     });
     
     if (error) {
@@ -104,7 +106,9 @@ export async function getGemScore({
       error: data.error || undefined,
       rawGrade: data.rawGrade,
       cached: data.cached || false,
-      gradeSource: data.gradeSource
+      gradeSource: data.gradeSource,
+      qualityWarnings: data.qualityWarnings || [],
+      imagesAnalyzed: data.imagesAnalyzed || 1
     };
     
     // Cache the result

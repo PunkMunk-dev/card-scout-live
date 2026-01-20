@@ -65,6 +65,7 @@ export function useGemScores({
       const result = await getGemScore({
         listingId: item.itemId,
         imageUrl: item.imageUrl,
+        additionalImages: item.additionalImages,
         title: item.title
       });
       

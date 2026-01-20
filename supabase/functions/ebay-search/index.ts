@@ -23,8 +23,19 @@ interface EbayItem {
   buyingOption: 'AUCTION' | 'FIXED_PRICE' | 'UNKNOWN';
   endDate?: string;
   imageUrl?: string;
+  additionalImages?: string[];  // For multi-image grading (front + back)
   itemUrl?: string;
   seller?: string;
+}
+
+/**
+ * Transform eBay image URL to high-resolution version (Phase 2)
+ */
+function getHighResImageUrl(url: string | undefined): string | undefined {
+  if (!url) return url;
+  return url
+    .replace(/s-l\d+\./, 's-l1600.')
+    .replace(/s-l\d+_/, 's-l1600_');
 }
 
 const JUNK_KEYWORDS = [
@@ -198,6 +209,20 @@ function normalizeItem(item: any): EbayItem {
 
   const price = item.price || {};
   const shippingCost = item.shippingOptions?.[0]?.shippingCost;
+  
+  // Get primary image and convert to high-res (Phase 2)
+  const primaryImageUrl = item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl;
+  
+  // Extract additional images for multi-image grading (Phase 1)
+  const additionalImages: string[] = [];
+  if (item.additionalImages && Array.isArray(item.additionalImages)) {
+    for (const img of item.additionalImages.slice(0, 3)) { // Limit to 3 additional images
+      const imgUrl = img.imageUrl || img;
+      if (typeof imgUrl === 'string') {
+        additionalImages.push(getHighResImageUrl(imgUrl) || imgUrl);
+      }
+    }
+  }
 
   return {
     itemId: item.itemId,
@@ -213,7 +238,8 @@ function normalizeItem(item: any): EbayItem {
     condition: item.condition || 'Unknown',
     buyingOption,
     endDate: item.itemEndDate,
-    imageUrl: item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl,
+    imageUrl: getHighResImageUrl(primaryImageUrl),
+    additionalImages: additionalImages.length > 0 ? additionalImages : undefined,
     itemUrl: item.itemWebUrl,
     seller: item.seller?.username,
   };
