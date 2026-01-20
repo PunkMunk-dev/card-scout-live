@@ -7,6 +7,7 @@ export interface EbayItem {
   buyingOption: 'AUCTION' | 'FIXED_PRICE' | 'UNKNOWN';
   endDate?: string;
   imageUrl?: string;
+  additionalImages?: string[];  // For multi-image grading (front + back)
   itemUrl?: string;
   seller?: string;
 }
