@@ -217,66 +217,26 @@ interface GemRateData {
   qcRating: string;
   qcNotes: string;
   source: string;
-  matchType: 'exact' | 'product' | 'brand' | 'era' | 'scraped' | 'default';
+  matchType: 'exact' | 'product' | 'brand' | 'era' | 'default';
 }
 
-// Check if cached data is stale (older than 7 days)
-function isDataStale(lastUpdated: string | null): boolean {
-  if (!lastUpdated) return true;
-  const updatedDate = new Date(lastUpdated);
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  return updatedDate < sevenDaysAgo;
-}
-
-// Fetch fresh data from PSA pop scraper
-async function fetchPsaPop(
-  metadata: CardMetadata, 
-  title: string, 
-  listingId: string
-): Promise<GemRateData | null> {
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    if (!supabaseUrl) return null;
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-psa-pop`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-      },
-      body: JSON.stringify({ metadata, title, listingId }),
-    });
-
-    const result = await response.json();
-    
-    if (result.success && result.data) {
-      const data = result.data;
-      return {
-        gemRate: data.gemRate,
-        psa9Rate: data.totalGraded > 0 
-          ? Math.round((data.psa9Count / data.totalGraded) * 100)
-          : 25,
-        totalGraded: data.totalGraded,
-        qcRating: data.gemRate >= 50 ? 'excellent' : data.gemRate >= 35 ? 'good' : 'average',
-        qcNotes: `Live data from ${data.source}`,
-        source: data.source,
-        matchType: 'scraped',
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error fetching PSA pop:', error);
-    return null;
-  }
-}
+/**
+ * NOTE: Firecrawl/scraper calls have been REMOVED from this function.
+ * 
+ * Per the specification, this gem-rate function should:
+ * - NEVER block search, pricing, or decisions
+ * - Use historical data from the database only
+ * - Be fast and reliable
+ * 
+ * PSA population enrichment via Firecrawl is handled separately by:
+ * - psa-population-extract edge function
+ * - Called ONLY when card detail is opened OR card is added to watchlist
+ * - Never during search
+ */
 
 async function lookupGemRate(
   supabase: any,
-  metadata: CardMetadata,
-  title: string,
-  listingId: string
+  metadata: CardMetadata
 ): Promise<GemRateData> {
   const { year, brand, product, setName } = metadata;
   
@@ -388,7 +348,7 @@ async function lookupGemRate(
         .ilike('set_name', setName)
         .maybeSingle();
       
-      if (exactMatch && !isDataStale(exactMatch.last_updated)) {
+      if (exactMatch) {
         const row = exactMatch as any;
         return {
           gemRate: parseFloat(row.gem_rate) || 35,
@@ -398,8 +358,8 @@ async function lookupGemRate(
           totalGraded: row.total_graded || 0,
           qcRating: row.qc_rating || 'average',
           qcNotes: row.qc_notes || '',
-          source: row.auto_fetched ? 'GemRate.com' : (row.source || 'Database'),
-          matchType: row.auto_fetched ? 'scraped' : 'exact'
+          source: row.source || 'Database',
+          matchType: 'exact'
         };
       }
     }
@@ -415,7 +375,7 @@ async function lookupGemRate(
         .limit(1)
         .maybeSingle();
       
-      if (productMatch && !isDataStale(productMatch.last_updated)) {
+      if (productMatch) {
         const row = productMatch as any;
         return {
           gemRate: parseFloat(row.gem_rate) || 35,
@@ -425,8 +385,8 @@ async function lookupGemRate(
           totalGraded: row.total_graded || 0,
           qcRating: row.qc_rating || 'average',
           qcNotes: row.qc_notes || '',
-          source: row.auto_fetched ? 'GemRate.com' : (row.source || 'Database'),
-          matchType: row.auto_fetched ? 'scraped' : 'product'
+          source: row.source || 'Database',
+          matchType: 'product'
         };
       }
     }
@@ -442,7 +402,7 @@ async function lookupGemRate(
         .limit(1)
         .maybeSingle();
       
-      if (brandProductMatch && !isDataStale(brandProductMatch.last_updated)) {
+      if (brandProductMatch) {
         const row = brandProductMatch as any;
         return {
           gemRate: parseFloat(row.gem_rate) || 35,
@@ -452,23 +412,16 @@ async function lookupGemRate(
           totalGraded: row.total_graded || 0,
           qcRating: row.qc_rating || 'average',
           qcNotes: `Based on ${row.year} data - ${row.qc_notes || ''}`,
-          source: row.auto_fetched ? 'GemRate.com' : (row.source || 'Database'),
-          matchType: row.auto_fetched ? 'scraped' : 'brand'
+          source: row.source || 'Database',
+          matchType: 'brand'
         };
       }
     }
     
-    // No cached data found or data is stale - try to fetch fresh data
-    console.log('No fresh cached data found, attempting to scrape...');
-    const scrapedData = await fetchPsaPop(metadata, title, listingId);
-    
-    if (scrapedData) {
-      console.log('Successfully scraped population data');
-      return scrapedData;
-    }
-    
-    // Fall back to product-specific or era estimate
-    console.log('Scraping failed, using fallback estimate');
+    // No cached data found - use fallback estimates
+    // NOTE: Scraping is NOT done here to avoid blocking search
+    // PSA population enrichment happens separately via psa-population-extract
+    console.log('No cached data found, using fallback estimate');
     return getEraFallback(year);
     
   } catch (error) {
@@ -504,8 +457,8 @@ Deno.serve(async (req) => {
     const metadata = parseCardTitle(title);
     console.log('Parsed metadata:', metadata);
     
-    // Look up historical gem rate (with scraper fallback)
-    const rateData = await lookupGemRate(supabase, metadata, title, listingId || 'unknown');
+    // Look up historical gem rate (no scraping - uses database and fallbacks only)
+    const rateData = await lookupGemRate(supabase, metadata);
     console.log('Rate data:', rateData);
     
     // Apply modifiers based on card specifics

@@ -119,6 +119,42 @@ export type Database = {
         }
         Relationships: []
       }
+      psa_population_cache: {
+        Row: {
+          card_slug: string
+          created_at: string | null
+          expires_at: string | null
+          gem_rate: number | null
+          id: string
+          psa_url: string | null
+          psa10_count: number | null
+          source: string | null
+          total_count: number | null
+        }
+        Insert: {
+          card_slug: string
+          created_at?: string | null
+          expires_at?: string | null
+          gem_rate?: number | null
+          id?: string
+          psa_url?: string | null
+          psa10_count?: number | null
+          source?: string | null
+          total_count?: number | null
+        }
+        Update: {
+          card_slug?: string
+          created_at?: string | null
+          expires_at?: string | null
+          gem_rate?: number | null
+          id?: string
+          psa_url?: string | null
+          psa10_count?: number | null
+          source?: string | null
+          total_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

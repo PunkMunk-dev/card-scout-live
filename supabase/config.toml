@@ -6,7 +6,7 @@ verify_jwt = false
 [functions.gem-rate]
 verify_jwt = false
 
-[functions.fetch-psa-pop]
+[functions.psa-population-extract]
 verify_jwt = false
 
 [functions.firecrawl-scrape]
