@@ -12,7 +12,9 @@ const WARNING_LABELS: Record<string, { label: string; description: string }> = {
   single_image: { label: "Front only", description: "Back image not available for analysis" },
   low_confidence: { label: "Low confidence", description: "AI confidence below 60%" },
   low_resolution: { label: "Low resolution", description: "Image quality may affect accuracy" },
-  no_psa10_reference: { label: "No PSA 10 reference", description: "Could not find PSA 10 examples for comparison" }
+  no_psa10_reference: { label: "No PSA 10 reference", description: "Could not find PSA 10 examples for comparison" },
+  ximilar_unavailable: { label: "Vision-only mode", description: "Using AI vision grading (Ximilar unavailable)" },
+  grading_unavailable: { label: "Grading unavailable", description: "No grading service could process this card" }
 };
 
 const SUBGRADE_LABELS: Record<string, string> = {
@@ -35,7 +37,7 @@ function getSubgradeTextColor(value: number): string {
 }
 
 export function GemScoreBreakdown({ result }: GemScoreBreakdownProps) {
-  const { gemScore, rawGrade, confidence, subgrades, psa10Likelihood, cached, gradeSource, qualityWarnings, imagesAnalyzed, certifiedGrade, analysisMethod, comparisonResult, referenceImagesUsed } = result;
+  const { gemScore, rawGrade, confidence, subgrades, psa10Likelihood, cached, gradeSource, qualityWarnings, imagesAnalyzed, certifiedGrade, analysisMethod, comparisonResult, referenceImagesUsed, visionReasoning } = result;
   
   const confidencePercent = Math.round(confidence * 100);
   const hasWarnings = qualityWarnings && qualityWarnings.length > 0;
@@ -184,7 +186,17 @@ export function GemScoreBreakdown({ result }: GemScoreBreakdownProps) {
             {analysisMethod === 'hybrid' && 'Hybrid: Ximilar + PSA 10 comparison'}
             {analysisMethod === 'ximilar_only' && 'Ximilar technical grading only'}
             {analysisMethod === 'reference_comparison' && 'Reference-based comparison'}
+            {analysisMethod === 'vision_only' && 'AI Vision grading (fallback mode)'}
+            {analysisMethod === 'failed' && 'Grading failed'}
           </span>
+        </div>
+      )}
+      
+      {/* Vision Reasoning (when using vision-only mode) */}
+      {analysisMethod === 'vision_only' && visionReasoning && (
+        <div className="p-2 rounded-md bg-purple-500/10 border border-purple-500/30">
+          <div className="text-xs text-purple-400 font-medium mb-1">AI Analysis:</div>
+          <p className="text-xs text-muted-foreground">{visionReasoning}</p>
         </div>
       )}
 

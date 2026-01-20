@@ -35,9 +35,10 @@ export interface GemScoreResult {
   // Certified grade extraction
   certifiedGrade?: CertifiedGrade;
   // Reference-based comparison (new)
-  analysisMethod?: 'ximilar_only' | 'reference_comparison' | 'certified_extraction' | 'hybrid' | 'cached';
+  analysisMethod?: 'ximilar_only' | 'reference_comparison' | 'certified_extraction' | 'hybrid' | 'cached' | 'vision_only' | 'failed';
   comparisonResult?: ComparisonResult;
   referenceImagesUsed?: number;
+  visionReasoning?: string;  // Explanation from Vision-only grading
 }
 
 export interface GemScoreState {
