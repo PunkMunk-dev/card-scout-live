@@ -425,10 +425,34 @@ Estimate the percentage likelihood (0-100) this card would receive a PSA 10 if s
  * Calculate hybrid score combining Ximilar and Vision comparison
  */
 function calculateHybridScore(
-  ximilarGrade: number,
+  ximilarGrade: number | null,
   ximilarConfidence: number,
   comparisonResult: ComparisonResult | null
 ): { hybridScore: number; hybridConfidence: number; analysisMethod: string } {
+  // If Ximilar failed but we have Vision comparison, use Vision-only
+  if (ximilarGrade === null && comparisonResult) {
+    const visionScore = geometricMean([
+      comparisonResult.centeringMatch,
+      comparisonResult.cornersMatch,
+      comparisonResult.edgesMatch,
+      comparisonResult.surfaceMatch
+    ]);
+    return {
+      hybridScore: clamp(Math.round(visionScore * 10), 0, 100),
+      hybridConfidence: clamp(comparisonResult.psa10Probability / 100, 0, 1),
+      analysisMethod: 'vision_only'
+    };
+  }
+  
+  // If no Ximilar and no Vision, return null-equivalent
+  if (ximilarGrade === null) {
+    return {
+      hybridScore: 0,
+      hybridConfidence: 0,
+      analysisMethod: 'failed'
+    };
+  }
+  
   if (!comparisonResult) {
     return {
       hybridScore: Math.round(ximilarGrade * 10),
@@ -463,6 +487,100 @@ function calculateHybridScore(
     hybridConfidence,
     analysisMethod: 'hybrid'
   };
+}
+
+/**
+ * Vision-only grading using Gemini to compare against PSA 10 references
+ */
+async function gradeWithVisionOnly(
+  rawCardUrl: string,
+  lovableApiKey: string
+): Promise<{ grade: number | null; subgrades: Record<string, number> | null; confidence: number; reasoning: string }> {
+  const prompt = `You are an expert sports card grader with 20+ years of experience grading raw cards for PSA, BGS, and SGC.
+
+Analyze this ungraded raw trading card image and estimate its likely PSA grade (1-10 scale).
+
+Evaluate these four key areas and rate each 1-10:
+1. CENTERING: How well-centered is the card? Look for left/right and top/bottom alignment.
+2. CORNERS: How sharp are the corners? Look for wear, softness, or damage.
+3. EDGES: How clean are the edges? Look for chips, whitening, or roughness.
+4. SURFACE: How pristine is the surface? Look for scratches, print lines, creases, stains.
+
+Be critical and specific. A 10 means PSA Gem Mint quality. 8-9 is excellent with minor issues. 6-7 has noticeable issues.
+
+Consider:
+- Image quality may limit accuracy
+- Cards in holders/sleeves are harder to assess
+- This is an estimate, not a guaranteed grade`;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: getHighResImageUrl(rawCardUrl) } }
+          ]
+        }],
+        tools: [{
+          type: "function",
+          function: {
+            name: "grade_card",
+            description: "Return the card grading analysis with scores",
+            parameters: {
+              type: "object",
+              properties: {
+                centering: { type: "number", minimum: 1, maximum: 10, description: "Centering grade 1-10" },
+                corners: { type: "number", minimum: 1, maximum: 10, description: "Corners grade 1-10" },
+                edges: { type: "number", minimum: 1, maximum: 10, description: "Edges grade 1-10" },
+                surface: { type: "number", minimum: 1, maximum: 10, description: "Surface grade 1-10" },
+                overall_grade: { type: "number", minimum: 1, maximum: 10, description: "Estimated overall PSA grade" },
+                confidence_percent: { type: "number", minimum: 0, maximum: 100, description: "Confidence in this assessment" },
+                reasoning: { type: "string", description: "Brief explanation of the analysis" }
+              },
+              required: ["centering", "corners", "edges", "surface", "overall_grade", "confidence_percent", "reasoning"]
+            }
+          }
+        }],
+        tool_choice: { type: "function", function: { name: "grade_card" } }
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Vision-only grading failed:', response.status);
+      return { grade: null, subgrades: null, confidence: 0, reasoning: 'Vision grading failed' };
+    }
+
+    const data = await response.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    
+    if (toolCall?.function?.arguments) {
+      const args = JSON.parse(toolCall.function.arguments);
+      return {
+        grade: clamp(args.overall_grade || 5, 1, 10),
+        subgrades: {
+          centering: clamp(args.centering || 5, 1, 10),
+          corners: clamp(args.corners || 5, 1, 10),
+          edges: clamp(args.edges || 5, 1, 10),
+          surface: clamp(args.surface || 5, 1, 10)
+        },
+        confidence: clamp((args.confidence_percent || 50) / 100, 0, 1),
+        reasoning: args.reasoning || ''
+      };
+    }
+    
+    return { grade: null, subgrades: null, confidence: 0, reasoning: 'Failed to parse response' };
+  } catch (error) {
+    console.error('Vision-only grading error:', error);
+    return { grade: null, subgrades: null, confidence: 0, reasoning: String(error) };
+  }
 }
 
 /**
@@ -607,45 +725,85 @@ Deno.serve(async (req) => {
     }
 
     const ximilarToken = Deno.env.get('XIMILAR_API_TOKEN');
-    if (!ximilarToken) {
-      return new Response(
-        JSON.stringify({ 
-          listingId,
-          gemScore: null,
-          psa10Likelihood: 'Low',
-          confidence: 0,
-          subgrades: null,
-          error: 'Ximilar API token not configured',
-          cached: false,
-          qualityWarnings: [],
-          imagesAnalyzed: 0
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Grade front image with Ximilar
-    const frontResult = await gradeImage(ximilarToken, imageUrl);
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     
-    if (frontResult.grade === null) {
-      console.error('Ximilar grade extraction failed:', {
-        listingId,
-        imageUrl,
-        rawResponse: JSON.stringify(frontResult.rawResponse, null, 2)
-      });
-      const errorMsg = 'Could not determine grade from response';
+    let ximilarAvailable = !!ximilarToken;
+    let frontResult: { grade: number | null; subgrades: Record<string, number> | null; confidence: number; rawResponse: any; source: string } | null = null;
+    let ximilarError: string | null = null;
+    
+    // Try Ximilar first if token is configured
+    if (ximilarAvailable) {
+      frontResult = await gradeImage(ximilarToken!, imageUrl);
       
-      await supabase.from('gem_scores').upsert({
-        listing_id: listingId,
-        image_url: imageUrl,
-        gem_score: null,
-        psa10_likelihood: 'Low',
-        confidence: 0,
-        subgrades: null,
-        error: errorMsg,
-        raw_response: frontResult.rawResponse
-      }, { onConflict: 'listing_id,image_url' });
-
+      // Check if Ximilar returned an API error (401, 403, etc.)
+      if (frontResult.source === 'api_error') {
+        const status = frontResult.rawResponse?.status;
+        if (status === 401 || status === 403) {
+          console.warn('Ximilar API authentication failed, falling back to Vision-only grading');
+          ximilarError = `Ximilar API error: ${status}`;
+          ximilarAvailable = false;
+          frontResult = null;
+        }
+      }
+      
+      // If Ximilar returned no grade, log and continue to fallback
+      if (frontResult && frontResult.grade === null && frontResult.source !== 'api_error') {
+        console.error('Ximilar grade extraction failed:', {
+          listingId,
+          imageUrl,
+          rawResponse: JSON.stringify(frontResult.rawResponse, null, 2)
+        });
+        ximilarError = 'Could not extract grade from Ximilar response';
+        ximilarAvailable = false;
+      }
+    }
+    
+    // FALLBACK: If Ximilar failed/unavailable, try Vision-only grading
+    if (!ximilarAvailable && lovableApiKey) {
+      console.log('Using Vision-only fallback grading for:', listingId);
+      
+      const visionResult = await gradeWithVisionOnly(imageUrl, lovableApiKey);
+      
+      if (visionResult.grade !== null) {
+        const gemScore = clamp(Math.round(visionResult.grade * 10), 0, 100);
+        const psa10Likelihood = calculatePSA10Likelihood(gemScore, visionResult.confidence);
+        const qualityWarnings = detectQualityWarnings(title, 1, visionResult.confidence);
+        qualityWarnings.push('ximilar_unavailable');
+        
+        // Cache the vision-only result
+        await supabase.from('gem_scores').upsert({
+          listing_id: listingId,
+          image_url: imageUrl,
+          gem_score: gemScore,
+          psa10_likelihood: psa10Likelihood,
+          confidence: visionResult.confidence,
+          subgrades: visionResult.subgrades,
+          error: null,
+          raw_response: { vision_only: true, reasoning: visionResult.reasoning }
+        }, { onConflict: 'listing_id,image_url' });
+        
+        return new Response(
+          JSON.stringify({
+            listingId,
+            gemScore,
+            psa10Likelihood,
+            confidence: visionResult.confidence,
+            subgrades: visionResult.subgrades,
+            error: null,
+            cached: false,
+            rawGrade: visionResult.grade,
+            gradeSource: 'vision_only',
+            qualityWarnings,
+            imagesAnalyzed: 1,
+            analysisMethod: 'vision_only',
+            visionReasoning: visionResult.reasoning
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Vision also failed - return error
+      const errorMsg = ximilarError || 'Both Ximilar and Vision grading failed';
       return new Response(
         JSON.stringify({
           listingId,
@@ -655,11 +813,48 @@ Deno.serve(async (req) => {
           subgrades: null,
           error: errorMsg,
           cached: false,
-          rawGrade: null,
-          gradeSource: 'none',
-          qualityWarnings: detectQualityWarnings(title, 1, 0),
-          imagesAnalyzed: 1,
-          analysisMethod: 'ximilar_only'
+          qualityWarnings: ['grading_unavailable'],
+          imagesAnalyzed: 0,
+          analysisMethod: 'failed'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // If no Ximilar and no Lovable API key, we can't grade
+    if (!ximilarAvailable && !lovableApiKey) {
+      return new Response(
+        JSON.stringify({ 
+          listingId,
+          gemScore: null,
+          psa10Likelihood: 'Low',
+          confidence: 0,
+          subgrades: null,
+          error: 'No grading service available',
+          cached: false,
+          qualityWarnings: ['grading_unavailable'],
+          imagesAnalyzed: 0,
+          analysisMethod: 'failed'
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // At this point, Ximilar worked - continue with hybrid grading
+    if (!frontResult || frontResult.grade === null) {
+      // Shouldn't reach here, but safety check
+      return new Response(
+        JSON.stringify({
+          listingId,
+          gemScore: null,
+          psa10Likelihood: 'Low',
+          confidence: 0,
+          subgrades: null,
+          error: 'Unexpected grading state',
+          cached: false,
+          qualityWarnings: [],
+          imagesAnalyzed: 0,
+          analysisMethod: 'failed'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -669,7 +864,7 @@ Deno.serve(async (req) => {
     let backResult: { grade: number | null; subgrades: Record<string, number> | null; confidence: number } | null = null;
     let imagesAnalyzed = 1;
     
-    if (additionalImages.length > 0) {
+    if (additionalImages.length > 0 && ximilarToken) {
       const backImageUrl = additionalImages[0];
       const backGradeResult = await gradeImage(ximilarToken, backImageUrl);
       if (backGradeResult.grade !== null) {
@@ -691,7 +886,6 @@ Deno.serve(async (req) => {
       : frontResult.confidence;
 
     // Fetch PSA 10 references and compare using Gemini Vision
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     let comparisonResult: ComparisonResult | null = null;
     let referenceImagesUsed = 0;
     
