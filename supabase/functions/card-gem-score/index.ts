@@ -29,16 +29,21 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+interface GradeExtractionResult {
+  grade: number | null;
+  source: string;
+}
+
 /**
- * Extract final grade from Ximilar response
+ * Extract final grade from Ximilar response with source tracking
  */
-function extractFinalGrade(record: any): number | null {
+function extractFinalGrade(record: any): GradeExtractionResult {
   const possibleFields = ['final', 'final_grade', 'grade', 'best_grade'];
   
   // Check top-level fields
   for (const field of possibleFields) {
     if (typeof record[field] === 'number') {
-      return record[field];
+      return { grade: record[field], source: field };
     }
   }
   
@@ -46,7 +51,7 @@ function extractFinalGrade(record: any): number | null {
   if (record.grades && typeof record.grades === 'object') {
     for (const field of possibleFields) {
       if (typeof record.grades[field] === 'number') {
-        return record.grades[field];
+        return { grade: record.grades[field], source: `grades.${field}` };
       }
     }
     
@@ -59,11 +64,14 @@ function extractFinalGrade(record: any): number | null {
       }
     }
     if (subgrades.length > 0) {
-      return subgrades.reduce((a, b) => a + b, 0) / subgrades.length;
+      return { 
+        grade: subgrades.reduce((a, b) => a + b, 0) / subgrades.length,
+        source: 'computed_average'
+      };
     }
   }
   
-  return null;
+  return { grade: null, source: 'none' };
 }
 
 /**
@@ -162,6 +170,17 @@ Deno.serve(async (req) => {
         .single();
 
       if (cached) {
+        // Extract rawGrade from raw_response if available
+        let rawGrade: number | null = null;
+        let gradeSource = 'cached';
+        if (cached.raw_response && typeof cached.raw_response === 'object') {
+          const rawResp = cached.raw_response as any;
+          const record = rawResp.records?.[0] || rawResp.record || rawResp;
+          const extracted = extractFinalGrade(record);
+          rawGrade = extracted.grade;
+          gradeSource = extracted.source;
+        }
+        
         return new Response(
           JSON.stringify({
             listingId: cached.listing_id,
@@ -170,7 +189,9 @@ Deno.serve(async (req) => {
             confidence: cached.confidence,
             subgrades: cached.subgrades,
             error: cached.error,
-            cached: true
+            cached: true,
+            rawGrade,
+            gradeSource
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -239,8 +260,8 @@ Deno.serve(async (req) => {
     const data = await ximilarResponse.json();
     const record = data.records?.[0] || data.record || data;
 
-    // Extract final grade
-    const finalGrade = extractFinalGrade(record);
+    // Extract final grade with source tracking
+    const { grade: finalGrade, source: gradeSource } = extractFinalGrade(record);
 
     if (finalGrade === null) {
       const result = {
@@ -264,7 +285,9 @@ Deno.serve(async (req) => {
           confidence: 0,
           subgrades: null,
           error: 'Could not determine grade from response',
-          cached: false
+          cached: false,
+          rawGrade: null,
+          gradeSource: 'none'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -292,11 +315,13 @@ Deno.serve(async (req) => {
       JSON.stringify({
         listingId,
         gemScore,
-        psa10Likelihood: psa10Likelihood,
+        psa10Likelihood,
         confidence,
         subgrades,
         error: null,
-        cached: false
+        cached: false,
+        rawGrade: finalGrade,
+        gradeSource
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -10,6 +10,10 @@ export interface GemScoreResult {
     surface?: number;
   } | null;
   error?: string;
+  // Breakdown metadata
+  rawGrade?: number;        // Original Ximilar grade (1-10 scale)
+  cached?: boolean;         // Whether result was served from cache
+  gradeSource?: string;     // Which field the grade was extracted from
 }
 
 export interface GemScoreState {
