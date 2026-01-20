@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      gem_scores: {
+        Row: {
+          confidence: number
+          created_at: string
+          error: string | null
+          gem_score: number | null
+          id: string
+          image_url: string
+          listing_id: string
+          psa10_likelihood: string
+          raw_response: Json | null
+          subgrades: Json | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          error?: string | null
+          gem_score?: number | null
+          id?: string
+          image_url: string
+          listing_id: string
+          psa10_likelihood?: string
+          raw_response?: Json | null
+          subgrades?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          error?: string | null
+          gem_score?: number | null
+          id?: string
+          image_url?: string
+          listing_id?: string
+          psa10_likelihood?: string
+          raw_response?: Json | null
+          subgrades?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
