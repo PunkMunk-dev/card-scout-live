@@ -14,6 +14,9 @@ const EXCLUDED_KEYWORDS = [
 // Keywords that indicate card is in a holder/slab (affects grading accuracy)
 const HOLDER_KEYWORDS = ['slab', 'slabbed', 'case', 'holder', 'one-touch', 'mag', 'magnetic'];
 
+// Keywords that indicate professionally graded cards
+const GRADED_KEYWORDS = ['psa', 'bgs', 'sgc', 'cgc', 'hga', 'csg', 'ksa', 'gem mint', 'gem-mint'];
+
 // Cache TTL in days
 const CACHE_TTL_DAYS = 14;
 
@@ -34,6 +37,45 @@ function isCardInHolder(title: string): boolean {
 }
 
 /**
+ * Check if a listing is a professionally graded card
+ */
+function isGradedCard(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  return GRADED_KEYWORDS.some(keyword => lowerTitle.includes(keyword));
+}
+
+/**
+ * Extract grade from title for already-graded cards
+ */
+function extractGradeFromTitle(title: string): { company: string; grade: number; gemScore: number } | null {
+  const patterns = [
+    // "PSA 10", "BGS 9.5", "SGC 10"
+    /\b(psa|bgs|sgc|cgc|hga|csg|ksa)\s*(\d+(?:\.\d+)?)\b/i,
+    // "PSA GEM MINT 10"
+    /\b(psa|bgs|sgc|cgc|hga|csg|ksa)\s*gem\s*mint\s*(\d+(?:\.\d+)?)\b/i,
+    // "PSA10", "BGS9.5" (no space)
+    /\b(psa|bgs|sgc|cgc|hga|csg|ksa)(\d+(?:\.\d+)?)\b/i,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = title.match(pattern);
+    if (match) {
+      const company = match[1].toUpperCase();
+      const grade = parseFloat(match[2]);
+      
+      // Validate grade range (1-10)
+      if (grade >= 1 && grade <= 10) {
+        // Convert to Gem Score (0-100 scale)
+        const gemScore = Math.round(grade * 10);
+        return { company, grade, gemScore };
+      }
+    }
+  }
+  
+  return null;
+}
+
+/**
  * Clamp a number between min and max
  */
 function clamp(value: number, min: number, max: number): number {
@@ -41,24 +83,20 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- * Transform eBay image URL to high-resolution version (Phase 2)
- * eBay URLs use suffixes like s-l500, s-l1600 for different sizes
+ * Transform eBay image URL to high-resolution version
  */
 function getHighResImageUrl(url: string): string {
   if (!url) return url;
-  // Replace common eBay thumbnail sizes with full-size
   return url
     .replace(/s-l\d+\./, 's-l1600.')
     .replace(/s-l\d+_/, 's-l1600_');
 }
 
 /**
- * Calculate geometric mean (Phase 3)
- * More accurate than arithmetic mean for grading - penalizes single bad subgrade properly
+ * Calculate geometric mean
  */
 function geometricMean(values: number[]): number {
   if (values.length === 0) return 0;
-  // Use log-based calculation to avoid overflow with large numbers
   const logSum = values.reduce((sum, val) => sum + Math.log(val), 0);
   return Math.exp(logSum / values.length);
 }
@@ -69,20 +107,17 @@ interface GradeExtractionResult {
 }
 
 /**
- * Extract final grade from Ximilar response with source tracking
- * Updated to use geometric mean for computed averages (Phase 3)
+ * Extract final grade from Ximilar response
  */
 function extractFinalGrade(record: any): GradeExtractionResult {
   const possibleFields = ['final', 'final_grade', 'grade', 'best_grade'];
   
-  // Check top-level fields
   for (const field of possibleFields) {
     if (typeof record[field] === 'number') {
       return { grade: record[field], source: field };
     }
   }
   
-  // Check nested grades object
   if (record.grades && typeof record.grades === 'object') {
     for (const field of possibleFields) {
       if (typeof record.grades[field] === 'number') {
@@ -90,7 +125,6 @@ function extractFinalGrade(record: any): GradeExtractionResult {
       }
     }
     
-    // If subgrades exist, compute geometric mean as fallback (Phase 3)
     const subgradeFields = ['centering', 'corners', 'edges', 'surface'];
     const subgrades: number[] = [];
     for (const field of subgradeFields) {
@@ -126,7 +160,6 @@ function extractSubgrades(record: any): Record<string, number> | null {
 
 /**
  * Extract confidence from Ximilar response
- * Updated to use lower default for uncertainty (Phase 5)
  */
 function extractConfidence(record: any): number {
   if (typeof record.confidence === 'number') {
@@ -143,23 +176,20 @@ function extractConfidence(record: any): number {
       return clamp(record._objects[0].confidence, 0, 1);
     }
   }
-  // Lower default confidence when API doesn't provide one (Phase 5)
   return 0.50;
 }
 
 /**
- * Calculate PSA-10 likelihood with stricter thresholds (Phase 5)
+ * Calculate PSA-10 likelihood
  */
 function calculatePSA10Likelihood(gemScore: number, confidence: number): 'High' | 'Medium' | 'Low' {
-  // Stricter thresholds for more accurate predictions
   if (gemScore >= 92 && confidence >= 0.85) return 'High';
   if (gemScore >= 85 && confidence >= 0.70) return 'Medium';
   return 'Low';
 }
 
 /**
- * Combine grades from front and back images (Phase 1)
- * Uses 70% front / 30% back weighting as recommended by Ximilar
+ * Combine grades from front and back images
  */
 function combineGrades(
   frontGrade: number,
@@ -236,7 +266,183 @@ async function gradeImage(
 }
 
 /**
- * Detect quality warnings (Phase 4)
+ * Fetch PSA 10 reference images for comparison
+ */
+async function fetchPSA10References(
+  supabaseUrl: string,
+  title: string
+): Promise<string[]> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-psa10-reference`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title })
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to fetch PSA 10 references:', response.status);
+      return [];
+    }
+    
+    const data = await response.json();
+    return data.imageUrls || [];
+  } catch (error) {
+    console.error('Error fetching PSA 10 references:', error);
+    return [];
+  }
+}
+
+interface ComparisonResult {
+  centeringMatch: number;
+  cornersMatch: number;
+  edgesMatch: number;
+  surfaceMatch: number;
+  defectsFound: string[];
+  psa10Probability: number;
+  reasoning: string;
+}
+
+/**
+ * Compare raw card to PSA 10 references using Gemini Vision
+ */
+async function compareToReferences(
+  rawCardUrl: string,
+  referenceUrls: string[],
+  lovableApiKey: string
+): Promise<ComparisonResult | null> {
+  if (referenceUrls.length === 0) return null;
+  
+  const referenceUrl = referenceUrls[0]; // Use first reference for comparison
+  
+  const comparisonPrompt = `You are an expert sports card grader with 20+ years of experience. Compare the FIRST image (an ungraded raw card) against the SECOND image (a PSA 10 Gem Mint example of a similar card).
+
+Analyze these specific aspects and rate 1-10 how closely the raw card matches the PSA 10 standard:
+
+1. CENTERING: Is the raw card as well-centered as the PSA 10? Note any left/right or top/bottom shifts.
+2. CORNERS: Are corners as sharp as the PSA 10? Note any softness, whitening, or damage.
+3. EDGES: Are edges as clean as the PSA 10? Note any chipping, wear, or roughness.
+4. SURFACE: Is the surface as pristine as the PSA 10? Note scratches, print lines, staining, fingerprints.
+
+Be critical and specific. A 10 means perfect match to PSA 10 standard. 8-9 means minor issues. 6-7 means noticeable issues. Below 6 means significant problems.
+
+List specific defects that would prevent a PSA 10 grade.
+Estimate the percentage likelihood (0-100) this card would receive a PSA 10 if submitted.`;
+
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: comparisonPrompt },
+            { type: "image_url", image_url: { url: getHighResImageUrl(rawCardUrl) } },
+            { type: "image_url", image_url: { url: referenceUrl } }
+          ]
+        }],
+        tools: [{
+          type: "function",
+          function: {
+            name: "grade_comparison",
+            description: "Return the grading comparison result with scores and defects",
+            parameters: {
+              type: "object",
+              properties: {
+                centering_match: { type: "number", minimum: 1, maximum: 10, description: "How well centering matches PSA 10 (1-10)" },
+                corners_match: { type: "number", minimum: 1, maximum: 10, description: "How well corners match PSA 10 (1-10)" },
+                edges_match: { type: "number", minimum: 1, maximum: 10, description: "How well edges match PSA 10 (1-10)" },
+                surface_match: { type: "number", minimum: 1, maximum: 10, description: "How well surface matches PSA 10 (1-10)" },
+                defects_found: { type: "array", items: { type: "string" }, description: "List of specific defects found" },
+                psa10_likelihood_percent: { type: "number", minimum: 0, maximum: 100, description: "Estimated percentage chance of PSA 10 grade" },
+                reasoning: { type: "string", description: "Brief explanation of the analysis" }
+              },
+              required: ["centering_match", "corners_match", "edges_match", "surface_match", "defects_found", "psa10_likelihood_percent", "reasoning"]
+            }
+          }
+        }],
+        tool_choice: { type: "function", function: { name: "grade_comparison" } }
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Gemini Vision comparison failed:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    
+    if (toolCall?.function?.arguments) {
+      const args = JSON.parse(toolCall.function.arguments);
+      return {
+        centeringMatch: clamp(args.centering_match || 5, 1, 10),
+        cornersMatch: clamp(args.corners_match || 5, 1, 10),
+        edgesMatch: clamp(args.edges_match || 5, 1, 10),
+        surfaceMatch: clamp(args.surface_match || 5, 1, 10),
+        defectsFound: args.defects_found || [],
+        psa10Probability: clamp(args.psa10_likelihood_percent || 50, 0, 100),
+        reasoning: args.reasoning || ''
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Gemini Vision comparison error:', error);
+    return null;
+  }
+}
+
+/**
+ * Calculate hybrid score combining Ximilar and Vision comparison
+ */
+function calculateHybridScore(
+  ximilarGrade: number,
+  ximilarConfidence: number,
+  comparisonResult: ComparisonResult | null
+): { hybridScore: number; hybridConfidence: number; analysisMethod: string } {
+  if (!comparisonResult) {
+    return {
+      hybridScore: Math.round(ximilarGrade * 10),
+      hybridConfidence: ximilarConfidence,
+      analysisMethod: 'ximilar_only'
+    };
+  }
+  
+  // Vision comparison score from geometric mean of subgrades
+  const visionScore = geometricMean([
+    comparisonResult.centeringMatch,
+    comparisonResult.cornersMatch,
+    comparisonResult.edgesMatch,
+    comparisonResult.surfaceMatch
+  ]);
+  
+  // Weight: 40% Ximilar (technical), 60% Vision comparison (contextual)
+  const XIMILAR_WEIGHT = 0.40;
+  const VISION_WEIGHT = 0.60;
+  
+  const hybridGrade = (ximilarGrade * XIMILAR_WEIGHT) + (visionScore * VISION_WEIGHT);
+  const hybridScore = clamp(Math.round(hybridGrade * 10), 0, 100);
+  
+  // Boost confidence if both methods agree
+  const ximilarScoreNormalized = ximilarGrade / 10;
+  const visionScoreNormalized = visionScore / 10;
+  const agreement = 1 - Math.abs(ximilarScoreNormalized - visionScoreNormalized);
+  const hybridConfidence = clamp((ximilarConfidence + (comparisonResult.psa10Probability / 100)) / 2 * (0.8 + 0.2 * agreement), 0, 1);
+  
+  return {
+    hybridScore,
+    hybridConfidence,
+    analysisMethod: 'hybrid'
+  };
+}
+
+/**
+ * Detect quality warnings
  */
 function detectQualityWarnings(
   title: string,
@@ -261,7 +467,6 @@ function detectQualityWarnings(
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -294,18 +499,46 @@ Deno.serve(async (req) => {
           error: 'Not a single card listing',
           cached: false,
           qualityWarnings: [],
-          imagesAnalyzed: 0
+          imagesAnalyzed: 0,
+          analysisMethod: 'skipped'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Initialize Supabase client with service role for database writes
+    // Check if already graded - extract certified grade from title
+    if (isGradedCard(title)) {
+      const extractedGrade = extractGradeFromTitle(title);
+      if (extractedGrade) {
+        return new Response(
+          JSON.stringify({
+            listingId,
+            gemScore: extractedGrade.gemScore,
+            psa10Likelihood: extractedGrade.grade >= 10 ? 'Certified' : (extractedGrade.grade >= 9 ? 'High' : 'Medium'),
+            confidence: 1.0,
+            subgrades: null,
+            error: null,
+            cached: false,
+            rawGrade: extractedGrade.grade,
+            gradeSource: 'title_extraction',
+            certifiedGrade: {
+              company: extractedGrade.company,
+              grade: extractedGrade.grade
+            },
+            qualityWarnings: [],
+            imagesAnalyzed: 0,
+            analysisMethod: 'certified_extraction'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check cache unless force refresh requested
+    // Check cache unless force refresh
     if (!force) {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - CACHE_TTL_DAYS);
@@ -319,7 +552,6 @@ Deno.serve(async (req) => {
         .single();
 
       if (cached) {
-        // Extract rawGrade from raw_response if available
         let rawGrade: number | null = null;
         let gradeSource = 'cached';
         if (cached.raw_response && typeof cached.raw_response === 'object') {
@@ -342,14 +574,14 @@ Deno.serve(async (req) => {
             rawGrade,
             gradeSource,
             qualityWarnings: [],
-            imagesAnalyzed: 1
+            imagesAnalyzed: 1,
+            analysisMethod: 'cached'
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
 
-    // Get Ximilar API token from secrets
     const ximilarToken = Deno.env.get('XIMILAR_API_TOKEN');
     if (!ximilarToken) {
       return new Response(
@@ -368,7 +600,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Grade front image (primary)
+    // Grade front image with Ximilar
     const frontResult = await gradeImage(ximilarToken, imageUrl);
     
     if (frontResult.grade === null) {
@@ -397,13 +629,14 @@ Deno.serve(async (req) => {
           rawGrade: null,
           gradeSource: 'none',
           qualityWarnings: detectQualityWarnings(title, 1, 0),
-          imagesAnalyzed: 1
+          imagesAnalyzed: 1,
+          analysisMethod: 'ximilar_only'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Grade back image if available (Phase 1: Multi-image support)
+    // Grade back image if available
     let backResult: { grade: number | null; subgrades: Record<string, number> | null; confidence: number } | null = null;
     let imagesAnalyzed = 1;
     
@@ -416,7 +649,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Combine front and back grades
+    // Combine front and back Ximilar grades
     const { combinedGrade, combinedSubgrades } = combineGrades(
       frontResult.grade,
       backResult?.grade || null,
@@ -424,23 +657,46 @@ Deno.serve(async (req) => {
       backResult?.subgrades || null
     );
 
-    // Average confidence if both images analyzed
-    const combinedConfidence = backResult 
+    const combinedXimilarConfidence = backResult 
       ? (frontResult.confidence + backResult.confidence) / 2
       : frontResult.confidence;
 
-    // Calculate scores
-    const gemScore = clamp(Math.round(combinedGrade * 10), 0, 100);
-    const psa10Likelihood = calculatePSA10Likelihood(gemScore, combinedConfidence);
-    const qualityWarnings = detectQualityWarnings(title, imagesAnalyzed, combinedConfidence);
+    // Fetch PSA 10 references and compare using Gemini Vision
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    let comparisonResult: ComparisonResult | null = null;
+    let referenceImagesUsed = 0;
+    
+    if (lovableApiKey && title) {
+      const referenceUrls = await fetchPSA10References(supabaseUrl, title);
+      referenceImagesUsed = referenceUrls.length;
+      
+      if (referenceUrls.length > 0) {
+        comparisonResult = await compareToReferences(imageUrl, referenceUrls, lovableApiKey);
+      }
+    }
+
+    // Calculate hybrid score
+    const { hybridScore, hybridConfidence, analysisMethod } = calculateHybridScore(
+      combinedGrade,
+      combinedXimilarConfidence,
+      comparisonResult
+    );
+
+    const psa10Likelihood = calculatePSA10Likelihood(hybridScore, hybridConfidence);
+    const qualityWarnings = detectQualityWarnings(title, imagesAnalyzed, hybridConfidence);
+    
+    // Add warning if no references were found
+    if (referenceImagesUsed === 0 && lovableApiKey) {
+      qualityWarnings.push('no_psa10_reference');
+    }
 
     // Store in cache
     await supabase.from('gem_scores').upsert({
       listing_id: listingId,
       image_url: imageUrl,
-      gem_score: gemScore,
+      gem_score: hybridScore,
       psa10_likelihood: psa10Likelihood,
-      confidence: combinedConfidence,
+      confidence: hybridConfidence,
       subgrades: combinedSubgrades,
       error: null,
       raw_response: frontResult.rawResponse
@@ -449,16 +705,19 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         listingId,
-        gemScore,
+        gemScore: hybridScore,
         psa10Likelihood,
-        confidence: combinedConfidence,
+        confidence: hybridConfidence,
         subgrades: combinedSubgrades,
         error: null,
         cached: false,
         rawGrade: combinedGrade,
         gradeSource: backResult ? 'combined_front_back' : frontResult.source,
         qualityWarnings,
-        imagesAnalyzed
+        imagesAnalyzed,
+        analysisMethod,
+        comparisonResult,
+        referenceImagesUsed
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
