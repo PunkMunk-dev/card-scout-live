@@ -184,7 +184,7 @@ interface GemRateData {
 }
 
 async function lookupGemRate(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   metadata: CardMetadata
 ): Promise<GemRateData> {
   const { year, brand, product, setName } = metadata;

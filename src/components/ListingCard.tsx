@@ -2,9 +2,9 @@ import { ExternalLink, Clock, Gavel, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GemScoreBadge } from "@/components/GemScoreBadge";
+import { GemRateBadge } from "@/components/GemRateBadge";
 import type { EbayItem } from "@/types/ebay";
-import type { GemScoreState } from "@/types/gemScore";
+import type { GemRateState } from "@/types/gemScore";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +13,7 @@ interface ListingCardProps {
   index: number;
   isInWatchlist?: boolean;
   onToggleWatchlist?: (item: EbayItem) => void;
-  gemScoreState?: GemScoreState;
+  gemScoreState?: GemRateState;
 }
 
 export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist, gemScoreState }: ListingCardProps) {
@@ -70,7 +70,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist, gem
 
         <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
           {gemScoreState && (
-            <GemScoreBadge state={gemScoreState} />
+            <GemRateBadge state={gemScoreState} />
           )}
           
           {onToggleWatchlist && (
