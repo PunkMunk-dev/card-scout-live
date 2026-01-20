@@ -11,7 +11,7 @@ import { WatchlistPanel } from "@/components/WatchlistPanel";
 import { Button } from "@/components/ui/button";
 import { searchEbay } from "@/lib/ebay-api";
 import { useWatchlist } from "@/hooks/useWatchlist";
-import { useGemScores } from "@/hooks/useGemScores";
+import { useGemRates } from "@/hooks/useGemRates";
 import type { EbayItem, SortOption, BuyingOption } from "@/types/ebay";
 
 export default function Index() {
@@ -32,8 +32,8 @@ export default function Index() {
   // Watchlist
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
 
-  // Gem Scores
-  const { gemScores, isConfigured: isGemScoreConfigured } = useGemScores({
+  // Gem Rates
+  const { gemRates, isConfigured: isGemRateConfigured } = useGemRates({
     enabled: gemScoreEnabled,
     items,
     visibleCount: 12
@@ -189,7 +189,7 @@ export default function Index() {
             onIncludeLotsChange={handleIncludeLotsChange}
             gemScoreEnabled={gemScoreEnabled}
             onGemScoreChange={setGemScoreEnabled}
-            isGemScoreConfigured={isGemScoreConfigured}
+            isGemScoreConfigured={isGemRateConfigured}
           />
         )}
 
@@ -211,7 +211,7 @@ export default function Index() {
               items={items}
               isInWatchlist={isInWatchlist}
               onToggleWatchlist={toggleWatchlist}
-              gemScores={gemScores}
+              gemScores={gemRates}
             />
           </div>
         ) : hasSearched ? (
