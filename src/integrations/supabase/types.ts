@@ -56,33 +56,54 @@ export type Database = {
         }
         Relationships: []
       }
-      psa10_references: {
+      historical_gem_rates: {
         Row: {
-          card_identifier: string
-          created_at: string
-          expires_at: string
-          fetched_at: string
+          brand: string
+          created_at: string | null
+          gem_rate: number | null
           id: string
-          image_urls: string[]
-          search_query: string
+          last_updated: string | null
+          product: string
+          psa10_count: number | null
+          psa9_count: number | null
+          qc_notes: string | null
+          qc_rating: string | null
+          set_name: string | null
+          source: string | null
+          total_graded: number | null
+          year: number
         }
         Insert: {
-          card_identifier: string
-          created_at?: string
-          expires_at?: string
-          fetched_at?: string
+          brand: string
+          created_at?: string | null
+          gem_rate?: number | null
           id?: string
-          image_urls?: string[]
-          search_query: string
+          last_updated?: string | null
+          product: string
+          psa10_count?: number | null
+          psa9_count?: number | null
+          qc_notes?: string | null
+          qc_rating?: string | null
+          set_name?: string | null
+          source?: string | null
+          total_graded?: number | null
+          year: number
         }
         Update: {
-          card_identifier?: string
-          created_at?: string
-          expires_at?: string
-          fetched_at?: string
+          brand?: string
+          created_at?: string | null
+          gem_rate?: number | null
           id?: string
-          image_urls?: string[]
-          search_query?: string
+          last_updated?: string | null
+          product?: string
+          psa10_count?: number | null
+          psa9_count?: number | null
+          qc_notes?: string | null
+          qc_rating?: string | null
+          set_name?: string | null
+          source?: string | null
+          total_graded?: number | null
+          year?: number
         }
         Relationships: []
       }
