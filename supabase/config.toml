@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.card-gem-score]
 verify_jwt = false
+
+[functions.fetch-psa10-reference]
+verify_jwt = false

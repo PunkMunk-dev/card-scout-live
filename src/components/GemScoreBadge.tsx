@@ -1,4 +1,4 @@
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -14,14 +14,10 @@ interface GemScoreBadgeProps {
 }
 
 export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
-  // Not yet loaded/requested
-  if (!state) {
-    return null;
-  }
+  if (!state) return null;
   
   const { loading, result } = state;
   
-  // Loading state
   if (loading) {
     return (
       <div className={cn(
@@ -36,7 +32,6 @@ export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
     );
   }
   
-  // No result or error
   if (!result || result.gemScore === null) {
     return (
       <Popover>
@@ -59,7 +54,30 @@ export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
     );
   }
   
-  // Success - show score with likelihood
+  // Certified grade - show special badge
+  if (result.certifiedGrade) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-md cursor-help",
+            "backdrop-blur-sm shadow-sm border",
+            "text-xs font-medium",
+            "hover:brightness-110 transition-all",
+            "border-blue-500/30 bg-blue-500/10 text-blue-400",
+            className
+          )}>
+            <Award className="h-3 w-3" />
+            <span>{result.certifiedGrade.company} {result.certifiedGrade.grade}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent side="bottom" align="start" className="w-auto p-4">
+          <GemScoreBreakdown result={result} />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+  
   const { gemScore, psa10Likelihood } = result;
   
   const likelihoodColors: Record<string, string> = {

@@ -56,6 +56,36 @@ export type Database = {
         }
         Relationships: []
       }
+      psa10_references: {
+        Row: {
+          card_identifier: string
+          created_at: string
+          expires_at: string
+          fetched_at: string
+          id: string
+          image_urls: string[]
+          search_query: string
+        }
+        Insert: {
+          card_identifier: string
+          created_at?: string
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          image_urls?: string[]
+          search_query: string
+        }
+        Update: {
+          card_identifier?: string
+          created_at?: string
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          image_urls?: string[]
+          search_query?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

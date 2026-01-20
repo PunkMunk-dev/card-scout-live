@@ -11,7 +11,8 @@ const WARNING_LABELS: Record<string, { label: string; description: string }> = {
   card_in_holder: { label: "Card in holder", description: "Holder/sleeve may affect grading accuracy" },
   single_image: { label: "Front only", description: "Back image not available for analysis" },
   low_confidence: { label: "Low confidence", description: "AI confidence below 60%" },
-  low_resolution: { label: "Low resolution", description: "Image quality may affect accuracy" }
+  low_resolution: { label: "Low resolution", description: "Image quality may affect accuracy" },
+  no_psa10_reference: { label: "No PSA 10 reference", description: "Could not find PSA 10 examples for comparison" }
 };
 
 const SUBGRADE_LABELS: Record<string, string> = {
@@ -34,10 +35,40 @@ function getSubgradeTextColor(value: number): string {
 }
 
 export function GemScoreBreakdown({ result }: GemScoreBreakdownProps) {
-  const { gemScore, rawGrade, confidence, subgrades, psa10Likelihood, cached, gradeSource, qualityWarnings, imagesAnalyzed } = result;
+  const { gemScore, rawGrade, confidence, subgrades, psa10Likelihood, cached, gradeSource, qualityWarnings, imagesAnalyzed, certifiedGrade, analysisMethod, comparisonResult, referenceImagesUsed } = result;
   
   const confidencePercent = Math.round(confidence * 100);
   const hasWarnings = qualityWarnings && qualityWarnings.length > 0;
+  
+  // Certified grade display
+  if (certifiedGrade) {
+    return (
+      <div className="space-y-3 text-sm min-w-[260px]">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="font-medium flex items-center gap-1.5 text-blue-400">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Certified Grade
+            </span>
+            <span className="font-bold text-lg text-blue-400">{certifiedGrade.company} {certifiedGrade.grade}</span>
+          </div>
+        </div>
+        
+        <div className="p-2 rounded-md bg-blue-500/10 border border-blue-500/30">
+          <p className="text-xs text-blue-300">
+            This card has already been professionally graded by {certifiedGrade.company}. 
+            The score reflects the certified grade extracted from the listing title.
+          </p>
+        </div>
+        
+        <div className="pt-2 border-t border-border/50">
+          <p className="text-[11px] text-muted-foreground italic">
+            No AI analysis needed for graded cards.
+          </p>
+        </div>
+      </div>
+    );
+  }
   
   // PSA-10 threshold checks (updated stricter thresholds - Phase 5)
   const scoreCheck = gemScore !== null && gemScore >= 92;
@@ -108,8 +139,57 @@ export function GemScoreBreakdown({ result }: GemScoreBreakdownProps) {
         </div>
       )}
       
+      {/* Comparison Result from Gemini Vision */}
+      {comparisonResult && (
+        <div className="space-y-2 p-2 rounded-md bg-primary/5 border border-primary/20">
+          <div className="text-xs font-medium text-primary flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3" />
+            <span>PSA 10 Comparison Analysis</span>
+            {referenceImagesUsed && <span className="text-muted-foreground">({referenceImagesUsed} refs)</span>}
+          </div>
+          
+          {comparisonResult.defectsFound && comparisonResult.defectsFound.length > 0 && (
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Differences from PSA 10:</div>
+              <ul className="text-xs space-y-0.5">
+                {comparisonResult.defectsFound.slice(0, 4).map((defect, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="text-yellow-500 mt-0.5">•</span>
+                    <span className="text-muted-foreground">{defect}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          <div className="text-xs">
+            <span className="text-muted-foreground">PSA 10 Probability: </span>
+            <span className={cn(
+              "font-medium",
+              comparisonResult.psa10Probability >= 70 && "text-green-500",
+              comparisonResult.psa10Probability >= 40 && comparisonResult.psa10Probability < 70 && "text-yellow-500",
+              comparisonResult.psa10Probability < 40 && "text-muted-foreground"
+            )}>
+              {comparisonResult.psa10Probability}%
+            </span>
+          </div>
+        </div>
+      )}
+      
+      {/* Analysis Method Indicator */}
+      {analysisMethod && analysisMethod !== 'cached' && (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Info className="h-3 w-3" />
+          <span>
+            {analysisMethod === 'hybrid' && 'Hybrid: Ximilar + PSA 10 comparison'}
+            {analysisMethod === 'ximilar_only' && 'Ximilar technical grading only'}
+            {analysisMethod === 'reference_comparison' && 'Reference-based comparison'}
+          </span>
+        </div>
+      )}
+
       {/* Images Analyzed Indicator */}
-      {imagesAnalyzed !== undefined && (
+      {imagesAnalyzed !== undefined && imagesAnalyzed > 0 && (
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Image className="h-3 w-3" />
           <span>
