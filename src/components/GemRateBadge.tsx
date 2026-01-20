@@ -1,19 +1,19 @@
-import { Sparkles, Loader2, Award } from "lucide-react";
+import { TrendingUp, Loader2, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { GemScoreBreakdown } from "@/components/GemScoreBreakdown";
-import type { GemScoreState } from "@/types/gemScore";
+import { GemRateBreakdown } from "@/components/GemRateBreakdown";
+import type { GemRateState } from "@/types/gemScore";
 
-interface GemScoreBadgeProps {
-  state: GemScoreState | undefined;
+interface GemRateBadgeProps {
+  state: GemRateState | undefined;
   className?: string;
 }
 
-export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
+export function GemRateBadge({ state, className }: GemRateBadgeProps) {
   if (!state) return null;
   
   const { loading, result } = state;
@@ -32,7 +32,7 @@ export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
     );
   }
   
-  if (!result || result.gemScore === null) {
+  if (!result || result.gemRate === null) {
     return (
       <Popover>
         <PopoverTrigger asChild>
@@ -43,12 +43,12 @@ export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
             "hover:bg-background transition-colors",
             className
           )}>
-            <Sparkles className="h-3 w-3" />
+            <TrendingUp className="h-3 w-3" />
             <span>Gem: —</span>
           </button>
         </PopoverTrigger>
         <PopoverContent side="bottom" align="start" className="w-auto p-3">
-          <p className="text-sm text-muted-foreground">{result?.error || 'Unable to grade this listing'}</p>
+          <p className="text-sm text-muted-foreground">{result?.error || 'Unable to analyze this listing'}</p>
         </PopoverContent>
       </Popover>
     );
@@ -72,13 +72,13 @@ export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
           </button>
         </PopoverTrigger>
         <PopoverContent side="bottom" align="start" className="w-auto p-4">
-          <GemScoreBreakdown result={result} />
+          <GemRateBreakdown result={result} />
         </PopoverContent>
       </Popover>
     );
   }
   
-  const { gemScore, psa10Likelihood } = result;
+  const { gemRate, psa10Likelihood } = result;
   
   const likelihoodColors: Record<string, string> = {
     High: 'text-green-500',
@@ -103,15 +103,18 @@ export function GemScoreBadge({ state, className }: GemScoreBadgeProps) {
           badgeColors[psa10Likelihood],
           className
         )}>
-          <Sparkles className={cn("h-3 w-3", likelihoodColors[psa10Likelihood])} />
+          <TrendingUp className={cn("h-3 w-3", likelihoodColors[psa10Likelihood])} />
           <span>
-            Gem: {gemScore} | <span className={likelihoodColors[psa10Likelihood]}>{psa10Likelihood}</span>
+            Gem: {gemRate}% | <span className={likelihoodColors[psa10Likelihood]}>{psa10Likelihood}</span>
           </span>
         </button>
       </PopoverTrigger>
       <PopoverContent side="bottom" align="start" className="w-auto p-4">
-        <GemScoreBreakdown result={result} />
+        <GemRateBreakdown result={result} />
       </PopoverContent>
     </Popover>
   );
 }
+
+// Legacy export for backward compatibility
+export { GemRateBadge as GemScoreBadge };

@@ -3,45 +3,57 @@ export interface CertifiedGrade {
   grade: number;    // 10, 9.5, 9, etc.
 }
 
-export interface ComparisonResult {
-  centeringMatch: number;    // 1-10 scale
-  cornersMatch: number;      // 1-10 scale
-  edgesMatch: number;        // 1-10 scale
-  surfaceMatch: number;      // 1-10 scale
-  defectsFound: string[];    // Specific defects identified
-  psa10Probability: number;  // Percentage likelihood
-  reasoning: string;         // AI explanation
+export interface CardMetadata {
+  year: number | null;
+  brand: string | null;
+  product: string | null;
+  setName: string | null;
+  playerName: string | null;
+  cardNumber: string | null;
+  isRookie: boolean;
+  isParallel: boolean;
+  isAuto: boolean;
+  isNumbered: string | null;
+  isRefractor: boolean;
+  sport: string | null;
 }
 
-export interface GemScoreResult {
+export interface GemRateResult {
   listingId: string;
-  gemScore: number | null;
+  gemRate: number | null;
   psa10Likelihood: 'High' | 'Medium' | 'Low' | 'Certified';
+  psa9Rate?: number;
   confidence: number;
-  subgrades: {
-    centering?: number;
-    corners?: number;
-    edges?: number;
-    surface?: number;
-  } | null;
-  error?: string;
-  // Breakdown metadata
-  rawGrade?: number;           // Original Ximilar grade (1-10 scale)
-  cached?: boolean;            // Whether result was served from cache
-  gradeSource?: string;        // Which field the grade was extracted from
-  // Quality indicators (Phase 4)
-  qualityWarnings?: string[];  // e.g., ["low_resolution", "card_in_holder", "single_image"]
-  imagesAnalyzed?: number;     // Number of images analyzed (1 = front only, 2 = front+back)
-  // Certified grade extraction
+  
+  // Historical data
+  dataPoints: number;
+  qcRating: 'excellent' | 'good' | 'average' | 'poor' | string;
+  qcNotes: string;
+  source: string;
+  matchType: 'exact' | 'product' | 'brand' | 'era' | 'default';
+  
+  // Modifiers
+  baseRate?: number;
+  modifiersApplied: string[];
+  
+  // Card metadata
+  cardMetadata?: CardMetadata;
+  
+  // Certified grade (if already graded)
   certifiedGrade?: CertifiedGrade;
-  // Reference-based comparison (new)
-  analysisMethod?: 'ximilar_only' | 'reference_comparison' | 'certified_extraction' | 'hybrid' | 'cached' | 'vision_only' | 'failed';
-  comparisonResult?: ComparisonResult;
-  referenceImagesUsed?: number;
-  visionReasoning?: string;  // Explanation from Vision-only grading
+  
+  // Analysis info
+  analysisMethod: 'historical_data' | 'certified_extraction' | 'failed';
+  
+  // Error state
+  error?: string;
 }
 
-export interface GemScoreState {
+export interface GemRateState {
   loading: boolean;
-  result: GemScoreResult | null;
+  result: GemRateResult | null;
 }
+
+// Legacy alias for backward compatibility during transition
+export type GemScoreResult = GemRateResult;
+export type GemScoreState = GemRateState;
