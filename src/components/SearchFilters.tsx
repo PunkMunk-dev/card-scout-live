@@ -35,7 +35,7 @@ export function SearchFilters({
             {buyingOption === "ALL" && (
               <>
                 <SelectItem value="best">Best Match</SelectItem>
-                <SelectItem value="price_asc">Lowest Price</SelectItem>
+                <SelectItem value="price_asc">Price: Low-High</SelectItem>
                 <SelectItem value="graded">Graded</SelectItem>
               </>
             )}
