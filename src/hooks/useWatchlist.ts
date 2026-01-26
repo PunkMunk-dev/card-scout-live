@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import type { EbayItem, WatchlistItem } from "@/types/ebay";
-import { fetchPsaPopulation } from "@/services/psaPopulationService";
 
 const WATCHLIST_KEY = "ebay-card-watchlist";
 
@@ -26,7 +25,7 @@ export function useWatchlist() {
     } catch (error) {
       console.error("Failed to save watchlist to localStorage:", error);
     }
-  }, [watchlist]);
+  }, []);
 
   const addToWatchlist = useCallback((item: EbayItem) => {
     setWatchlist((prev) => {
@@ -35,12 +34,6 @@ export function useWatchlist() {
         return prev;
       }
       return [...prev, { ...item, addedAt: Date.now() }];
-    });
-    
-    // Trigger PSA population fetch in background (non-blocking)
-    // This is one of the two allowed trigger points per specification
-    fetchPsaPopulation(item.title).catch(() => {
-      // Silently fail - population data is enhancement only
     });
   }, []);
 

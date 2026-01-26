@@ -7,16 +7,9 @@ export interface EbayItem {
   buyingOption: 'AUCTION' | 'FIXED_PRICE' | 'UNKNOWN';
   endDate?: string;
   imageUrl?: string;
-  additionalImages?: string[];  // For multi-image grading (front + back)
+  additionalImages?: string[];
   itemUrl?: string;
   seller?: string;
-  // Extracted population data from listing title/description or graded lookup
-  popData?: {
-    psa10: number | null;
-    total: number | null;
-    gemRate: number | null;
-    source: 'listing' | 'graded_lookup';
-  };
 }
 
 export interface WatchlistItem extends EbayItem {
