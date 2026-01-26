@@ -200,7 +200,7 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
 function getSortParam(sort: string): string {
   switch (sort) {
     case 'price_asc':
-      return 'price';
+      return 'bestMatch';  // Fetch all relevant cards, then sort client-side
     case 'end_soonest':
       return 'endingSoonest';
     case 'raw':
