@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getGemRate, isGemRateConfigured, shouldSkipListing } from '@/services/gemRateService';
+import { lookupGradedPop } from '@/services/gradedPopService';
 import type { EbayItem } from '@/types/ebay';
 import type { GemRateResult, GemRateState } from '@/types/gemScore';
 
@@ -90,6 +91,7 @@ export function useGemRates({
         isRealData: true,
         psa10Count: psa10Count,
         totalCount: totalCount || undefined,
+        popDataSource: 'listing',
       };
       
       setGemRates(prev => {
@@ -111,6 +113,51 @@ export function useGemRates({
     });
     
     try {
+      // First, try graded lookup to get real pop data from PSA 10 listings
+      const gradedPop = await lookupGradedPop(item.title);
+      
+      if (gradedPop?.psa10) {
+        // Found real pop data from graded listings!
+        const psa10Count = gradedPop.psa10;
+        const totalCount = gradedPop.total;
+        const gemRate = gradedPop.gemRate;
+        
+        let psa10Likelihood: 'High' | 'Medium' | 'Low';
+        if (gemRate !== null) {
+          psa10Likelihood = gemRate >= 45 ? 'High' : gemRate >= 30 ? 'Medium' : 'Low';
+        } else {
+          psa10Likelihood = psa10Count <= 5 ? 'High' : psa10Count <= 20 ? 'Medium' : 'Low';
+        }
+        
+        const result: GemRateResult = {
+          listingId: item.itemId,
+          gemRate: gemRate,
+          psa10Likelihood,
+          confidence: 0.9,  // Slightly lower since it's from lookup, not direct listing
+          dataPoints: totalCount || psa10Count,
+          qcRating: 'good',
+          qcNotes: totalCount 
+            ? `PSA 10: ${psa10Count} / ${totalCount} total (from graded lookup)`
+            : `PSA 10 Population: ${psa10Count} (from graded lookup)`,
+          source: 'Graded Lookup',
+          matchType: 'exact',
+          modifiersApplied: [],
+          analysisMethod: 'historical_data',
+          isRealData: true,
+          psa10Count: psa10Count,
+          totalCount: totalCount || undefined,
+          popDataSource: 'graded_lookup',
+        };
+        
+        setGemRates(prev => {
+          const next = new Map(prev);
+          next.set(item.itemId, { loading: false, result });
+          return next;
+        });
+        return;
+      }
+      
+      // Fallback to historical gem rate if no graded pop found
       const result = await getGemRate({
         listingId: item.itemId,
         title: item.title

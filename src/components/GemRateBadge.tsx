@@ -1,4 +1,4 @@
-import { TrendingUp, Loader2, Award, Database } from "lucide-react";
+import { TrendingUp, Loader2, Award, Database, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -78,13 +78,17 @@ export function GemRateBadge({ state, className }: GemRateBadgeProps) {
     );
   }
   
-  // Real pop data from listing - show special badge
+  // Real pop data from listing or graded lookup - show special badge
   if (result.isRealData && result.psa10Count !== undefined) {
     const popColors: Record<string, string> = {
       High: 'border-green-500/30 bg-green-500/10 text-green-400',
       Medium: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
       Low: 'border-border/50 bg-background/90 text-muted-foreground'
     };
+    
+    // Determine icon based on data source
+    const isFromGradedLookup = result.popDataSource === 'graded_lookup';
+    const PopIcon = isFromGradedLookup ? Search : Database;
     
     // If we have a calculated gem rate, show it prominently
     if (result.gemRate !== null) {
@@ -99,7 +103,7 @@ export function GemRateBadge({ state, className }: GemRateBadgeProps) {
               popColors[result.psa10Likelihood],
               className
             )}>
-              <Database className="h-3 w-3" />
+              <PopIcon className="h-3 w-3" />
               <span>Gem: {result.gemRate}%</span>
             </button>
           </PopoverTrigger>
@@ -122,7 +126,7 @@ export function GemRateBadge({ state, className }: GemRateBadgeProps) {
             popColors[result.psa10Likelihood],
             className
           )}>
-            <Database className="h-3 w-3" />
+            <PopIcon className="h-3 w-3" />
             <span>Pop: {result.psa10Count}</span>
           </button>
         </PopoverTrigger>
