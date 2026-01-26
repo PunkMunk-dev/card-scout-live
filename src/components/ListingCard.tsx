@@ -73,6 +73,12 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist, gem
             <GemRateBadge state={gemScoreState} />
           )}
           
+          {item.popData?.psa10 && (
+            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
+              Pop: {item.popData.psa10}
+            </Badge>
+          )}
+          
           {onToggleWatchlist && (
             <button
               onClick={(e) => {

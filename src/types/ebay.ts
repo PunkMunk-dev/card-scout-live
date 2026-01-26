@@ -10,6 +10,13 @@ export interface EbayItem {
   additionalImages?: string[];  // For multi-image grading (front + back)
   itemUrl?: string;
   seller?: string;
+  // Extracted population data from listing title/description
+  popData?: {
+    psa10: number | null;
+    total: number | null;
+    gemRate: number | null;
+    source: 'listing';
+  };
 }
 
 export interface WatchlistItem extends EbayItem {
