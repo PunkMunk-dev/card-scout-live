@@ -36,13 +36,11 @@ export function SearchFilters({
               <>
                 <SelectItem value="best">Best Match</SelectItem>
                 <SelectItem value="price_asc">Price: Low-High</SelectItem>
-                <SelectItem value="graded">Graded</SelectItem>
               </>
             )}
             {buyingOption === "AUCTION" && (
               <>
                 <SelectItem value="raw">Raw Cards</SelectItem>
-                <SelectItem value="graded">Graded Cards</SelectItem>
               </>
             )}
           </SelectContent>
