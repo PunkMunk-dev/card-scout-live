@@ -435,8 +435,11 @@ serve(async (req) => {
     } else if (sort === 'raw') {
       // "Raw Cards - Ending Soon" - explicitly filter for ungraded cards only
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
+    } else if (sort === 'price_asc') {
+      // For price sort, show ALL listings (both raw and graded) ordered by price
+      // No filtering applied - all cards shown
     } else {
-      // For other sorts (best, price_asc, end_soonest), show only raw/ungraded cards by default
+      // For other sorts (best, end_soonest), show only raw/ungraded cards by default
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     }
     
