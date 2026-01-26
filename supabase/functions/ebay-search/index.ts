@@ -50,6 +50,12 @@ function extractPopulationFromListing(
   
   // PRIORITY 1: Patterns that capture BOTH psa10 and total (most specific first)
   const twoValuePatterns = [
+    // "PSA 10 Pop 4, Total Pop 6" or "PSA 10 Pop: 4 Total Pop: 6"
+    /PSA\s*10\s+Pop[:\s]*(\d{1,5})[,\s]+Total\s+Pop[:\s]*(\d{1,6})/i,
+    // "Pop 4, Total 6" or "Pop 4 / Total 6"
+    /\bPOP[:\s]*(\d{1,5})[,\s\/]+Total[:\s]*(\d{1,6})\b/i,
+    // "Pop 4 out of 6"
+    /\bPOP[:\s]*(\d{1,5})\s+out\s+of\s+(\d{1,6})\b/i,
     // "Pop 5/100" or "Pop: 5/100" or "POP 5 / 100"
     /\bPOP[:\s]*(\d{1,5})\s*[\/]\s*(\d{1,6})\b/i,
     // "Pop 5 of 100" or "POP 5 OF 100"
