@@ -56,6 +56,39 @@ export function useGemRates({
       return;
     }
     
+    // NEW: If popData is available from listing, use it directly (no API call)
+    if (item.popData?.psa10 !== null && item.popData?.psa10 !== undefined) {
+      ratedIds.current.add(item.itemId);
+      const psa10Count = item.popData.psa10;
+      
+      // Calculate likelihood based on pop count
+      const psa10Likelihood: 'High' | 'Medium' | 'Low' = 
+        psa10Count <= 5 ? 'High' : psa10Count <= 20 ? 'Medium' : 'Low';
+      
+      const result: GemRateResult = {
+        listingId: item.itemId,
+        gemRate: null, // Cannot calculate without total graded
+        psa10Likelihood,
+        confidence: 1.0,
+        dataPoints: psa10Count,
+        qcRating: 'good',
+        qcNotes: `PSA 10 Population: ${psa10Count} (from listing)`,
+        source: 'eBay Listing',
+        matchType: 'exact',
+        modifiersApplied: [],
+        analysisMethod: 'historical_data',
+        isRealData: true,
+        psa10Count: psa10Count,
+      };
+      
+      setGemRates(prev => {
+        const next = new Map(prev);
+        next.set(item.itemId, { loading: false, result });
+        return next;
+      });
+      return;
+    }
+    
     // Mark as being rated
     ratedIds.current.add(item.itemId);
     
