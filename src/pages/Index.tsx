@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -8,10 +7,8 @@ import { LoadingGrid } from "@/components/LoadingGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
-import { Button } from "@/components/ui/button";
 import { searchEbay } from "@/lib/ebay-api";
 import { useWatchlist } from "@/hooks/useWatchlist";
-import { useGemRates } from "@/hooks/useGemRates";
 import type { EbayItem, SortOption, BuyingOption } from "@/types/ebay";
 
 export default function Index() {
@@ -27,17 +24,9 @@ export default function Index() {
   const [sort, setSort] = useState<SortOption>("best");
   const [buyingOption, setBuyingOption] = useState<BuyingOption>("ALL");
   const [includeLots, setIncludeLots] = useState(false);
-  const [gemScoreEnabled, setGemScoreEnabled] = useState(false);
 
   // Watchlist
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
-
-  // Gem Rates
-  const { gemRates, isConfigured: isGemRateConfigured } = useGemRates({
-    enabled: gemScoreEnabled,
-    items,
-    visibleCount: 12
-  });
 
   const performSearch = useCallback(async (
     searchQuery: string, 
@@ -187,9 +176,6 @@ export default function Index() {
             onBuyingOptionChange={handleBuyingOptionChange}
             includeLots={includeLots}
             onIncludeLotsChange={handleIncludeLotsChange}
-            gemScoreEnabled={gemScoreEnabled}
-            onGemScoreChange={setGemScoreEnabled}
-            isGemScoreConfigured={isGemRateConfigured}
           />
         )}
 
@@ -211,7 +197,6 @@ export default function Index() {
               items={items}
               isInWatchlist={isInWatchlist}
               onToggleWatchlist={toggleWatchlist}
-              gemScores={gemRates}
             />
           </div>
         ) : hasSearched ? (

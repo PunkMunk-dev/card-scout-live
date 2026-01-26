@@ -2,15 +2,3 @@ project_id = "yoebdmrpmftlwbwyzzjq"
 
 [functions.ebay-search]
 verify_jwt = false
-
-[functions.gem-rate]
-verify_jwt = false
-
-[functions.psa-population-extract]
-verify_jwt = false
-
-[functions.firecrawl-scrape]
-verify_jwt = false
-
-[functions.graded-pop-lookup]
-verify_jwt = false
