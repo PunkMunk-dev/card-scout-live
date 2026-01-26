@@ -60,25 +60,36 @@ export function useGemRates({
     if (item.popData?.psa10 !== null && item.popData?.psa10 !== undefined) {
       ratedIds.current.add(item.itemId);
       const psa10Count = item.popData.psa10;
+      const totalCount = item.popData.total;
+      const gemRate = item.popData.gemRate;
       
-      // Calculate likelihood based on pop count
-      const psa10Likelihood: 'High' | 'Medium' | 'Low' = 
-        psa10Count <= 5 ? 'High' : psa10Count <= 20 ? 'Medium' : 'Low';
+      // Calculate likelihood based on gem rate if available, otherwise use pop count
+      let psa10Likelihood: 'High' | 'Medium' | 'Low';
+      if (gemRate !== null) {
+        // Use gem rate thresholds
+        psa10Likelihood = gemRate >= 45 ? 'High' : gemRate >= 30 ? 'Medium' : 'Low';
+      } else {
+        // Fallback to pop count rarity
+        psa10Likelihood = psa10Count <= 5 ? 'High' : psa10Count <= 20 ? 'Medium' : 'Low';
+      }
       
       const result: GemRateResult = {
         listingId: item.itemId,
-        gemRate: null, // Cannot calculate without total graded
+        gemRate: gemRate,  // Now can be a real percentage!
         psa10Likelihood,
         confidence: 1.0,
-        dataPoints: psa10Count,
+        dataPoints: totalCount || psa10Count,
         qcRating: 'good',
-        qcNotes: `PSA 10 Population: ${psa10Count} (from listing)`,
+        qcNotes: totalCount 
+          ? `PSA 10: ${psa10Count} / ${totalCount} total (${gemRate}%)`
+          : `PSA 10 Population: ${psa10Count} (from listing)`,
         source: 'eBay Listing',
         matchType: 'exact',
         modifiersApplied: [],
         analysisMethod: 'historical_data',
         isRealData: true,
         psa10Count: psa10Count,
+        totalCount: totalCount || undefined,
       };
       
       setGemRates(prev => {

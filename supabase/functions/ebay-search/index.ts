@@ -38,14 +38,53 @@ interface EbayItem {
  * Extract PSA population data from listing title and description
  * Sellers often include: "POP 5", "PSA 10 Pop 12", "Low Pop 3", "Population: 15"
  */
+/**
+ * Extract PSA population data from listing title and description
+ * Sellers often include: "POP 5", "Pop 5/100", "PSA 10 Pop 12", "Low Pop 3", "Population 5 of 100"
+ */
 function extractPopulationFromListing(
   title: string, 
   shortDescription?: string
 ): { psa10: number | null; total: number | null } | null {
   const text = `${title} ${shortDescription || ''}`;
   
-  // Patterns sellers commonly use (order matters - more specific first):
-  const patterns = [
+  // PRIORITY 1: Patterns that capture BOTH psa10 and total (most specific first)
+  const twoValuePatterns = [
+    // "Pop 5/100" or "Pop: 5/100" or "POP 5 / 100"
+    /\bPOP[:\s]*(\d{1,5})\s*[\/]\s*(\d{1,6})\b/i,
+    // "Pop 5 of 100" or "POP 5 OF 100"
+    /\bPOP[:\s]*(\d{1,5})\s+of\s+(\d{1,6})\b/i,
+    // "PSA 10 Pop 5/100" or "PSA10 Pop: 3/50"
+    /PSA\s*10\s+Pop[:\s]*(\d{1,5})\s*[\/]\s*(\d{1,6})/i,
+    // "PSA 10 Pop 5 of 100"
+    /PSA\s*10\s+Pop[:\s]*(\d{1,5})\s+of\s+(\d{1,6})/i,
+    // "Population 5/100" or "Population: 8/200"
+    /Population[:\s]*(\d{1,5})\s*[\/]\s*(\d{1,6})/i,
+    // "Population 5 of 100"
+    /Population[:\s]*(\d{1,5})\s+of\s+(\d{1,6})/i,
+    // "Pop Count 5/100" or "Pop Count: 12/150"
+    /Pop\s+Count[:\s]*(\d{1,5})\s*[\/]\s*(\d{1,6})/i,
+    // "Pop 5 (100 total)" or "POP 5 (100 Total)"
+    /\bPOP[:\s]*(\d{1,5})\s*\(\s*(\d{1,6})\s*total\s*\)/i,
+    // "PSA Pop 5 (120 total)"
+    /PSA\s+Pop[:\s]*(\d{1,5})\s*\(\s*(\d{1,6})\s*total\s*\)/i,
+  ];
+
+  // Try two-value patterns first
+  for (const pattern of twoValuePatterns) {
+    const match = text.match(pattern);
+    if (match && match[1] && match[2]) {
+      const psa10 = parseInt(match[1], 10);
+      const total = parseInt(match[2], 10);
+      // Sanity checks
+      if (psa10 > 0 && psa10 < 50000 && total > 0 && total < 500000 && psa10 <= total) {
+        return { psa10, total };
+      }
+    }
+  }
+  
+  // PRIORITY 2: Single-value patterns (existing logic)
+  const singleValuePatterns = [
     // "PSA 10 Pop 5" or "PSA10 Pop: 12"
     /PSA\s*10\s+Pop[:\s]*(\d{1,5})/i,
     // "Pop Count: 8" or "Pop Count 12"
@@ -58,11 +97,11 @@ function extractPopulationFromListing(
     /\bPOP[:\s]*(\d{1,5})\b/i,
   ];
 
-  for (const pattern of patterns) {
+  for (const pattern of singleValuePatterns) {
     const match = text.match(pattern);
     if (match && match[1]) {
       const count = parseInt(match[1], 10);
-      if (count > 0 && count < 50000) { // Sanity check
+      if (count > 0 && count < 50000) {
         return { psa10: count, total: null };
       }
     }
@@ -275,10 +314,16 @@ function normalizeItem(item: any): EbayItem {
   
   let popData: EbayItem['popData'] = undefined;
   if (popExtracted && popExtracted.psa10 !== null) {
+    // Calculate gem rate if we have both values
+    let gemRate: number | null = null;
+    if (popExtracted.total !== null && popExtracted.total > 0) {
+      gemRate = Math.round((popExtracted.psa10 / popExtracted.total) * 100);
+    }
+    
     popData = {
       psa10: popExtracted.psa10,
       total: popExtracted.total,
-      gemRate: null, // Cannot calculate without total
+      gemRate: gemRate,
       source: 'listing' as const,
     };
   }
