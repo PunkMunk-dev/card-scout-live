@@ -26,6 +26,49 @@ interface EbayItem {
   additionalImages?: string[];  // For multi-image grading (front + back)
   itemUrl?: string;
   seller?: string;
+  popData?: {
+    psa10: number | null;
+    total: number | null;
+    gemRate: number | null;
+    source: 'listing';
+  };
+}
+
+/**
+ * Extract PSA population data from listing title and description
+ * Sellers often include: "POP 5", "PSA 10 Pop 12", "Low Pop 3", "Population: 15"
+ */
+function extractPopulationFromListing(
+  title: string, 
+  shortDescription?: string
+): { psa10: number | null; total: number | null } | null {
+  const text = `${title} ${shortDescription || ''}`;
+  
+  // Patterns sellers commonly use (order matters - more specific first):
+  const patterns = [
+    // "PSA 10 Pop 5" or "PSA10 Pop: 12"
+    /PSA\s*10\s+Pop[:\s]*(\d{1,5})/i,
+    // "Pop Count: 8" or "Pop Count 12"
+    /Pop\s+Count[:\s]*(\d{1,5})/i,
+    // "Low Pop 3" or "Low Pop: 5"
+    /Low\s+Pop[:\s]*(\d{1,5})/i,
+    // "Population: 15" or "Population 8"
+    /Population[:\s]*(\d{1,5})/i,
+    // "POP 5" or "Pop: 5" or "Pop 12"
+    /\bPOP[:\s]*(\d{1,5})\b/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const count = parseInt(match[1], 10);
+      if (count > 0 && count < 50000) { // Sanity check
+        return { psa10: count, total: null };
+      }
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -224,6 +267,22 @@ function normalizeItem(item: any): EbayItem {
     }
   }
 
+  // Extract population data from listing title and description
+  const popExtracted = extractPopulationFromListing(
+    item.title, 
+    item.shortDescription
+  );
+  
+  let popData: EbayItem['popData'] = undefined;
+  if (popExtracted && popExtracted.psa10 !== null) {
+    popData = {
+      psa10: popExtracted.psa10,
+      total: popExtracted.total,
+      gemRate: null, // Cannot calculate without total
+      source: 'listing' as const,
+    };
+  }
+
   return {
     itemId: item.itemId,
     title: item.title,
@@ -242,6 +301,7 @@ function normalizeItem(item: any): EbayItem {
     additionalImages: additionalImages.length > 0 ? additionalImages : undefined,
     itemUrl: item.itemWebUrl,
     seller: item.seller?.username,
+    popData,
   };
 }
 
