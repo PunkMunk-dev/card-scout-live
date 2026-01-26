@@ -1,204 +1,215 @@
 
-
-# Plan: Extract PSA Population Data from eBay Listing Descriptions
+# Plan: Integrate eBay Pop Data into Gem Rate Calculation
 
 ## Overview
 
-Add extraction of PSA population data from eBay listing descriptions during search. Sellers often include population data in their listing titles/descriptions (e.g., "POP 5", "PSA 10 Pop 12", "Low Pop!"). This data source is **free** (no Firecrawl credits needed) and available during search.
+When a listing has `popData` extracted from the eBay title/description (e.g., "PSA 10 Pop 5"), use that real population number directly in the gem rate display instead of making an API call for estimated data.
 
 ---
 
-## Phase 1: Update EbayItem Interface
+## Current Flow (What Happens Now)
 
-**File:** `src/types/ebay.ts`
+```text
+eBay Search → popData extracted → Displayed as separate "Pop: X" badge
+                                → Gem Rate still calls edge function for ESTIMATE
+```
 
-Add new optional fields to capture extracted population data:
+The pop data is shown but ignored for the gem rate calculation.
+
+---
+
+## New Flow (After Integration)
+
+```text
+eBay Search → popData extracted → IF popData available:
+                                     → Calculate gem rate CLIENT-SIDE (no API call)
+                                     → Show "Pop: X | Real Data" in gem badge
+                                  → ELSE:
+                                     → Call edge function for estimate (existing flow)
+```
+
+---
+
+## Phase 1: Update Types for Real Data Indicator
+
+**File:** `src/types/gemScore.ts`
+
+Add a new field to indicate when gem rate comes from real listing data:
 
 ```typescript
-export interface EbayItem {
-  itemId: string;
-  title: string;
-  price: { value: string; currency: string };
-  shipping?: { value: string; currency: string };
-  condition: string;
-  buyingOption: 'AUCTION' | 'FIXED_PRICE' | 'UNKNOWN';
-  endDate?: string;
-  imageUrl?: string;
-  additionalImages?: string[];
-  itemUrl?: string;
-  seller?: string;
-  // NEW: Extracted population data from listing
-  popData?: {
-    psa10: number | null;
-    total: number | null;
-    gemRate: number | null;
-    source: 'listing';  // Indicates data came from eBay listing
-  };
+export interface GemRateResult {
+  // ... existing fields ...
+  
+  // NEW: Indicates source of data
+  isRealData?: boolean;  // true = from eBay listing popData
+  psa10Count?: number;   // Actual PSA 10 count from listing
 }
 ```
 
 ---
 
-## Phase 2: Add Population Extraction to Edge Function
+## Phase 2: Update useGemRates Hook
 
-**File:** `supabase/functions/ebay-search/index.ts`
+**File:** `src/hooks/useGemRates.ts`
 
-### 2.1 Add Extraction Function
-
-Create a function to parse population data from title and short description:
+Modify `rateItem` to check for `popData` before calling the edge function:
 
 ```typescript
-/**
- * Extract PSA population data from listing title and description
- * Sellers often include: "POP 5", "PSA 10 Pop 12", "Low Pop 3", "Population: 15"
- */
-function extractPopulationFromListing(
-  title: string, 
-  shortDescription?: string
-): { psa10: number | null; total: number | null } | null {
-  const text = `${title} ${shortDescription || ''}`;
+const rateItem = useCallback(async (item: EbayItem) => {
+  if (ratedIds.current.has(item.itemId)) return;
   
-  // Patterns sellers commonly use:
-  const patterns = [
-    // "POP 5" or "Pop: 5" or "Pop 12"
-    /\bPOP[:\s]*(\d{1,5})\b/i,
-    // "PSA 10 Pop 5" or "PSA10 Pop: 12"
-    /PSA\s*10\s+Pop[:\s]*(\d{1,5})/i,
-    // "Population: 15" or "Population 8"
-    /Population[:\s]*(\d{1,5})/i,
-    // "Low Pop 3" or "Low Pop: 5"
-    /Low\s+Pop[:\s]*(\d{1,5})/i,
-    // "Pop Count: 8" or "Pop Count 12"
-    /Pop\s+Count[:\s]*(\d{1,5})/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      const count = parseInt(match[1], 10);
-      if (count > 0 && count < 50000) { // Sanity check
-        // This is likely the PSA 10 population
-        // We don't have total from listing, so return null for total
-        return { psa10: count, total: null };
-      }
-    }
-  }
-
-  return null;
-}
-```
-
-### 2.2 Update normalizeItem Function
-
-Modify `normalizeItem` to capture `shortDescription` and extract pop data:
-
-```typescript
-function normalizeItem(item: any): EbayItem {
-  // ... existing code ...
-
-  // NEW: Extract population data from listing
-  const popExtracted = extractPopulationFromListing(
-    item.title, 
-    item.shortDescription
-  );
+  // ... existing skip logic ...
   
-  let popData = undefined;
-  if (popExtracted && popExtracted.psa10 !== null) {
-    popData = {
-      psa10: popExtracted.psa10,
-      total: popExtracted.total,
-      gemRate: null, // Cannot calculate without total
-      source: 'listing' as const,
+  // NEW: If popData is available, use it directly (no API call)
+  if (item.popData?.psa10 !== null && item.popData?.psa10 !== undefined) {
+    ratedIds.current.add(item.itemId);
+    const psa10Count = item.popData.psa10;
+    
+    // Calculate likelihood based on pop count
+    // Low pop (<10) = rare = High interest, but doesn't mean high gem rate
+    // We use the count for display, but can't calculate % without total
+    const result: GemRateResult = {
+      listingId: item.itemId,
+      gemRate: null, // Cannot calculate without total graded
+      psa10Likelihood: psa10Count <= 5 ? 'High' : psa10Count <= 20 ? 'Medium' : 'Low',
+      confidence: 1.0,  // We know this is real data
+      dataPoints: psa10Count,
+      qcRating: 'good',
+      qcNotes: `PSA 10 Population: ${psa10Count} (from listing)`,
+      source: 'eBay Listing',
+      matchType: 'exact',
+      modifiersApplied: [],
+      analysisMethod: 'historical_data',
+      isRealData: true,
+      psa10Count: psa10Count,
     };
+    
+    setGemRates(prev => {
+      const next = new Map(prev);
+      next.set(item.itemId, { loading: false, result });
+      return next;
+    });
+    return;
   }
+  
+  // ... existing edge function call logic ...
+}, []);
+```
 
-  return {
-    itemId: item.itemId,
-    title: item.title,
-    // ... existing fields ...
-    popData, // NEW
-  };
+---
+
+## Phase 3: Update GemRateBadge UI
+
+**File:** `src/components/GemRateBadge.tsx`
+
+Display differently when we have real pop data vs estimates:
+
+```tsx
+// NEW: Real pop data display
+if (result.isRealData && result.psa10Count !== undefined) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className={cn(
+          "flex items-center gap-1.5 px-2 py-1 rounded-md cursor-help",
+          "backdrop-blur-sm shadow-sm border",
+          "text-xs font-medium",
+          "hover:brightness-110 transition-all",
+          "border-blue-500/30 bg-blue-500/10 text-blue-400",
+          className
+        )}>
+          <Database className="h-3 w-3" />
+          <span>Pop: {result.psa10Count}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent>
+        <GemRateBreakdown result={result} />
+      </PopoverContent>
+    </Popover>
+  );
 }
 ```
 
 ---
 
-## Phase 3: Update Edge Function Interface
+## Phase 4: Update GemRateBreakdown Component
 
-**File:** `supabase/functions/ebay-search/index.ts`
+**File:** `src/components/GemRateBreakdown.tsx`
 
-Update the internal `EbayItem` interface to match:
+Add special display for real pop data:
 
-```typescript
-interface EbayItem {
-  itemId: string;
-  title: string;
-  price: { value: string; currency: string };
-  shipping?: { value: string; currency: string };
-  condition: string;
-  buyingOption: 'AUCTION' | 'FIXED_PRICE' | 'UNKNOWN';
-  endDate?: string;
-  imageUrl?: string;
-  additionalImages?: string[];
-  itemUrl?: string;
-  seller?: string;
-  // NEW
-  popData?: {
-    psa10: number | null;
-    total: number | null;
-    gemRate: number | null;
-    source: 'listing';
-  };
+```tsx
+// Real pop data from listing
+if (result.isRealData && result.psa10Count !== undefined) {
+  return (
+    <div className="space-y-3 min-w-[240px]">
+      <div className="flex items-center gap-2">
+        <Database className="h-5 w-5 text-blue-500" />
+        <div>
+          <div className="font-semibold text-lg">
+            PSA 10 Pop: {result.psa10Count}
+          </div>
+          <div className="text-xs text-muted-foreground">From eBay Listing</div>
+        </div>
+      </div>
+      
+      <div className="pt-2 border-t border-border/50">
+        <p className="text-sm text-muted-foreground">
+          This population count was extracted directly from the listing. 
+          Lower pop means fewer PSA 10 copies exist.
+        </p>
+        <div className="mt-2 text-xs text-muted-foreground">
+          <div className="flex justify-between">
+            <span className="text-green-500">Low Pop (1-5):</span>
+            <span>Very rare</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-yellow-500">Medium (6-20):</span>
+            <span>Uncommon</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">High (20+):</span>
+            <span>Common</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 ```
 
 ---
 
-## Phase 4: Display Pop Data in UI (Optional Enhancement)
+## Phase 5: Remove Redundant Pop Badge
 
 **File:** `src/components/ListingCard.tsx`
 
-Add a small badge when pop data is extracted from listing:
+Since the gem rate badge now shows pop data when available, remove the separate "Pop: X" badge to avoid duplication:
 
 ```tsx
-{item.popData?.psa10 && (
-  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-    Pop: {item.popData.psa10}
-  </Badge>
-)}
+// REMOVE this section:
+// {item.popData?.psa10 && (
+//   <Badge variant="outline" ...>Pop: {item.popData.psa10}</Badge>
+// )}
 ```
 
 ---
 
 ## Summary of Changes
 
-| File | Action |
-|------|--------|
-| `src/types/ebay.ts` | Add `popData` optional field to `EbayItem` interface |
-| `supabase/functions/ebay-search/index.ts` | Add `extractPopulationFromListing()` function |
-| `supabase/functions/ebay-search/index.ts` | Update `normalizeItem()` to extract and include pop data |
-| `src/components/ListingCard.tsx` | Display pop badge when data available |
+| File | Changes |
+|------|---------|
+| `src/types/gemScore.ts` | Add `isRealData` and `psa10Count` fields |
+| `src/hooks/useGemRates.ts` | Check for `popData` before calling edge function |
+| `src/components/GemRateBadge.tsx` | Add real data display mode with Database icon |
+| `src/components/GemRateBreakdown.tsx` | Add real pop data breakdown section |
+| `src/components/ListingCard.tsx` | Remove redundant Pop badge |
 
 ---
 
 ## Benefits
 
-1. **Zero cost** - Uses data already in eBay API response
-2. **No rate limits** - No external API calls required  
-3. **Real-time** - Data extracted during normal search flow
-4. **Non-blocking** - If no pop data found, nothing breaks
-5. **Complements Firecrawl** - Provides immediate data while Firecrawl handles deeper lookups
-
----
-
-## Common Seller Pop Formats Covered
-
-| Format | Example |
-|--------|---------|
-| `POP X` | "2023 Bowman Chrome POP 5" |
-| `Pop: X` | "PSA 10 Pop: 12 Rare!" |
-| `PSA 10 Pop X` | "PSA 10 Pop 3 Low Pop!" |
-| `Population: X` | "Population: 8 - Rare Card" |
-| `Low Pop X` | "Low Pop 4 Investment Grade" |
-| `Pop Count: X` | "Pop Count: 15 Gem Mint" |
-
+1. **No API call needed** when pop data is in listing - faster UI
+2. **Real data indicator** - users know when data is accurate vs estimated
+3. **Unified UI** - single badge shows gem rate or pop data, not both
+4. **Zero cost** - uses data already extracted during search
