@@ -34,5 +34,5 @@ export interface SearchParams {
   buyingOptions?: 'ALL' | 'AUCTION';
 }
 
-export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'graded' | 'raw';
+export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'raw';
 export type BuyingOption = 'ALL' | 'AUCTION';
