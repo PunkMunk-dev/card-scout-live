@@ -36,6 +36,44 @@ function getGemRateColor(rate: number): string {
 }
 
 export function GemRateBreakdown({ result }: GemRateBreakdownProps) {
+  // Real pop data from listing display
+  if (result.isRealData && result.psa10Count !== undefined) {
+    return (
+      <div className="space-y-3 min-w-[240px]">
+        <div className="flex items-center gap-2">
+          <Database className="h-5 w-5 text-blue-500" />
+          <div>
+            <div className="font-semibold text-lg">
+              PSA 10 Pop: {result.psa10Count}
+            </div>
+            <div className="text-xs text-muted-foreground">From eBay Listing</div>
+          </div>
+        </div>
+        
+        <div className="pt-2 border-t border-border/50">
+          <p className="text-sm text-muted-foreground">
+            This population count was extracted directly from the listing. 
+            Lower pop means fewer PSA 10 copies exist.
+          </p>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <div className="flex justify-between">
+              <span className="text-green-500">Low Pop (1-5):</span>
+              <span>Very rare</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-yellow-500">Medium (6-20):</span>
+              <span>Uncommon</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">High (20+):</span>
+              <span>Common</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   // Certified grade display
   if (result.certifiedGrade) {
     return (

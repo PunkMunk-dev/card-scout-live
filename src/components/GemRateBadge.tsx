@@ -1,4 +1,4 @@
-import { TrendingUp, Loader2, Award } from "lucide-react";
+import { TrendingUp, Loader2, Award, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -69,6 +69,36 @@ export function GemRateBadge({ state, className }: GemRateBadgeProps) {
           )}>
             <Award className="h-3 w-3" />
             <span>{result.certifiedGrade.company} {result.certifiedGrade.grade}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent side="bottom" align="start" className="w-auto p-4">
+          <GemRateBreakdown result={result} />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+  
+  // Real pop data from listing - show special badge
+  if (result.isRealData && result.psa10Count !== undefined) {
+    const popColors: Record<string, string> = {
+      High: 'border-green-500/30 bg-green-500/10 text-green-400',
+      Medium: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
+      Low: 'border-border/50 bg-background/90 text-muted-foreground'
+    };
+    
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-md cursor-help",
+            "backdrop-blur-sm shadow-sm border",
+            "text-xs font-medium",
+            "hover:brightness-110 transition-all",
+            popColors[result.psa10Likelihood],
+            className
+          )}>
+            <Database className="h-3 w-3" />
+            <span>Pop: {result.psa10Count}</span>
           </button>
         </PopoverTrigger>
         <PopoverContent side="bottom" align="start" className="w-auto p-4">

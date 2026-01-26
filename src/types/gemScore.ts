@@ -47,6 +47,10 @@ export interface GemRateResult {
   
   // Error state
   error?: string;
+  
+  // Real data from listing (when popData is extracted)
+  isRealData?: boolean;
+  psa10Count?: number;
 }
 
 export interface GemRateState {
