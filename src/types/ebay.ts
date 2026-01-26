@@ -10,12 +10,12 @@ export interface EbayItem {
   additionalImages?: string[];  // For multi-image grading (front + back)
   itemUrl?: string;
   seller?: string;
-  // Extracted population data from listing title/description
+  // Extracted population data from listing title/description or graded lookup
   popData?: {
     psa10: number | null;
     total: number | null;
     gemRate: number | null;
-    source: 'listing';
+    source: 'listing' | 'graded_lookup';
   };
 }
 

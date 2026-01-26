@@ -48,10 +48,11 @@ export interface GemRateResult {
   // Error state
   error?: string;
   
-  // Real data from listing (when popData is extracted)
+  // Real data from listing or graded lookup (when popData is extracted)
   isRealData?: boolean;
   psa10Count?: number;
   totalCount?: number;  // Total graded cards when available
+  popDataSource?: 'listing' | 'graded_lookup';  // Source of population data
 }
 
 export interface GemRateState {
