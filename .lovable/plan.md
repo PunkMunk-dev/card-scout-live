@@ -1,44 +1,69 @@
 
-# Fix Price: Low-High Sort to Show All Listings
+# Remove Graded Sort Option
 
-## Problem
+## Summary
 
-When sorting by "Price: Low-High", only 1 card is displayed instead of all available listings.
+Remove the "Graded" and "Graded Cards" sort options from both buying format modes (ALL and AUCTION).
 
-**Root Cause**: The eBay API returns completely different (and fewer) results when using `sort=price` vs `sort=bestMatch`. For specific card queries, the price-sorted results from eBay contain mostly unrelated items that get filtered out by the query matching logic.
+## Changes
 
-## Solution
+### 1. `src/components/SearchFilters.tsx`
 
-For `price_asc` sort, fetch results using `bestMatch` first (to get all relevant cards), then sort them by price client-side.
+**Lines 39 and 45:** Remove the graded SelectItem options
 
-## Change
-
-**File:** `supabase/functions/ebay-search/index.ts`
-
-**Line 200-208:** Update `getSortParam` function to use `bestMatch` for `price_asc`:
-
-```typescript
-function getSortParam(sort: string): string {
-  switch (sort) {
-    case 'price_asc':
-      return 'bestMatch';  // Changed from 'price' - client will sort
-    case 'end_soonest':
-      return 'endingSoonest';
-    case 'raw':
-      return 'bestMatch';
-    case 'graded':
-      return 'bestMatch';
-    case 'best':
-    default:
-      return 'bestMatch';
-  }
-}
+```diff
+  {buyingOption === "ALL" && (
+    <>
+      <SelectItem value="best">Best Match</SelectItem>
+      <SelectItem value="price_asc">Price: Low-High</SelectItem>
+-     <SelectItem value="graded">Graded</SelectItem>
+    </>
+  )}
+  {buyingOption === "AUCTION" && (
+    <>
+      <SelectItem value="raw">Raw Cards</SelectItem>
+-     <SelectItem value="graded">Graded Cards</SelectItem>
+    </>
+  )}
 ```
 
-The existing client-side price sorting at lines 447-452 will then correctly order ALL relevant cards by price.
+### 2. `src/types/ebay.ts`
 
-## Expected Result
+**Line 37:** Remove 'graded' from SortOption type
 
-- Price: Low-High will show all 24+ cards (same as Best Match)
-- Cards will be correctly ordered from lowest to highest price
-- All relevant variations of the card will appear
+```diff
+- export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'graded' | 'raw';
++ export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'raw';
+```
+
+### 3. `src/pages/Index.tsx`
+
+**Lines 107-112:** Update the buying option change handler to remove graded check
+
+```diff
+  if (newOption === "AUCTION") {
+-   // When switching to Auction, default to "Raw Cards - Ending Soon" unless already on "graded"
+-   if (sort !== "graded") {
+-     newSort = "raw";
+-     setSort(newSort);
+-   }
++   // When switching to Auction, default to "Raw Cards"
++   newSort = "raw";
++   setSort(newSort);
+  } else if (newOption === "ALL") {
+    // When switching to All, default to "Best Match" if on auction-specific sorts
+-   if (sort === "end_soonest" || sort === "raw") {
++   if (sort === "end_soonest" || sort === "raw" || sort === "graded") {
+      newSort = "best";
+      setSort(newSort);
+    }
+  }
+```
+
+Note: The edge function can keep its graded filtering logic for future use if needed, but it won't be triggered from the UI anymore.
+
+## Result
+
+- "Graded" option removed from "All" buying format
+- "Graded Cards" option removed from "Auction" buying format
+- Switching between formats will correctly default to appropriate sort options
