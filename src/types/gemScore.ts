@@ -51,6 +51,7 @@ export interface GemRateResult {
   // Real data from listing (when popData is extracted)
   isRealData?: boolean;
   psa10Count?: number;
+  totalCount?: number;  // Total graded cards when available
 }
 
 export interface GemRateState {

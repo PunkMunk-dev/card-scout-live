@@ -43,32 +43,79 @@ export function GemRateBreakdown({ result }: GemRateBreakdownProps) {
         <div className="flex items-center gap-2">
           <Database className="h-5 w-5 text-blue-500" />
           <div>
-            <div className="font-semibold text-lg">
-              PSA 10 Pop: {result.psa10Count}
-            </div>
-            <div className="text-xs text-muted-foreground">From eBay Listing</div>
+            {result.gemRate !== null ? (
+              <>
+                <div className="font-semibold text-lg">{result.gemRate}% Gem Rate</div>
+                <div className="text-xs text-muted-foreground">From eBay Listing</div>
+              </>
+            ) : (
+              <>
+                <div className="font-semibold text-lg">PSA 10 Pop: {result.psa10Count}</div>
+                <div className="text-xs text-muted-foreground">From eBay Listing</div>
+              </>
+            )}
           </div>
         </div>
         
+        {/* Population breakdown */}
         <div className="pt-2 border-t border-border/50">
-          <p className="text-sm text-muted-foreground">
-            This population count was extracted directly from the listing. 
-            Lower pop means fewer PSA 10 copies exist.
-          </p>
-          <div className="mt-2 text-xs text-muted-foreground">
-            <div className="flex justify-between">
-              <span className="text-green-500">Low Pop (1-5):</span>
-              <span>Very rare</span>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <span className="text-muted-foreground">PSA 10:</span>
+              <span className="ml-2 font-medium">{result.psa10Count}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-yellow-500">Medium (6-20):</span>
-              <span>Uncommon</span>
+            {result.totalCount && (
+              <div>
+                <span className="text-muted-foreground">Total:</span>
+                <span className="ml-2 font-medium">{result.totalCount}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Rate visualization if available */}
+        {result.gemRate !== null && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Gem Rate</span>
+              <span>{result.gemRate}%</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">High (20+):</span>
-              <span>Common</span>
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full transition-all",
+                  result.gemRate >= 45 ? 'bg-green-500' :
+                  result.gemRate >= 30 ? 'bg-yellow-500' : 'bg-red-500'
+                )}
+                style={{ width: `${result.gemRate}%` }}
+              />
             </div>
           </div>
+        )}
+        
+        <div className="pt-2 border-t border-border/50">
+          <p className="text-sm text-muted-foreground">
+            {result.totalCount 
+              ? `Population data extracted from listing: ${result.psa10Count} of ${result.totalCount} cards graded PSA 10.`
+              : 'PSA 10 count extracted from listing. Lower pop = fewer exist.'
+            }
+          </p>
+          {!result.totalCount && (
+            <div className="mt-2 text-xs text-muted-foreground">
+              <div className="flex justify-between">
+                <span className="text-green-500">Low Pop (1-5):</span>
+                <span>Very rare</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-yellow-500">Medium (6-20):</span>
+                <span>Uncommon</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">High (20+):</span>
+                <span>Common</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

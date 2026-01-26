@@ -86,6 +86,31 @@ export function GemRateBadge({ state, className }: GemRateBadgeProps) {
       Low: 'border-border/50 bg-background/90 text-muted-foreground'
     };
     
+    // If we have a calculated gem rate, show it prominently
+    if (result.gemRate !== null) {
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-md cursor-help",
+              "backdrop-blur-sm shadow-sm border",
+              "text-xs font-medium",
+              "hover:brightness-110 transition-all",
+              popColors[result.psa10Likelihood],
+              className
+            )}>
+              <Database className="h-3 w-3" />
+              <span>Gem: {result.gemRate}%</span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="bottom" align="start" className="w-auto p-4">
+            <GemRateBreakdown result={result} />
+          </PopoverContent>
+        </Popover>
+      );
+    }
+    
+    // Otherwise show just the pop count
     return (
       <Popover>
         <PopoverTrigger asChild>
