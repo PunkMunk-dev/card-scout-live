@@ -442,7 +442,7 @@ serve(async (req) => {
     } else if (sort === 'raw') {
       // Show only ungraded/raw cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
-    } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
+    } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc' || sort === 'end_soonest') {
       // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
     } else {
       // Default (best, end_soonest): show only raw/ungraded cards
