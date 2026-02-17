@@ -1,52 +1,45 @@
 
-# Fix: Auction Only and Buy It Now Only Still Returning No Results
+# Add "Ending Soon" Sort Option
 
-## Root Cause
+## Summary
 
-The `buyingOptions` filter is only applied **client-side** after fetching results from eBay. The eBay Browse API returns mostly `FIXED_PRICE` items by default for "bestMatch", so when we filter for `AUCTION` client-side, all items get removed.
-
-The fix is to pass the `buyingOptions` filter **to the eBay API itself** using the `filter` query parameter, so eBay returns the correct type of listings from the source.
+Add an "Ending Soon" option to the "Sort by" dropdown that shows auction listings ending soonest. The `end_soonest` value already exists in the `SortOption` type -- it just needs to be wired up in the UI and edge function.
 
 ## Changes
 
-### 1. Update `searchEbay` function signature (`supabase/functions/ebay-search/index.ts`)
+### 1. Add dropdown option (`src/components/SearchFilters.tsx`)
 
-Add a `buyingOptions` parameter to the `searchEbay` function and include it as a `filter` param in the API request:
+Add a new `SelectItem` for "Ending Soon" using the existing `end_soonest` value, placed after "Buy It Now Only":
 
-```typescript
-async function searchEbay(
-  token: string,
-  query: string,
-  limit: number,
-  offset: number,
-  sort: string,
-  buyingOptions?: 'AUCTION' | 'FIXED_PRICE'
-): Promise<{ items: any[]; total: number }>
+```
+<SelectItem value="end_soonest">Ending Soon</SelectItem>
 ```
 
-When `buyingOptions` is provided, add `filter=buyingOptions:{AUCTION}` or `filter=buyingOptions:{FIXED_PRICE}` to the URL parameters.
+### 2. Update buying format derivation (`src/pages/Index.tsx`)
 
-### 2. Pass `buyingOptions` through to the API call
-
-In the main `serve` handler, pass the `buyingOptions` value to `searchEbay()` so the eBay API filters at the source:
+Map `end_soonest` to `AUCTION` buying format since only auctions have end times:
 
 ```typescript
-const { items: rawItems, total } = await searchEbay(
-  token, query, requestLimit, offset, sortParam,
-  buyingOptions !== 'ALL' ? buyingOptions : undefined
-);
+function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
+  if (sort === 'auction_only') return 'AUCTION';
+  if (sort === 'buy_now_only') return 'FIXED_PRICE';
+  if (sort === 'end_soonest') return 'AUCTION';
+  return 'ALL';
+}
 ```
 
-### 3. Keep client-side filter as a safety net
+### 3. Edge function already supports it
 
-The existing client-side `buyingOptions` filter at lines 407-410 can remain as a fallback to catch any items that slip through, but the primary filtering will now happen server-side via the eBay API.
+The `getSortParam` function in `supabase/functions/ebay-search/index.ts` already maps `end_soonest` to `endingSoonest`, and the filtering logic already treats it as default (raw-only). We need to update the filtering so `end_soonest` shows all cards (graded + raw) since users looking at ending auctions want to see everything.
+
+Update the filtering block to include `end_soonest` alongside `auction_only`, `buy_now_only`, and `price_asc`:
+
+```
+} else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc' || sort === 'end_soonest') {
+  // Show ALL cards (both graded and raw)
+}
+```
 
 ### 4. Deploy edge function
 
-Redeploy `ebay-search` after the fix.
-
-## Expected Result
-
-- **Auction Only**: eBay API returns only auction listings, so results will populate correctly
-- **Buy It Now Only**: eBay API returns only fixed-price listings
-- **Other sort options**: No `filter` param sent, eBay returns all buying formats as before
+Redeploy `ebay-search` with the updated filtering.
