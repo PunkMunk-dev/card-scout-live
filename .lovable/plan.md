@@ -1,58 +1,52 @@
 
-# Fix: Auction Only and Raw Cards Sort Options Returning No Results
+# Fix: Auction Only and Buy It Now Only Still Returning No Results
 
-## Problem
+## Root Cause
 
-Testing revealed that **"Auction Only"** and **"Raw Cards"** sort options return zero results. Two bugs are causing this:
+The `buyingOptions` filter is only applied **client-side** after fetching results from eBay. The eBay Browse API returns mostly `FIXED_PRICE` items by default for "bestMatch", so when we filter for `AUCTION` client-side, all items get removed.
 
-### Bug 1: Edge function filtering logic
-In `supabase/functions/ebay-search/index.ts` (lines 442-444), the `else` block catches `auction_only` and `buy_now_only` and filters to only non-graded cards. This is wrong for `auction_only` and `buy_now_only` -- they should show ALL cards (both graded and raw), filtered only by buying format.
-
-### Bug 2: Over-restrictive buying format for "Raw Cards"
-In `src/pages/Index.tsx`, the `deriveBuyingOptions` function maps `raw` to `AUCTION`. This means Raw Cards only shows auction listings. Combined with the non-graded filter, the result set is too narrow. Raw Cards should show ALL buying formats (both auction and buy-it-now) but exclude graded cards.
+The fix is to pass the `buyingOptions` filter **to the eBay API itself** using the `filter` query parameter, so eBay returns the correct type of listings from the source.
 
 ## Changes
 
-### 1. Fix edge function filtering (`supabase/functions/ebay-search/index.ts`)
+### 1. Update `searchEbay` function signature (`supabase/functions/ebay-search/index.ts`)
 
-Update the graded/raw filtering section to add explicit cases for `auction_only` and `buy_now_only`:
+Add a `buyingOptions` parameter to the `searchEbay` function and include it as a `filter` param in the API request:
 
-```
-if (sort === 'graded') {
-  // ... existing graded logic unchanged ...
-} else if (sort === 'raw') {
-  // Show only ungraded/raw cards
-  normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
-} else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
-  // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
-} else {
-  // Default (best, end_soonest): show only raw/ungraded cards
-  normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
-}
+```typescript
+async function searchEbay(
+  token: string,
+  query: string,
+  limit: number,
+  offset: number,
+  sort: string,
+  buyingOptions?: 'AUCTION' | 'FIXED_PRICE'
+): Promise<{ items: any[]; total: number }>
 ```
 
-### 2. Fix buying format derivation (`src/pages/Index.tsx`)
+When `buyingOptions` is provided, add `filter=buyingOptions:{AUCTION}` or `filter=buyingOptions:{FIXED_PRICE}` to the URL parameters.
 
-Change `deriveBuyingOptions` so that `raw` uses `ALL` instead of `AUCTION`:
+### 2. Pass `buyingOptions` through to the API call
 
+In the main `serve` handler, pass the `buyingOptions` value to `searchEbay()` so the eBay API filters at the source:
+
+```typescript
+const { items: rawItems, total } = await searchEbay(
+  token, query, requestLimit, offset, sortParam,
+  buyingOptions !== 'ALL' ? buyingOptions : undefined
+);
 ```
-function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
-  if (sort === 'auction_only') return 'AUCTION';
-  if (sort === 'buy_now_only') return 'FIXED_PRICE';
-  return 'ALL';
-}
-```
 
-### 3. Deploy the edge function
+### 3. Keep client-side filter as a safety net
 
-Re-deploy `ebay-search` after the fix.
+The existing client-side `buyingOptions` filter at lines 407-410 can remain as a fallback to catch any items that slip through, but the primary filtering will now happen server-side via the eBay API.
 
-## Expected Results After Fix
+### 4. Deploy edge function
 
-| Sort Option | Buying Format Filter | Graded/Raw Filter | Expected Behavior |
-|---|---|---|---|
-| Best Match | ALL | Raw only | Default view, ungraded cards |
-| Price: Low-High | ALL | None | All cards sorted by price |
-| Auction Only | AUCTION | None | All auction listings (graded + raw) |
-| Buy It Now Only | FIXED_PRICE | None | All Buy It Now listings (graded + raw) |
-| Raw Cards | ALL | Raw only | Ungraded cards, all buying formats |
+Redeploy `ebay-search` after the fix.
+
+## Expected Result
+
+- **Auction Only**: eBay API returns only auction listings, so results will populate correctly
+- **Buy It Now Only**: eBay API returns only fixed-price listings
+- **Other sort options**: No `filter` param sent, eBay returns all buying formats as before
