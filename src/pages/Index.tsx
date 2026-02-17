@@ -14,6 +14,7 @@ import type { EbayItem, SortOption } from "@/types/ebay";
 function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
   if (sort === 'auction_only') return 'AUCTION';
   if (sort === 'buy_now_only') return 'FIXED_PRICE';
+  if (sort === 'end_soonest') return 'AUCTION';
   return 'ALL';
 }
 

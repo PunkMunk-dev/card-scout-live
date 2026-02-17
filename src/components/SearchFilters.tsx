@@ -23,6 +23,7 @@ export function SearchFilters({ sort, onSortChange }: SearchFiltersProps) {
             <SelectItem value="price_asc">Price: Low-High</SelectItem>
             <SelectItem value="auction_only">Auction Only</SelectItem>
             <SelectItem value="buy_now_only">Buy It Now Only</SelectItem>
+            <SelectItem value="end_soonest">Ending Soon</SelectItem>
             <SelectItem value="raw">Raw Cards</SelectItem>
           </SelectContent>
         </Select>
