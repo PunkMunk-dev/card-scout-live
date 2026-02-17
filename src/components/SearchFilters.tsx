@@ -1,26 +1,13 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { SortOption, BuyingOption } from "@/types/ebay";
+import type { SortOption } from "@/types/ebay";
 
 interface SearchFiltersProps {
   sort: SortOption;
   onSortChange: (sort: SortOption) => void;
-  buyingOption: BuyingOption;
-  onBuyingOptionChange: (option: BuyingOption) => void;
-  includeLots: boolean;
-  onIncludeLotsChange: (include: boolean) => void;
 }
 
-export function SearchFilters({
-  sort,
-  onSortChange,
-  buyingOption,
-  onBuyingOptionChange,
-  includeLots,
-  onIncludeLotsChange,
-}: SearchFiltersProps) {
+export function SearchFilters({ sort, onSortChange }: SearchFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-6 py-4">
       <div className="flex items-center gap-3">
@@ -28,59 +15,17 @@ export function SearchFilters({
           Sort by
         </Label>
         <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)}>
-          <SelectTrigger id="sort" className="w-44 bg-card">
+          <SelectTrigger id="sort" className="w-48 bg-card">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {buyingOption === "ALL" && (
-              <>
-                <SelectItem value="best">Best Match</SelectItem>
-                <SelectItem value="price_asc">Price: Low-High</SelectItem>
-              </>
-            )}
-            {buyingOption === "AUCTION" && (
-              <>
-                <SelectItem value="raw">Raw Cards</SelectItem>
-              </>
-            )}
+            <SelectItem value="best">Best Match</SelectItem>
+            <SelectItem value="price_asc">Price: Low-High</SelectItem>
+            <SelectItem value="auction_only">Auction Only</SelectItem>
+            <SelectItem value="buy_now_only">Buy It Now Only</SelectItem>
+            <SelectItem value="raw">Raw Cards</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Label className="text-sm font-medium text-muted-foreground">
-          Buying Format
-        </Label>
-        <ToggleGroup 
-          type="single" 
-          value={buyingOption} 
-          onValueChange={(v) => v && onBuyingOptionChange(v as BuyingOption)}
-          className="bg-secondary/50 p-1 rounded-lg"
-        >
-          <ToggleGroupItem 
-            value="ALL" 
-            className="px-4 py-2 text-sm data-[state=on]:bg-card data-[state=on]:shadow-sm rounded-md"
-          >
-            All
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="AUCTION" 
-            className="px-4 py-2 text-sm data-[state=on]:bg-card data-[state=on]:shadow-sm rounded-md"
-          >
-            Auction
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-
-      <div className="flex items-center gap-3 ml-auto">
-        <Switch
-          id="include-lots"
-          checked={includeLots}
-          onCheckedChange={onIncludeLotsChange}
-        />
-        <Label htmlFor="include-lots" className="text-sm font-medium cursor-pointer">
-          Include lots/boxes
-        </Label>
       </div>
     </div>
   );

@@ -9,7 +9,13 @@ import { ResultsHeader } from "@/components/ResultsHeader";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
 import { searchEbay } from "@/lib/ebay-api";
 import { useWatchlist } from "@/hooks/useWatchlist";
-import type { EbayItem, SortOption, BuyingOption } from "@/types/ebay";
+import type { EbayItem, SortOption } from "@/types/ebay";
+
+function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
+  if (sort === 'auction_only' || sort === 'raw') return 'AUCTION';
+  if (sort === 'buy_now_only') return 'FIXED_PRICE';
+  return 'ALL';
+}
 
 export default function Index() {
   const [query, setQuery] = useState("");
@@ -19,20 +25,15 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
-  // Filters
   const [sort, setSort] = useState<SortOption>("best");
-  const [buyingOption, setBuyingOption] = useState<BuyingOption>("ALL");
-  const [includeLots, setIncludeLots] = useState(false);
 
-  // Watchlist
   const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
 
   const performSearch = useCallback(async (
     searchQuery: string, 
     page: number = 1, 
     append: boolean = false,
-    overrides?: { sort?: SortOption; buyingOption?: BuyingOption; includeLots?: boolean }
+    overrideSort?: SortOption
   ) => {
     if (page === 1) {
       setIsLoading(true);
@@ -40,14 +41,15 @@ export default function Index() {
       setIsLoadingMore(true);
     }
 
+    const activeSort = overrideSort ?? sort;
+
     try {
       const response = await searchEbay({
         query: searchQuery,
         page,
         limit: 24,
-        sort: overrides?.sort ?? sort,
-        includeLots: overrides?.includeLots ?? includeLots,
-        buyingOptions: overrides?.buyingOption ?? buyingOption,
+        sort: activeSort,
+        buyingOptions: deriveBuyingOptions(activeSort),
       });
 
       if (append) {
@@ -70,7 +72,7 @@ export default function Index() {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, [sort, includeLots, buyingOption]);
+  }, [sort]);
 
   const handleSearch = (newQuery: string) => {
     setQuery(newQuery);
@@ -96,37 +98,7 @@ export default function Index() {
     setSort(newSort);
     if (query && hasSearched) {
       setItems([]);
-      performSearch(query, 1, false, { sort: newSort });
-    }
-  };
-
-  const handleBuyingOptionChange = (newOption: BuyingOption) => {
-    setBuyingOption(newOption);
-    
-    let newSort = sort;
-    if (newOption === "AUCTION") {
-      // When switching to Auction, default to "Raw Cards"
-      newSort = "raw";
-      setSort(newSort);
-    } else if (newOption === "ALL") {
-      // When switching to All, default to "Best Match" if on auction-specific sorts
-      if (sort === "end_soonest" || sort === "raw") {
-        newSort = "best";
-        setSort(newSort);
-      }
-    }
-    
-    if (query && hasSearched) {
-      setItems([]);
-      performSearch(query, 1, false, { sort: newSort, buyingOption: newOption });
-    }
-  };
-
-  const handleIncludeLotsChange = (include: boolean) => {
-    setIncludeLots(include);
-    if (query && hasSearched) {
-      setItems([]);
-      performSearch(query, 1, false, { includeLots: include });
+      performSearch(query, 1, false, newSort);
     }
   };
 
@@ -160,7 +132,6 @@ export default function Index() {
 
       {/* Main Content */}
       <main className="container py-6 relative">
-        {/* Gradient background for frosted glass effect */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-20 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
           <div className="absolute top-40 right-10 w-96 h-96 bg-accent/25 rounded-full blur-3xl" />
@@ -170,10 +141,6 @@ export default function Index() {
           <SearchFilters
             sort={sort}
             onSortChange={handleSortChange}
-            buyingOption={buyingOption}
-            onBuyingOptionChange={handleBuyingOptionChange}
-            includeLots={includeLots}
-            onIncludeLotsChange={handleIncludeLotsChange}
           />
         )}
 

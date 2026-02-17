@@ -30,9 +30,7 @@ export interface SearchParams {
   page?: number;
   limit?: number;
   sort?: SortOption;
-  includeLots?: boolean;
-  buyingOptions?: 'ALL' | 'AUCTION';
+  buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
 }
 
-export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'raw';
-export type BuyingOption = 'ALL' | 'AUCTION';
+export type SortOption = 'best' | 'price_asc' | 'end_soonest' | 'raw' | 'auction_only' | 'buy_now_only';
