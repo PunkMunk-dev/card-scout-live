@@ -9,7 +9,7 @@ interface SearchRequest {
   query: string;
   page?: number;
   limit?: number;
-  sort?: 'best' | 'price_asc' | 'end_soonest' | 'graded' | 'raw';
+  sort?: 'best' | 'price_asc' | 'end_soonest' | 'graded' | 'raw' | 'auction_only' | 'buy_now_only';
   includeLots?: boolean;
   buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
 }
@@ -200,13 +200,14 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
 function getSortParam(sort: string): string {
   switch (sort) {
     case 'price_asc':
-      return 'bestMatch';  // Fetch all relevant cards, then sort client-side
+      return 'bestMatch';
     case 'end_soonest':
       return 'endingSoonest';
     case 'raw':
-      return 'bestMatch'; // Show all raw cards by best match
     case 'graded':
-      return 'bestMatch'; // Use bestMatch, then filter for graded items
+    case 'auction_only':
+    case 'buy_now_only':
+      return 'bestMatch';
     case 'best':
     default:
       return 'bestMatch';
