@@ -434,13 +434,12 @@ serve(async (req) => {
         normalizedItems = fallbackItems;
       }
     } else if (sort === 'raw') {
-      // "Raw Cards - Ending Soon" - explicitly filter for ungraded cards only
+      // Show only ungraded/raw cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
-    } else if (sort === 'price_asc') {
-      // For price sort, show ALL listings (both raw and graded) ordered by price
-      // No filtering applied - all cards shown
+    } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
+      // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
     } else {
-      // For other sorts (best, end_soonest), show only raw/ungraded cards by default
+      // Default (best, end_soonest): show only raw/ungraded cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     }
     
