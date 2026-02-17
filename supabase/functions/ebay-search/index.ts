@@ -249,7 +249,8 @@ async function searchEbay(
   query: string,
   limit: number,
   offset: number,
-  sort: string
+  sort: string,
+  buyingOptions?: 'AUCTION' | 'FIXED_PRICE'
 ): Promise<{ items: any[]; total: number }> {
   const browseBase = Deno.env.get('EBAY_BROWSE_BASE') || 'https://api.ebay.com';
   const marketplaceId = Deno.env.get('EBAY_MARKETPLACE_ID') || 'EBAY_US';
@@ -260,6 +261,10 @@ async function searchEbay(
     offset: offset.toString(),
     sort: sort,
   });
+
+  if (buyingOptions) {
+    params.set('filter', `buyingOptions:{${buyingOptions}}`);
+  }
 
   const url = `${browseBase}/buy/browse/v1/item_summary/search?${params}`;
   
@@ -391,7 +396,8 @@ serve(async (req) => {
 
     const token = await getEbayToken();
     const sortParam = getSortParam(sort);
-    const { items: rawItems, total } = await searchEbay(token, query, requestLimit, offset, sortParam);
+    const apiBuyingOptions = buyingOptions !== 'ALL' ? buyingOptions : undefined;
+    const { items: rawItems, total } = await searchEbay(token, query, requestLimit, offset, sortParam, apiBuyingOptions);
 
     let normalizedItems = rawItems.map(normalizeItem);
 
