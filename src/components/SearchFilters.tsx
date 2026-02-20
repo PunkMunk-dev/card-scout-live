@@ -21,10 +21,9 @@ export function SearchFilters({ sort, onSortChange }: SearchFiltersProps) {
           <SelectContent>
             <SelectItem value="best">Best Match</SelectItem>
             <SelectItem value="price_asc">Price: Low-High</SelectItem>
-            <SelectItem value="auction_only">Auction Only</SelectItem>
-            <SelectItem value="buy_now_only">Buy It Now Only</SelectItem>
-            <SelectItem value="end_soonest">Ending Soon</SelectItem>
-            <SelectItem value="raw">Raw Cards</SelectItem>
+            <SelectItem value="auction_only">Auction</SelectItem>
+            <SelectItem value="buy_now_only">Buy It Now</SelectItem>
+            <SelectItem value="raw">Ungraded</SelectItem>
           </SelectContent>
         </Select>
       </div>
