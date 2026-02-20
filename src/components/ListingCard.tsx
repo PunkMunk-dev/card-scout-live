@@ -3,14 +3,50 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useCountdown } from "@/hooks/useCountdown";
 
 interface ListingCardProps {
   item: EbayItem;
   index: number;
   isInWatchlist?: boolean;
   onToggleWatchlist?: (item: EbayItem) => void;
+}
+
+function AuctionCountdown({ endDate }: { endDate: string }) {
+  const countdown = useCountdown(endDate);
+
+  if (!countdown) return null;
+
+  const { days, hours, minutes, seconds, isEnded, isUrgent, isWarning } = countdown;
+
+  const colorClass = isEnded
+    ? "text-muted-foreground"
+    : isUrgent
+    ? "text-destructive animate-pulse"
+    : isWarning
+    ? "text-orange-500"
+    : "text-auction";
+
+  let label: string;
+  if (isEnded) {
+    label = "Ended";
+  } else if (days > 0) {
+    label = `${days}d ${hours}h ${minutes}m`;
+  } else if (hours > 0) {
+    label = `${hours}h ${minutes}m ${seconds}s`;
+  } else if (minutes > 0) {
+    label = `${minutes}m ${seconds}s`;
+  } else {
+    label = `${seconds}s`;
+  }
+
+  return (
+    <span className={cn("flex items-center gap-1 font-medium tabular-nums", colorClass)}>
+      <Clock className="h-3 w-3 flex-shrink-0" />
+      {label}
+    </span>
+  );
 }
 
 export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: ListingCardProps) {
@@ -20,14 +56,6 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
       style: 'currency',
       currency: currency,
     }).format(num);
-  };
-
-  const getTimeRemaining = (endDate: string) => {
-    try {
-      return formatDistanceToNow(new Date(endDate), { addSuffix: true });
-    } catch {
-      return null;
-    }
   };
 
   return (
@@ -116,10 +144,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="truncate max-w-[60%]">{item.condition}</span>
           {item.endDate && item.buyingOption === 'AUCTION' && (
-            <span className="flex items-center gap-1 text-auction font-medium">
-              <Clock className="h-3 w-3" />
-              {getTimeRemaining(item.endDate)}
-            </span>
+            <AuctionCountdown endDate={item.endDate} />
           )}
         </div>
 
