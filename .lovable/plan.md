@@ -1,45 +1,97 @@
 
-# Add "Ending Soon" Sort Option
+# Add Live Countdown Timer to Auction Cards
 
-## Summary
+## Current State
 
-Add an "Ending Soon" option to the "Sort by" dropdown that shows auction listings ending soonest. The `end_soonest` value already exists in the `SortOption` type -- it just needs to be wired up in the UI and edge function.
+`ListingCard.tsx` currently shows a static time-remaining string using `formatDistanceToNow` from `date-fns`. This string is computed once on render and **never updates** — so a user can leave the page open and the timer stays frozen.
+
+## Goal
+
+Replace the static time display with a **live countdown timer** that:
+- Ticks every second showing `Xd Xh Xm Xs` format
+- Color-codes by urgency: green (> 1 hour) → orange (15–60 min) → red + pulsing (< 15 min)
+- Shows "Ended" when the auction has passed
+- Cleans up its interval when the card unmounts (no memory leaks)
+
+---
 
 ## Changes
 
-### 1. Add dropdown option (`src/components/SearchFilters.tsx`)
+### 1. Create `src/hooks/useCountdown.ts` (new file)
 
-Add a new `SelectItem` for "Ending Soon" using the existing `end_soonest` value, placed after "Buy It Now Only":
-
-```
-<SelectItem value="end_soonest">Ending Soon</SelectItem>
-```
-
-### 2. Update buying format derivation (`src/pages/Index.tsx`)
-
-Map `end_soonest` to `AUCTION` buying format since only auctions have end times:
+A reusable hook that accepts an ISO date string and returns a live-updating countdown object:
 
 ```typescript
-function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
-  if (sort === 'auction_only') return 'AUCTION';
-  if (sort === 'buy_now_only') return 'FIXED_PRICE';
-  if (sort === 'end_soonest') return 'AUCTION';
-  return 'ALL';
+import { useState, useEffect } from 'react';
+
+interface CountdownResult {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isEnded: boolean;
+  isUrgent: boolean;   // < 15 minutes
+  isWarning: boolean;  // 15–60 minutes
+  totalSeconds: number;
+}
+
+export function useCountdown(endDate: string | undefined): CountdownResult | null {
+  // ...sets up a setInterval that fires every second
+  // ...calculates d/h/m/s from diff between now and endDate
+  // ...returns null if no endDate provided
+  // ...clears interval on unmount
 }
 ```
 
-### 3. Edge function already supports it
+### 2. Update `src/components/ListingCard.tsx`
 
-The `getSortParam` function in `supabase/functions/ebay-search/index.ts` already maps `end_soonest` to `endingSoonest`, and the filtering logic already treats it as default (raw-only). We need to update the filtering so `end_soonest` shows all cards (graded + raw) since users looking at ending auctions want to see everything.
+Replace `getTimeRemaining` + the static `<span>` with the `useCountdown` hook and a new `AuctionCountdown` sub-component:
 
-Update the filtering block to include `end_soonest` alongside `auction_only`, `buy_now_only`, and `price_asc`:
+**Remove:**
+```typescript
+import { formatDistanceToNow } from "date-fns";
+
+const getTimeRemaining = (endDate: string) => { ... };
+
+// and the JSX:
+<span className="flex items-center gap-1 text-auction font-medium">
+  <Clock className="h-3 w-3" />
+  {getTimeRemaining(item.endDate)}
+</span>
+```
+
+**Add:**
+- Import `useCountdown` hook
+- New `AuctionCountdown` component that renders the live timer with color-coded urgency:
 
 ```
-} else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc' || sort === 'end_soonest') {
-  // Show ALL cards (both graded and raw)
-}
+// Color logic:
+isEnded    → muted gray "Ended"
+isUrgent   → red + animate-pulse  (< 15 min)
+isWarning  → orange/amber         (15–60 min)
+default    → auction red (existing color)
+
+// Format:
+- > 1 day:   "2d 4h 30m"
+- < 1 day:   "4h 30m 12s"
+- < 1 hour:  "30m 12s"  (with urgency color)
+- < 1 min:   "45s"      (full urgency)
 ```
 
-### 4. Deploy edge function
+The timer displays inline where the static time currently sits — same card position, but now it ticks live.
 
-Redeploy `ebay-search` with the updated filtering.
+---
+
+## Implementation Details
+
+- `setInterval` at 1000ms inside `useEffect`, cleaned up with `clearInterval` on unmount
+- The hook re-renders the component every second — only auction cards with an `endDate` pay this cost
+- No new dependencies needed (`date-fns` import for `formatDistanceToNow` can be removed from `ListingCard.tsx` entirely since the hook handles all time math natively)
+- The `AuctionCountdown` component is a small inline component inside the same file — no separate file needed for it
+
+---
+
+## Files Changed
+
+- `src/hooks/useCountdown.ts` — new file, the countdown logic
+- `src/components/ListingCard.tsx` — swap static time for live timer component
