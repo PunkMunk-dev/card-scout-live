@@ -9,7 +9,7 @@ interface SearchRequest {
   query: string;
   page?: number;
   limit?: number;
-  sort?: 'best' | 'price_asc' | 'end_soonest' | 'graded' | 'raw' | 'auction_only' | 'buy_now_only';
+  sort?: 'best' | 'price_asc' | 'graded' | 'raw' | 'auction_only' | 'buy_now_only';
   includeLots?: boolean;
   buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
 }
@@ -197,21 +197,8 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
   return nameTermsMatch && otherTermsMatch;
 }
 
-function getSortParam(sort: string): string {
-  switch (sort) {
-    case 'price_asc':
-      return 'bestMatch';
-    case 'end_soonest':
-      return 'endingSoonest';
-    case 'raw':
-    case 'graded':
-    case 'auction_only':
-    case 'buy_now_only':
-      return 'bestMatch';
-    case 'best':
-    default:
-      return 'bestMatch';
-  }
+function getSortParam(_sort: string): string {
+  return 'bestMatch';
 }
 
 async function getEbayToken(): Promise<string> {
@@ -442,10 +429,10 @@ serve(async (req) => {
     } else if (sort === 'raw') {
       // Show only ungraded/raw cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
-    } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc' || sort === 'end_soonest') {
+    } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
       // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
     } else {
-      // Default (best, end_soonest): show only raw/ungraded cards
+      // Default (best): show only raw/ungraded cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     }
     
