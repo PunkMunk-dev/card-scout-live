@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import type { EbayListing } from '@/types/tcg';
 import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 import { tcgListingToEbayItem } from '@/lib/watchlistAdapters';
+import { cleanListingTitle } from '@/lib/cleanTitle';
 
 interface TerminalCardProps {
   listing: EbayListing;
@@ -86,7 +87,7 @@ export function TerminalCard({ listing }: TerminalCardProps) {
               onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                await navigator.clipboard.writeText(cleanTitle);
+                await navigator.clipboard.writeText(cleanListingTitle(listing.title));
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}

@@ -6,6 +6,7 @@ import { SoldCompsDialog } from './SoldCompsDialog';
 import { GemRateBadge } from './GemRateBadge';
 import { WatchlistStar } from './WatchlistStar';
 import { buildEbaySoldPsa10Url, buildGemRateUrl } from '@/lib/sportsCardsProUrl';
+import { cleanListingTitle } from '@/lib/cleanTitle';
 import type { EbayListing } from '@/types/sportsEbay';
 
 const GRADING_COST = 25;
@@ -95,7 +96,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
               </div>
             )}
             <div className="flex items-center justify-end pt-1 border-t border-border">
-              <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); await navigator.clipboard.writeText(listing.title); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+              <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); await navigator.clipboard.writeText(cleanListingTitle(listing.title)); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 className="w-8 h-8 flex items-center justify-center rounded-md bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all">
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </button>
