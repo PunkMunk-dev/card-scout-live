@@ -1,65 +1,104 @@
 
 
-# Fix: Sports Lab Guided Search Infinite Loop + Code Cleanup
+# Clean Up Copied Card Names for Better Card Finder Results
 
-## Problems Found
+## Problem
+When copying a card title from Sports Lab or TCG Lab listings, the raw eBay listing title is copied with all the seller noise -- grading references (PSA 10, BGS 9.5), shipping promos (FREE SHIPPING), seller tags, card numbers (#123), emojis, and filler words (INVEST, HOT, RARE). Pasting this into Card Finder produces poor search results because the eBay API chokes on the extra keywords.
 
-### 1. Guided Search Infinite Loop (Critical)
-The guided search in Sports Lab has the same infinite loop bug that was fixed for quick search. In `SportsLab.tsx`, two arrays are derived inline on every render without memoization:
+**Example**: "PSA 10 One Piece card Chinese Boa Hancock OP07-051 2nd Anniversary Exclusive" copies as-is, but a cleaner version like "One Piece Boa Hancock OP07-051 2nd Anniversary" would yield much better results.
 
-```
-line 44: const selectedPlayerNames = filteredPlayers.filter(...).map(p => p.name);
-line 47: const selectedTraitLabels = filteredRuleItems.filter(...).map(ri => ri.label);
-```
+## Solution
+Create a shared `cleanListingTitle` utility function and use it in both card components' copy buttons.
 
-These arrays get **new references on every render** and are passed to `ResultsGrid`, which uses them as `useMemo` dependencies. Since JavaScript compares arrays by reference, the memo recalculates every render, creating a new `searchParams` object, which triggers the search effect, which updates state, which re-renders, which creates new arrays -- infinite loop.
+### File 1: `src/lib/cleanTitle.ts` (new)
+Create a shared utility that strips common eBay listing noise from titles:
 
-### 2. Broken Indentation in EbayResultsPanel.tsx
-The last edit introduced incorrect indentation on lines 57-60 of the search effect. The logic is correct but the formatting is broken.
-
-## Fix Plan
-
-### File 1: `src/pages/SportsLab.tsx`
-Wrap `selectedPlayerNames` and `selectedTraitLabels` in `useMemo` so their references stay stable between renders:
-
-```typescript
-// Before (new array every render)
-const selectedPlayerNames = filteredPlayers.filter(p => state.selected_player_ids.includes(p.id)).map(p => p.name);
-const selectedTraitLabels = filteredRuleItems.filter(ri => ri.kind === 'trait' && ...).map(ri => ri.label);
-
-// After (stable reference)
-const selectedPlayerNames = useMemo(() =>
-  filteredPlayers.filter(p => state.selected_player_ids.includes(p.id)).map(p => p.name),
-  [filteredPlayers, state.selected_player_ids]
-);
-const selectedTraitLabels = useMemo(() =>
-  filteredRuleItems.filter(ri => ri.kind === 'trait' && state.selected_rule_item_ids.includes(ri.id)).map(ri => ri.label),
-  [filteredRuleItems, state.selected_rule_item_ids]
-);
-```
-
-### File 2: `src/components/sports-lab/EbayResultsPanel.tsx`
-Fix the broken indentation in the search effect (lines 51-60) so it reads correctly:
+- Remove grading references: PSA, BGS, SGC, CGC, GMA, HGA, etc. + grade numbers (e.g. "PSA 10", "BGS 9.5")
+- Remove seller promo phrases: "FREE SHIPPING", "SHIPS FREE", "FAST SHIPPING", "MUST SEE", "INVEST", "HOT", "FIRE", "RARE", "L@@K", "WOW", "NM", "MINT"
+- Remove population data: "POP 5", "Pop 5/100", "LOW POP", "Population 15"
+- Remove card numbering noise: "#123", "No. 45" (but keep set identifiers like "OP07-051")
+- Remove emojis and special unicode characters
+- Remove parenthetical seller notes like "(Read Description)"
+- Collapse whitespace and trim
+- No arbitrary truncation -- keep the meaningful card name intact
 
 ```typescript
-useEffect(() => {
-  if (!searchParams.playerName) return;
-  const key = JSON.stringify({ playerName: searchParams.playerName, brand: searchParams.brand, traits: searchParams.traits });
-  if (key !== lastSearchRef.current) {
-    lastSearchRef.current = key;
-    loadAllTriggeredRef.current = false;
-    search(searchParams);
-  }
-  return () => { lastSearchRef.current = ''; };
-}, [searchParams, search]);
+export function cleanListingTitle(title: string): string {
+  let cleaned = title;
+
+  // Remove emojis
+  cleaned = cleaned
+    .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')
+    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '');
+
+  // Remove grading company + grade patterns (PSA 10, BGS 9.5, SGC 98, etc.)
+  cleaned = cleaned.replace(/\b(PSA|BGS|SGC|CGC|GMA|HGA|CSG|KSA|MNT|BCCG|ACE|TAG|AGS|CGA|CCIC)\s*\d+\.?\d*\b/gi, '');
+  // Remove standalone grading keywords
+  cleaned = cleaned.replace(/\b(graded|slab|slabbed|authenticated|gem\s*mint|gem-mint)\b/gi, '');
+
+  // Remove population data
+  cleaned = cleaned.replace(/\b(low\s+)?pop(ulation)?[:\s]*\d+(\s*[\/]\s*\d+)?(\s+of\s+\d+)?\b/gi, '');
+
+  // Remove seller promo phrases
+  cleaned = cleaned.replace(/\b(free\s+shipping|ships?\s+free|fast\s+ship(ping)?|must\s+see|invest|hot|fire|rare|wow|l@@k|look|📈|🔥)\b/gi, '');
+
+  // Remove parenthetical notes like (Read Description), (PSA 10), etc.
+  cleaned = cleaned.replace(/\([^)]{0,40}\)/g, '');
+
+  // Remove standalone card condition shorthand
+  cleaned = cleaned.replace(/\b(NM|NM\+|NM-MT|MINT|NEAR MINT|EX|VG|GOOD)\b/gi, '');
+
+  // Remove hash card numbers like #123 but keep set IDs like OP07-051
+  cleaned = cleaned.replace(/#\d+\b/g, '');
+
+  // Remove trailing/leading dashes, pipes, slashes used as separators
+  cleaned = cleaned.replace(/[|~]/g, ' ');
+
+  // Collapse whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+  // Remove leading/trailing punctuation
+  cleaned = cleaned.replace(/^[\s\-–—,]+|[\s\-–—,]+$/g, '').trim();
+
+  return cleaned;
+}
 ```
+
+### File 2: `src/components/sports-lab/EbayListingCard.tsx`
+Replace `listing.title` in the copy handler with `cleanListingTitle(listing.title)`:
+
+```typescript
+// Line 98: Change from
+await navigator.clipboard.writeText(listing.title);
+// To
+await navigator.clipboard.writeText(cleanListingTitle(listing.title));
+```
+
+Import `cleanListingTitle` from `@/lib/cleanTitle`.
+
+### File 3: `src/components/tcg-lab/TerminalCard.tsx`
+Replace the inline `cleanTitle` (emoji strip + 60-char truncation) used for copying with `cleanListingTitle`:
+
+```typescript
+// Line 89: Change from
+await navigator.clipboard.writeText(cleanTitle);
+// To
+await navigator.clipboard.writeText(cleanListingTitle(listing.title));
+```
+
+Keep the existing `cleanTitle` variable for display purposes (it's used in the card UI and link URLs), but use the deeper-cleaned version for clipboard.
+
+Import `cleanListingTitle` from `@/lib/cleanTitle`.
 
 ## Technical Summary
 
-| File | Change | Why |
-|------|--------|-----|
-| `src/pages/SportsLab.tsx` | Memoize `selectedPlayerNames` and `selectedTraitLabels` | Prevents new array references every render, breaking the infinite loop for guided search |
-| `src/components/sports-lab/EbayResultsPanel.tsx` | Fix indentation on lines 57-60 | Cosmetic fix from previous edit's broken formatting |
-
-No changes needed to Card Finder (`Index.tsx`) or TCG Lab (`TcgLab.tsx`) -- both are functioning correctly.
+| File | Change |
+|------|--------|
+| `src/lib/cleanTitle.ts` | New shared utility -- strips grading, promos, pop data, emojis, card numbers from eBay titles |
+| `src/components/sports-lab/EbayListingCard.tsx` | Use `cleanListingTitle()` in copy button instead of raw `listing.title` |
+| `src/components/tcg-lab/TerminalCard.tsx` | Use `cleanListingTitle()` in copy button instead of truncated `cleanTitle` |
 
