@@ -184,8 +184,8 @@ export function TcgHeader({
               )}
             </div>
           </div>
-          {summaryBar}
         </div>
+        {summaryBar}
       </div>
     );
   }
@@ -212,8 +212,10 @@ export function TcgHeader({
               {watchlistButton}
             </div>
           </div>
-          {summaryBar}
         </div>
+      </div>
+      <div className="max-w-6xl mx-auto">
+        {summaryBar}
       </div>
     </div>
   );
