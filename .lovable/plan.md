@@ -1,39 +1,62 @@
 
 
-# TCG Lab: Pokémon-themed Empty State Background + Tooltip
+# Match Sports Lab Watchlist Button to TCG Lab Style
 
-## 1. Pokémon-themed Background for Empty State
+## What Changes
 
-Replace the plain white/background empty state with a subtle Pokémon-themed decorative background. Since no background images exist in the project, we'll use CSS-rendered decorative elements -- large, faded Pokéball SVG silhouettes scattered behind the empty state content, similar to how the Card Finder previously had decorative blur circles.
+The Sports Lab watchlist button currently shows a yellow star with "Watchlist" text and a count in parentheses. The TCG Lab uses a minimal grey star icon (no text, no "Watchlist" wording) with an optional small badge for the count. We'll match that pattern.
 
-**File: `src/components/tcg-lab/TcgEmptyState.tsx`**
+## Technical Details
 
-- Wrap the empty state in a `relative overflow-hidden` container
-- Add 2-3 large, faded `PokeballIcon` elements positioned absolutely behind the content at ~3-5% opacity
-- These decorative pokéballs will be scattered at different sizes and rotations to create a subtle branded background
-- When `selectedGame` is `one_piece`, use the `StrawHatIcon` instead, keeping the theming game-aware
-- When no game is selected, show Pokéball icons as the default (since Pokémon is the primary TCG)
+**File: `src/components/sports-lab/QueryHeader.tsx`**
 
-Example layout of decorative elements:
-- Top-right: large (w-64 h-64) Pokéball at 4% opacity, rotated 15deg
-- Bottom-left: medium (w-48 h-48) Pokéball at 3% opacity, rotated -20deg
-- Center-left: small (w-32 h-32) Pokéball at 5% opacity, rotated 30deg
+Two locations need updating:
 
-## 2. Tooltip on Empty State Title
+### Desktop (line 95-97)
+Current:
+```tsx
+<Button variant={watchlistOpen ? 'default' : 'ghost'} size="sm" onClick={onWatchlistToggle} className="h-9 px-3 gap-2">
+  <Star className="h-4 w-4 text-yellow-500" />Watchlist{watchlistCount > 0 && <span ...>{watchlistCount}</span>}
+</Button>
+```
 
-Add a tooltip to the empty state that says: **"Select a TCG for guided or use quick search to search market"**
+Change to:
+```tsx
+<Button variant="ghost" size="sm" onClick={onWatchlistToggle} className="h-8 gap-1.5 text-muted-foreground hover:text-foreground">
+  <Star className="h-3.5 w-3.5" />
+  {watchlistCount > 0 && (
+    <Badge variant="outline" className="h-4 min-w-4 justify-center px-1 text-[9px] font-mono">{watchlistCount}</Badge>
+  )}
+</Button>
+```
 
-**File: `src/components/tcg-lab/TcgEmptyState.tsx`**
+### Mobile (line 71-73)
+Current:
+```tsx
+<Button variant={watchlistOpen ? 'default' : 'outline'} size="sm" onClick={onWatchlistToggle} className="gap-1.5">
+  <Star className="h-3.5 w-3.5 text-yellow-500" />Watchlist{watchlistCount > 0 && ` (${watchlistCount})`}
+</Button>
+```
 
-- Import `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` from `@/components/ui/tooltip`
-- Wrap the title + subtitle block in a `Tooltip` component
-- The tooltip trigger will be the icon container (the round circle with the Terminal/Crosshair/Anchor icon)
-- Tooltip content: "Select a TCG for guided or use quick search to search market"
-- Use `side="bottom"` so it appears below the icon
+Change to:
+```tsx
+<Button variant="ghost" size="sm" onClick={onWatchlistToggle} className="h-8 gap-1.5 text-muted-foreground hover:text-foreground">
+  <Star className="h-3.5 w-3.5" />
+  {watchlistCount > 0 && (
+    <Badge variant="outline" className="h-4 min-w-4 justify-center px-1 text-[9px] font-mono">{watchlistCount}</Badge>
+  )}
+</Button>
+```
 
-## Files Changed
+### Import
+Add `Badge` import from `@/components/ui/badge` to the file.
 
-| File | Change |
+## Summary
+
+| Change | Detail |
 |---|---|
-| `src/components/tcg-lab/TcgEmptyState.tsx` | Add decorative Pokéball/StrawHat background icons + tooltip on the icon |
+| Remove yellow star color | Use default `text-muted-foreground` instead of `text-yellow-500` |
+| Remove "Watchlist" text | Icon-only button, matching TCG Lab |
+| Replace count format | Use `Badge` component instead of inline text/span |
+| Match button styling | `variant="ghost"`, `h-8`, `text-muted-foreground hover:text-foreground` |
 
