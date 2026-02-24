@@ -1,50 +1,98 @@
 
 
-# Speed Up Sports Lab Search + Fix Player-Only Search
+# Add "Load More" to TCG Lab + Verify Sports Lab
 
-## Problem 1: Search doesn't visually trigger until player AND brand are selected
-Even though the code logic already sets `show_all_brands: true` when a player is first selected, there's a **400ms debounce** delay during which the UI shows "No listings found" instead of a loading skeleton. The `isLoading` flag is only set *inside* the debounce callback (after 400ms), so for that initial period the component renders with `isLoading=false` and `listings=[]`, which triggers the "No listings found" empty state.
+## Summary
 
-## Problem 2: 400ms debounce is unnecessary for guided clicks
-The debounce exists to handle rapid typing in quick-search mode. For guided mode (dropdown clicks), there's no need to debounce -- the search should fire immediately.
+The TCG Lab currently fetches only 100 listings with no way to load more. The Sports Lab already has "Load more" functionality built in. This plan adds pagination support to the TCG Lab and ensures both labs have a visible, working "Load more" button.
 
 ## Changes
 
-### 1. Set `isLoading` immediately in `useSportsEbaySearch.ts`
-Move `setIsLoading(true)` out of the `setTimeout` callback so the loading skeleton appears the instant `search()` is called, not 400ms later.
+### 1. Add `offset` support to the TCG eBay edge function
 
-### 2. Reduce debounce to 150ms
-The 400ms debounce is too slow. Reducing to 150ms still prevents rapid-fire duplicate requests while feeling much snappier. This benefits both guided mode clicks and quick search typing.
+**File: `supabase/functions/tcg-ebay-search/index.ts`**
 
-### 3. Reduce `LOAD_ALL_DELAY_MS` from 200ms to 100ms
-The inter-page delay during the "load all" phase adds unnecessary latency. Cutting it in half speeds up total load time for fetching additional pages.
+- Accept an `offset` parameter in the request body
+- Pass it to the eBay Browse API via `url.searchParams.set('offset', offset.toString())`
+- Return pagination metadata alongside results: `{ items, total, offset, hasMore }`
+- The Browse API supports `offset` natively (0-based), so this is straightforward
+
+### 2. Add pagination to `tcgEbayService.ts`
+
+**File: `src/services/tcgEbayService.ts`**
+
+- Update `searchActiveListings` to accept and pass `offset` parameter
+- Return an object with `{ listings, total, hasMore, nextOffset }` instead of just a flat array
+- This enables the UI to know whether more pages exist
+
+### 3. Convert TCG Lab to `useInfiniteQuery`
+
+**File: `src/components/tcg-lab/TerminalView.tsx`**
+
+- Replace `useQuery` with `useInfiniteQuery` from TanStack React Query
+- `getNextPageParam`: use `lastPage.nextOffset` when `lastPage.hasMore` is true
+- Flatten pages: `data.pages.flatMap(p => p.listings)`
+- Pass `hasNextPage` and `fetchNextPage` / `isFetchingNextPage` down to the grid
+
+### 4. Add "Load More" button/sentinel to `TerminalGrid`
+
+**File: `src/components/tcg-lab/TerminalGrid.tsx`**
+
+- Add props: `hasMore`, `isLoadingMore`, `onLoadMore`
+- After the card grid, render a "Load more" button when `hasMore` is true
+- Show a spinner when `isLoadingMore` is true
+- Optionally add an IntersectionObserver sentinel for auto-loading (matching Sports Lab pattern)
+
+### 5. Update `ResultsToolbar` count display
+
+**File: `src/components/tcg-lab/ResultsToolbar.tsx`**
+
+- Show "loaded ... more available" text when there are more results, matching the Sports Lab pattern
+
+## Sports Lab - Already Working
+
+The Sports Lab (`EbayResultsPanel.tsx`) already has:
+- A "Load more" button (line ~157)
+- Auto-loading via IntersectionObserver
+- `loadAll` with cancel support
+
+No changes needed for Sports Lab pagination.
 
 ## Technical Details
 
-**File: `src/hooks/useSportsEbaySearch.ts`**
+### Edge function response shape change (TCG)
 
-- Line 53: Change `DEBOUNCE_MS` from `400` to `150`
-- Line 55: Change `LOAD_ALL_DELAY_MS` from `200` to `100`
-- Lines 90-104: Move `setIsLoading(true)` and `setListings([])` to run immediately when `search()` is called, before the debounce timer. This ensures the loading skeleton shows instantly instead of "No listings found" flashing for 150-400ms.
-
-The structure changes from:
+Before:
 ```text
-search() called
-  -> clear old timers
-  -> setTimeout(400ms):
-       setIsLoading(true)    <-- too late!
-       fetch(...)
+searchActiveListings returns: EbayListing[]  (flat array)
 ```
 
-To:
+After:
 ```text
-search() called
-  -> clear old timers
-  -> setIsLoading(true)      <-- immediate
-  -> setListings([])         <-- clear stale results
-  -> setTimeout(150ms):
-       fetch(...)
+searchActiveListings returns: { listings: EbayListing[], total: number, hasMore: boolean, nextOffset: number }
 ```
 
-No other files need changes. The guided search already triggers correctly when only a player is selected (the `selectPlayer` function sets `show_all_brands: true` when no brand is selected). The fix is purely about the loading state timing and debounce speed.
+The edge function will return:
+```text
+{ items: [...], total: 500, offset: 0, hasMore: true }
+```
+
+Where `hasMore = (offset + items.length) < total`
+
+### useInfiniteQuery setup
+
+```text
+queryKey: ['terminal-listings', 'tcg', game, activeQuery, filters]
+initialPageParam: 0
+getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextOffset : undefined
+```
+
+### Files changed (4 files)
+
+| File | Change |
+|------|--------|
+| `supabase/functions/tcg-ebay-search/index.ts` | Accept `offset`, return pagination metadata |
+| `src/services/tcgEbayService.ts` | Pass offset, return structured response |
+| `src/components/tcg-lab/TerminalView.tsx` | Switch to `useInfiniteQuery`, pass pagination props |
+| `src/components/tcg-lab/TerminalGrid.tsx` | Add "Load more" button and loading indicator |
 
