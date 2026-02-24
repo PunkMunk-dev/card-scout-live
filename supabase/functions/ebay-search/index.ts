@@ -194,7 +194,7 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
     term.length <= 2 || /^\d+$/.test(term)
   );
   
-  // Require at least 70% of name-like terms to match (more flexible)
+  // Require at least 85% of name-like terms to match
   const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
   const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
   const nameTermsMatch = nameMatchRatio >= 0.85;
@@ -257,7 +257,6 @@ async function searchEbay(
 
   const params = new URLSearchParams({
     q: enrichedQuery,
-    category_ids: '183454',
     limit: limit.toString(),
     offset: offset.toString(),
     sort: sort,
@@ -445,10 +444,7 @@ serve(async (req) => {
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
     } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
       // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
-    } else {
-      // Default (best): show only raw/ungraded cards
-      normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
-    }
+  }
     
     // Re-sort by price after filtering to ensure correct order
     if (sort === 'price_asc') {
