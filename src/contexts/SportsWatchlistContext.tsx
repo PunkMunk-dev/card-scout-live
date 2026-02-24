@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { EbayListing } from '@/types/sportsEbay';
+import { useSharedWatchlist } from '@/contexts/WatchlistContext';
+import { sportsListingToEbayItem } from '@/lib/watchlistAdapters';
 
 export interface WatchlistItem extends EbayListing { addedAt: string; }
 
@@ -36,11 +38,14 @@ export function SportsWatchlistProvider({ children }: { children: ReactNode }) {
   }, []);
   const removeFromWatchlist = useCallback((itemId: string) => setWatchlist(prev => prev.filter(i => i.itemId !== itemId)), []);
   const clearWatchlist = useCallback(() => setWatchlist([]), []);
+  const shared = useSharedWatchlist();
+
   const toggleWatchlist = useCallback((listing: EbayListing) => {
     const watched = watchlist.some(i => i.itemId === listing.itemId);
-    if (watched) { removeFromWatchlist(listing.itemId); return false; }
-    else { addToWatchlist(listing); return true; }
-  }, [watchlist, addToWatchlist, removeFromWatchlist]);
+    const ebayItem = sportsListingToEbayItem(listing);
+    if (watched) { removeFromWatchlist(listing.itemId); shared.removeFromWatchlist(listing.itemId); return false; }
+    else { addToWatchlist(listing); shared.addToWatchlist(ebayItem); return true; }
+  }, [watchlist, addToWatchlist, removeFromWatchlist, shared]);
 
   return (
     <WatchlistContext.Provider value={{ watchlist, isWatched, addToWatchlist, removeFromWatchlist, clearWatchlist, toggleWatchlist, count: watchlist.length }}>

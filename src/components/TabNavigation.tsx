@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Search, FlaskConical, Trophy } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useWatchlist } from '@/hooks/useWatchlist';
+import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 import { useTcgWatchlist } from '@/hooks/useTcgWatchlist';
 import { useSportsWatchlist } from '@/contexts/SportsWatchlistContext';
 
@@ -22,11 +22,11 @@ function WatchlistBadge({ count }: { count: number }) {
 }
 
 function useWatchlistCounts() {
-  const { watchlist: cardsWatchlist } = useWatchlist();
+  const { count: cardsCount } = useSharedWatchlist();
   const { data: tcgWatchlist } = useTcgWatchlist();
   const { count: sportsCount } = useSportsWatchlist();
   return {
-    cards: cardsWatchlist.length,
+    cards: cardsCount,
     tcg: tcgWatchlist?.length ?? 0,
     sports: sportsCount,
   };

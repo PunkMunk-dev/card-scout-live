@@ -1,9 +1,11 @@
-import { ExternalLink, TrendingDown, TrendingUp, Clock, Award, Diamond, Copy } from 'lucide-react';
+import { ExternalLink, TrendingDown, TrendingUp, Clock, Award, Diamond, Copy, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { EbayListing, SearchFilters } from '@/types/tcg';
+import { useSharedWatchlist } from '@/contexts/WatchlistContext';
+import { tcgListingToEbayItem } from '@/lib/watchlistAdapters';
 
 interface TerminalCardProps {
   listing: EbayListing;
@@ -14,6 +16,13 @@ interface TerminalCardProps {
 }
 
 export function TerminalCard({ listing, setName, rarityTag, rank, activeSort }: TerminalCardProps) {
+  const { isInWatchlist, toggleWatchlist } = useSharedWatchlist();
+  const watched = isInWatchlist(listing.itemId);
+
+  const handleToggleWatchlist = () => {
+    toggleWatchlist(tcgListingToEbayItem(listing));
+  };
+
   const handleView = () => {
     window.open(listing.itemWebUrl, '_blank', 'noopener,noreferrer');
   };
@@ -119,6 +128,9 @@ export function TerminalCard({ listing, setName, rarityTag, rank, activeSort }: 
           </Button>
           <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" onClick={handleCopy} title="Copy card name">
             <Copy className="h-3 w-3" />
+          </Button>
+          <Button size="sm" variant="ghost" className={cn("h-7 w-7 p-0", watched ? "text-primary" : "text-muted-foreground hover:text-foreground")} onClick={handleToggleWatchlist} title={watched ? "Remove from watchlist" : "Add to watchlist"}>
+            <Star className={cn("h-3 w-3", watched && "fill-current")} />
           </Button>
         </div>
       </div>
