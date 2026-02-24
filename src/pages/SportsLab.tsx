@@ -26,6 +26,11 @@ export default function SportsLab() {
   const [searchMode, setSearchMode] = useState<SearchMode>('guided');
   const [quickSearchQuery, setQuickSearchQuery] = useState('');
 
+  const quickSearchParams = useMemo(() => ({
+    playerName: quickSearchQuery.trim(),
+    freeFormSearch: true as const,
+  }), [quickSearchQuery]);
+
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -88,7 +93,7 @@ export default function SportsLab() {
         {searchMode === 'quick' ? (
           !canSearchQuick ? (
             <GuidedSearchEmptyState />
-          ) : <EbayResultsPanel searchParams={{ playerName: quickSearchQuery.trim(), freeFormSearch: true }} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />
+          ) : <EbayResultsPanel searchParams={quickSearchParams} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />
         ) : (
           !canSearchGuided ? (
             <GuidedSearchEmptyState />
