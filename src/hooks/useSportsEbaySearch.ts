@@ -66,11 +66,11 @@ export function useSportsEbaySearch(): UseSportsEbaySearchResult {
     setHasMore(false);
     hasMoreRef.current = false;
     totalPagesLoadedRef.current = 0;
-    setIsLoading(true);
     setError(null);
 
     debounceTimerRef.current = setTimeout(async () => {
       abortControllerRef.current = new AbortController();
+      setIsLoading(true);
       try {
         console.log('[SportsSearch] Fetching:', params.playerName);
         const data = await invokeEdgeFunction<EbaySearchResponse>('sports-ebay-search', params);
