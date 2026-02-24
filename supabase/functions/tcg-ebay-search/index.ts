@@ -81,7 +81,7 @@ function getTimeRemaining(endDate: string): string {
   return `${hours}h`;
 }
 
-async function searchActiveListings(query: string, limit = 100, sort = 'best_match', cardType = 'single', minPrice = 0, maxPrice = 0, buyingOptions = 'ALL') {
+async function searchActiveListings(query: string, limit = 100, sort = 'best_match', cardType = 'single', minPrice = 0, maxPrice = 0, buyingOptions = 'ALL', offset = 0) {
   const token = await getAccessToken();
   
   const sortMap: Record<string, string> = {
@@ -106,6 +106,7 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   url.searchParams.set('q', fullQuery);
   url.searchParams.set('limit', limit.toString());
+  url.searchParams.set('offset', offset.toString());
   url.searchParams.set('category_ids', '183454');
 
   const filterParts: string[] = [];
@@ -142,8 +143,8 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   }
 
   const data = await response.json();
-  
-  return (data.itemSummaries || []).map((item: any) => ({
+  const total = data.total || 0;
+  const items = (data.itemSummaries || []).map((item: any) => ({
     itemId: item.itemId,
     title: item.title,
     price: {
@@ -164,6 +165,9 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
     timeRemaining: item.itemEndDate ? getTimeRemaining(item.itemEndDate) : undefined,
     watchCount: item.watchCount || 0,
   }));
+
+  const hasMore = (offset + items.length) < total;
+  return { items, total, offset, hasMore };
 }
 
 async function searchSoldListings(query: string, limit = 10) {
@@ -235,7 +239,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, query, limit, sort, cardType, minPrice, maxPrice, buyingOptions } = await req.json();
+    const { action, query, limit, sort, cardType, minPrice, maxPrice, buyingOptions, offset } = await req.json();
 
     if (!query) {
       return new Response(
@@ -246,7 +250,7 @@ serve(async (req) => {
 
     let result;
     if (action === 'active') {
-      result = await searchActiveListings(query, limit || 100, sort || 'best_match', cardType || 'single', minPrice || 0, maxPrice || 0, buyingOptions || 'ALL');
+      result = await searchActiveListings(query, limit || 100, sort || 'best_match', cardType || 'single', minPrice || 0, maxPrice || 0, buyingOptions || 'ALL', offset || 0);
     } else if (action === 'sold') {
       result = await searchSoldListings(query, limit || 10);
     } else {

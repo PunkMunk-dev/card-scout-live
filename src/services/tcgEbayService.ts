@@ -47,16 +47,25 @@ function sortListings(listings: EbayListing[], sort: SearchFilters['sort']): Eba
   }
 }
 
+export interface PaginatedListings {
+  listings: EbayListing[];
+  total: number;
+  hasMore: boolean;
+  nextOffset: number;
+}
+
 export async function searchActiveListings(
   query: string,
   filters: SearchFilters,
-  limit: number = 100
-): Promise<EbayListing[]> {
+  limit: number = 100,
+  offset: number = 0
+): Promise<PaginatedListings> {
   const { data, error } = await supabase.functions.invoke('tcg-ebay-search', {
     body: {
       action: 'active',
       query,
       limit,
+      offset,
       sort: filters.sort,
       cardType: filters.cardType || 'single',
       minPrice: filters.minPrice || 0,
@@ -67,8 +76,19 @@ export async function searchActiveListings(
 
   if (error) throw error;
 
-  const filtered = filterListings(data || [], filters);
-  return sortListings(filtered, filters.sort);
+  const items: EbayListing[] = data?.items || data || [];
+  const total: number = data?.total ?? items.length;
+  const hasMore: boolean = data?.hasMore ?? false;
+
+  const filtered = filterListings(items, filters);
+  const sorted = sortListings(filtered, filters.sort);
+
+  return {
+    listings: sorted,
+    total,
+    hasMore,
+    nextOffset: offset + limit,
+  };
 }
 
 export async function searchSoldListingsLast7Days(
