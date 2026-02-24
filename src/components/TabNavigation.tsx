@@ -1,15 +1,15 @@
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Search, FlaskConical, Trophy } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 import { useTcgWatchlist } from '@/hooks/useTcgWatchlist';
 import { useSportsWatchlist } from '@/contexts/SportsWatchlistContext';
 
 const tabs = [
-  { to: '/', label: 'Card Finder', shortLabel: 'Cards', icon: Search, watchlistKey: 'cards' as const },
-  { to: '/tcg', label: 'TCG Lab', shortLabel: 'TCG', icon: FlaskConical, watchlistKey: 'tcg' as const },
-  { to: '/sports', label: 'Sports Lab', shortLabel: 'Sports', icon: Trophy, watchlistKey: 'sports' as const },
+  { to: '/', label: 'Card Finder', shortLabel: 'Cards', icon: Search as typeof Search | null, watchlistKey: 'cards' as const },
+  { to: '/tcg', label: 'TCG Lab', shortLabel: 'TCG', icon: null, watchlistKey: 'tcg' as const },
+  { to: '/sports', label: 'Sports Lab', shortLabel: 'Sports', icon: null, watchlistKey: 'sports' as const },
 ];
 
 function WatchlistBadge({ count }: { count: number }) {
@@ -57,10 +57,13 @@ export function TabNavigation() {
     >
       {({ isActive }) => (
         <>
-          <span className="relative">
-            <Icon className={cn(isMobile ? 'h-5 w-5' : 'h-4 w-4')} strokeWidth={isActive ? 2.5 : 2} />
-            <WatchlistBadge count={counts[watchlistKey]} />
-          </span>
+          {Icon && (
+            <span className="relative">
+              <Icon className={cn(isMobile ? 'h-5 w-5' : 'h-4 w-4')} strokeWidth={isActive ? 2.5 : 2} />
+              <WatchlistBadge count={counts[watchlistKey]} />
+            </span>
+          )}
+          {!Icon && <WatchlistBadge count={counts[watchlistKey]} />}
           <span>{isMobile ? shortLabel : label}</span>
           {!isMobile && isActive && (
             <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary" />

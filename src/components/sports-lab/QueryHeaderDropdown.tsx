@@ -27,7 +27,7 @@ export function QueryHeaderDropdown({ label, value, placeholder, options, select
   return (
     <div ref={containerRef} className="relative">
       <button onClick={() => setIsOpen(!isOpen)}
-        className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all border",
+        className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
           "bg-secondary/50 hover:bg-secondary border-border/50",
           isOpen && "border-primary/40 ring-1 ring-primary/20",
           (selectedId || showAllActive) ? "text-foreground" : "text-muted-foreground")}>
@@ -94,7 +94,7 @@ export function TraitsDropdown({ traits, selectedIds, onToggle, onClear }: Trait
   return (
     <div ref={containerRef} className="relative">
       <button onClick={() => setIsOpen(!isOpen)}
-        className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all border",
+        className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
           "bg-secondary/50 hover:bg-secondary border-border/50", isOpen && "border-primary/40 ring-1 ring-primary/20",
           count > 0 ? "text-foreground" : "text-muted-foreground")}>
         <span className="text-xs text-muted-foreground mr-1">Traits</span>
