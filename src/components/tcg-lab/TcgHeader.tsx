@@ -1,20 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, Filter } from 'lucide-react';
-import { PokeballIcon } from '@/components/icons/PokeballIcon';
-import { StrawHatIcon } from '@/components/icons/StrawHatIcon';
+import { QueryHeaderDropdown } from '@/components/sports-lab/QueryHeaderDropdown';
+import { QuerySummaryBar } from '@/components/sports-lab/QuerySummaryBar';
 import { CanonicalSetSelector } from '@/components/tcg-lab/CanonicalSetSelector';
 import { SearchModeToggle } from '@/components/sports-lab/SearchModeToggle';
 import { QuickSearchInput } from '@/components/sports-lab/QuickSearchInput';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useTcgWatchlist } from '@/hooks/useTcgWatchlist';
 import { useTargets } from '@/hooks/useTcgData';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -38,6 +31,11 @@ interface TcgHeaderProps {
   isSearchLoading: boolean;
 }
 
+const gameOptions = [
+  { id: 'pokemon', label: 'Pokémon' },
+  { id: 'one_piece', label: 'One Piece' },
+];
+
 export function TcgHeader({
   selectedGame,
   onGameChange,
@@ -58,15 +56,7 @@ export function TcgHeader({
   const { data: watchlist } = useTcgWatchlist();
   const { data: targets = [] } = useTargets(selectedGame);
   const watchlistCount = watchlist?.length || 0;
-  const [targetOpen, setTargetOpen] = useState(false);
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    if (selectedGame && !selectedTarget && targets.length > 0) {
-      const timer = setTimeout(() => setTargetOpen(true), 150);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedGame, targets.length]);
 
   const handleTargetChange = (value: string) => {
     const target = targets.find(t => t.id === value);
@@ -77,93 +67,60 @@ export function TcgHeader({
   const selectedSet = sets.find(s => s.id === selectedSetId);
   const hasActiveQuery = (mode === 'guided' && !!selectedTarget && !!selectedGame) || (mode === 'quick' && quickQuery.trim().length > 0);
 
-  const summaryBar = hasActiveQuery ? (
-    <div className="h-8 px-4 flex items-center border-t border-border/20">
-      <div className="flex items-center justify-between gap-4 text-xs w-full">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-muted-foreground">Showing:</span>
-          <span className="text-foreground truncate">
-            {mode === 'quick' ? (
-              quickQuery.trim()
-            ) : (
-              <>
-                {selectedTarget?.name}
-                {selectedGame !== 'one_piece' && (
-                  <>
-                    <span className="mx-1.5 text-muted-foreground/50">·</span>
-                    {selectedSet?.set_name ?? 'All Sets'}
-                  </>
-                )}
-                <span className="mx-1.5 text-muted-foreground/50">·</span>
-                Raw Singles
-              </>
-            )}
-          </span>
-        </div>
-        <div className="flex-shrink-0">
-          {isSearchLoading ? (
-            <span className="text-muted-foreground animate-pulse">Searching...</span>
-          ) : (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary border border-border text-muted-foreground tabular-nums">
-              {totalCount} cards
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  ) : null;
+  const targetOptions = targets.map(t => ({ id: t.id, label: t.name }));
 
+  // Build summary bar props
+  const summaryPlayerName = mode === 'quick'
+    ? (quickQuery.trim() || undefined)
+    : selectedTarget?.name;
+
+  const summaryBrandLabel = mode === 'guided' && selectedGame !== 'one_piece'
+    ? (selectedSet?.set_name || undefined)
+    : undefined;
+
+  const summaryShowAllBrands = mode === 'guided' && !!selectedTarget && !selectedSetId && selectedGame !== 'one_piece';
+
+  const summaryTraitLabels = mode === 'guided' && hasActiveQuery ? ['Raw Singles'] : [];
+
+  const summaryIdleMessage = !selectedGame
+    ? 'Select a TCG to begin searching'
+    : 'Select a chase to begin searching';
+
+  const summaryBar = (
+    <QuerySummaryBar
+      playerName={hasActiveQuery ? summaryPlayerName : undefined}
+      brandLabel={summaryBrandLabel}
+      showAllBrands={summaryShowAllBrands}
+      traitLabels={summaryTraitLabels}
+      resultCount={hasActiveQuery ? totalCount : undefined}
+      isLoading={hasActiveQuery ? isSearchLoading : false}
+      idleMessage={summaryIdleMessage}
+    />
+  );
 
   const guidedFilters = (
     <div className="flex items-center gap-1.5 flex-wrap">
-      {/* Game Toggle */}
-      <div className="flex items-center bg-secondary/40 rounded-md p-0.5 border border-border/30 shrink-0">
-        <button
-          onClick={() => onGameChange('pokemon')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            selectedGame === 'pokemon'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <PokeballIcon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Pokémon</span>
-        </button>
-        <button
-          onClick={() => onGameChange('one_piece')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            selectedGame === 'one_piece'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <StrawHatIcon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">One Piece</span>
-        </button>
-      </div>
+      <QueryHeaderDropdown
+        label="TCG"
+        value={gameOptions.find(g => g.id === selectedGame)?.label || ''}
+        placeholder="Select"
+        options={gameOptions}
+        selectedId={selectedGame}
+        onSelect={(id) => onGameChange(id as Game)}
+      />
 
-      {/* Target Selector */}
       {selectedGame && (
-        <Select
-          open={targetOpen}
-          onOpenChange={setTargetOpen}
-          value={selectedTarget?.id || ''}
-          onValueChange={handleTargetChange}
-        >
-          <SelectTrigger className="w-[160px] h-8 bg-secondary/30 border-border/30 text-xs shrink-0">
-            <SelectValue placeholder={`${chaseName}...`} />
-          </SelectTrigger>
-          <SelectContent>
-            {targets.map((target) => (
-              <SelectItem key={target.id} value={target.id} className="text-xs">
-                {target.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <QueryHeaderDropdown
+          label={chaseName}
+          value={targets.find(t => t.id === selectedTarget?.id)?.name || ''}
+          placeholder="Select"
+          options={targetOptions}
+          selectedId={selectedTarget?.id || null}
+          onSelect={handleTargetChange}
+          searchable={targets.length > 8}
+        />
       )}
 
-      {/* Set Selector */}
       {selectedGame && selectedGame !== 'one_piece' && selectedTarget && (
         <CanonicalSetSelector
           sets={sets}
