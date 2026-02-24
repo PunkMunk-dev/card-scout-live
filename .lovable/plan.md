@@ -1,66 +1,62 @@
 
 
-# Unify Watchlists into Card Finder
+# Fix: Sports Lab Search Not Firing
 
-## Goal
+## Problem
 
-When a user stars/watchlists a card in Sports Lab or TCG Lab, it also appears in the Card Finder watchlist (the main shared watchlist).
+When selecting a player in Sports Lab, the UI shows loading skeletons forever. The `supabase.functions.invoke('sports-ebay-search')` call never produces a network request, even though:
+- The edge function works perfectly when called directly (returns 72 listings for "Saquon Barkley")
+- Other Supabase client operations (RPC calls, table queries) work fine
+- CORS headers are correctly configured
 
-## Current State
+## Root Cause
 
-- **Card Finder**: `useWatchlist` hook stores `EbayItem` objects in localStorage (`ebay-card-watchlist` key). Used only on the Card Finder page.
-- **Sports Lab**: `SportsWatchlistContext` stores `sportsEbay.EbayListing` objects in localStorage (`sports-watchlist` key). Completely separate.
-- **TCG Lab**: Has a Supabase-based watchlist (`tcg_watchlist` table) but no watchlist toggle buttons on individual cards yet.
+The Supabase JS client's `functions.invoke` method appears to silently hang in this environment. This affects all sports edge function calls (`sports-ebay-search`, `sports-ebay-sold-psa`).
 
-## Changes
+## Solution
 
-### 1. Create a Shared Watchlist Context
+Replace `supabase.functions.invoke` with direct `fetch` calls in `useSportsEbaySearch.ts`. The edge functions have `verify_jwt = false` and proper CORS headers, so direct fetch works without auth.
 
-Convert `useWatchlist` into a React context provider (`WatchlistProvider`) so it can be accessed from any page/component.
+### Changes
 
-**New file**: `src/contexts/WatchlistContext.tsx`
-- Wraps the existing `useWatchlist` logic in a context provider
-- Exposes `addToWatchlist`, `removeFromWatchlist`, `isInWatchlist`, `toggleWatchlist`, `clearWatchlist`, `watchlist`, `count`
-- Accepts `EbayItem` (the Card Finder type) as input
+**`src/hooks/useSportsEbaySearch.ts`**
 
-### 2. Add Adapter Functions
+Create a small helper function that builds the edge function URL from env vars and makes a direct `fetch` POST:
 
-Create converter utilities to map Sports Lab and TCG Lab listing types into the Card Finder's `EbayItem` shape:
+```text
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
-**New file**: `src/lib/watchlistAdapters.ts`
-- `sportsListingToEbayItem(listing: sportsEbay.EbayListing): EbayItem` -- maps price (number to string), imageUrl, itemWebUrl to itemUrl, etc.
-- `tcgListingToEbayItem(listing: tcg.EbayListing): EbayItem` -- maps price.value, image to imageUrl, listingType to buyingOption, etc.
+async function invokeEdgeFunction<T>(name: string, body: object): Promise<T> {
+  const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Edge function error: ${res.status}`);
+  return res.json();
+}
+```
 
-### 3. Wire Sports Lab Into Shared Watchlist
+Then replace all 4 occurrences of `supabase.functions.invoke` in the file with `invokeEdgeFunction`:
+- `search()` function (line 61)
+- `loadMore()` function (line 94)
+- `loadAll()` function (line 132)
+- `fetchPsa10Price()` function (line 163)
 
-Modify `SportsWatchlistContext.tsx` to also call the shared watchlist's `addToWatchlist`/`removeFromWatchlist` when toggling, using the adapter to convert the sports listing format.
+Also add `console.log` breadcrumbs at key points (before/after fetch) for future debugging.
 
-### 4. Add Watchlist Button to TCG Lab Cards
-
-Modify `TerminalCard.tsx` to add a watchlist heart/star button that:
-- Calls the shared watchlist context (using the TCG adapter to convert the listing)
-- Shows filled/unfilled state based on `isInWatchlist`
-
-### 5. Mount the Provider
-
-Wrap the app with `WatchlistProvider` in `App.tsx` (alongside the existing `SportsWatchlistProvider`).
-
-### 6. Update Card Finder Page
-
-Update `Index.tsx` to use the new context instead of the standalone hook.
-
-## Files Changed
+### Files Changed
 
 | File | Change |
 |---|---|
-| `src/contexts/WatchlistContext.tsx` | New -- shared watchlist context wrapping existing useWatchlist logic |
-| `src/lib/watchlistAdapters.ts` | New -- adapter functions for Sports and TCG listing types |
-| `src/contexts/SportsWatchlistContext.tsx` | Import shared watchlist, call adapters on toggle |
-| `src/components/tcg-lab/TerminalCard.tsx` | Add watchlist heart button using shared context |
-| `src/App.tsx` | Wrap app with WatchlistProvider |
-| `src/pages/Index.tsx` | Switch from useWatchlist hook to shared context |
-| `src/components/TabNavigation.tsx` | Update to use shared context for Card Finder badge count |
+| `src/hooks/useSportsEbaySearch.ts` | Replace `supabase.functions.invoke` with direct `fetch` calls using helper function |
 
-## Result
+### No Other Changes Needed
 
-Watchlisting a card anywhere in the app adds it to the unified Card Finder watchlist, visible from the Card Finder tab's watchlist panel and reflected in the tab badge count.
+- Edge functions: no changes (CORS already configured)
+- Frontend components: no changes
+- Types: no changes
+
