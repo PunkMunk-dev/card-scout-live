@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
 import { TerminalGrid } from './TerminalGrid';
 import { ResultsToolbar, PRICE_RANGES, type PriceRange } from './ResultsToolbar';
@@ -44,7 +44,6 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
   };
 
   const activeQuery = buildSearchQuery();
-  const selectedSet = sets.find(s => s.id === selectedSetId);
 
   const filters: SearchFilters = {
     sort,
@@ -57,20 +56,35 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
     buyingOptions: showAuctionsOnly ? 'AUCTION' : undefined,
   };
 
-  // Include game in query key to prevent cross-game collisions
-  const { data: listings, isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['terminal-listings', 'tcg', game, activeQuery, filters, showAuctionsOnly],
-    queryFn: () => searchActiveListings(activeQuery, filters),
+    queryFn: ({ pageParam = 0 }) => searchActiveListings(activeQuery, filters, 100, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextOffset : undefined,
     enabled: !!activeQuery,
     retry: 1,
     staleTime: 60_000,
   });
 
+  const allListings = useMemo(() => {
+    if (!data) return undefined;
+    return data.pages.flatMap(p => p.listings);
+  }, [data]);
+
+  const totalFromApi = data?.pages[0]?.total ?? 0;
+
   useEffect(() => { onLoadingChange(isLoading); }, [isLoading, onLoadingChange]);
-  useEffect(() => { onTotalCountChange(listings?.length ?? 0); }, [listings, onTotalCountChange]);
+  useEffect(() => { onTotalCountChange(allListings?.length ?? 0); }, [allListings, onTotalCountChange]);
 
   const processedResults = useMemo(() => {
-    if (!listings) return undefined;
+    if (!allListings) return undefined;
 
     const filterOptions = {
       game,
@@ -82,7 +96,7 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
       rarity: 'any' as const,
     };
 
-    const { passed, removedCount } = filterTcgListings(listings, filterOptions);
+    const { passed, removedCount } = filterTcgListings(allListings, filterOptions);
     const result = dedupeTcgListings(passed);
     let final = result.deduped;
 
@@ -91,7 +105,7 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
     }
 
     return { listings: final, removedCount, dupsRemoved: result.duplicatesRemoved };
-  }, [listings, game, sort]);
+  }, [allListings, game, sort]);
 
   return (
     <div className="space-y-4">
@@ -114,7 +128,7 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
 
       <ResultsToolbar
         resultCount={processedResults?.listings.length ?? 0}
-        totalCount={listings?.length ?? 0}
+        totalCount={totalFromApi}
         showAuctionsOnly={showAuctionsOnly}
         onToggleAuctions={() => {
           setShowAuctionsOnly(prev => {
@@ -134,6 +148,9 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
         listings={processedResults?.listings}
         isLoading={isLoading}
         error={error}
+        hasMore={!!hasNextPage}
+        isLoadingMore={isFetchingNextPage}
+        onLoadMore={() => fetchNextPage()}
       />
     </div>
   );
