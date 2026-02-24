@@ -1,34 +1,25 @@
 
-# Clean Up Sort Options
 
-A simple cleanup across 4 files. The user also wants to rename "Raw Cards" to "Ungraded".
+# Update Search Bar Placeholder Text
 
-## Changes
+## Change
 
-### 1. `src/components/SearchFilters.tsx`
-- `"Auction Only"` → `"Auction"` (value stays `auction_only`)
-- `"Buy It Now Only"` → `"Buy It Now"` (value stays `buy_now_only`)
-- `"Raw Cards"` → `"Ungraded"` (value stays `raw`)
-- Remove the `"Ending Soon"` `<SelectItem>` (value `end_soonest`)
+Update the placeholder text in `src/components/SearchBar.tsx` to show examples covering multiple card types (sports, Pokemon, One Piece).
 
-Final dropdown order:
-- Best Match
-- Price: Low-High
-- Auction
-- Buy It Now
-- Ungraded
+### File: `src/components/SearchBar.tsx` (line 38)
 
-### 2. `src/types/ebay.ts`
-- Remove `'end_soonest'` from the `SortOption` union type
+**Current:**
+```
+Paste full card name (e.g., 2023 Bowman Chrome Sapphire #67 Shohei Ohtani Angels)
+```
 
-### 3. `src/pages/Index.tsx`
-- Remove the `if (sort === 'end_soonest') return 'AUCTION';` line from `deriveBuyingOptions`
+**New:**
+```
+Search any card (e.g., 2023 Bowman Chrome Shohei Ohtani, Charizard VMAX, One Piece OP01 Luffy)
+```
 
-### 4. `supabase/functions/ebay-search/index.ts`
-- Remove `'end_soonest'` from the `SearchRequest` sort type on line 12
-- Remove the `case 'end_soonest': return 'endingSoonest';` from `getSortParam` (lines 204–205)
-- Update line 445: remove `|| sort === 'end_soonest'` from the condition that shows all cards
-- Update line 448: remove the `end_soonest` reference in the comment on line 448 (`// Default (best, end_soonest): show only raw...` → `// Default (best): show only raw...`)
-- Redeploy the edge function
+This makes it immediately clear the tool supports sports cards, Pokemon, and One Piece TCGs -- all in one concise line.
 
-## No functional changes — labels and dead code only.
+### Files Changed
+- `src/components/SearchBar.tsx` -- one line edit (placeholder string)
+
