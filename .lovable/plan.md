@@ -1,42 +1,74 @@
 
 
-# Finish Sports Card Lab -- Seed Database
+# Fix: Seed Sports Card Lab Database
 
-## Current State
+## Problem
 
-The Sports Card Lab is fully ported and functionally identical to the standalone version (minus auth/Stripe, which was intentionally deferred). All frontend components, hooks, edge functions, and types are in place.
+The `get_published_ruleset_snapshot()` RPC returns empty data because the migration that was supposed to seed the database only included schema changes (adding `compatible_brand_ids` column and updating RPCs) but did NOT include the actual data inserts.
 
-**The only reason it shows "No published ruleset available" is because the database tables are empty.** Once we seed the data, it will work exactly like the standalone app.
+## Solution
 
-## What's Missing
+Create a new database migration that seeds all the required data:
 
-1. **Schema fix**: The `rule_items` table needs a `compatible_brand_ids` column (UUID array) so traits can be filtered by which brands they apply to
-2. **RPC update**: The `get_published_ruleset_snapshot()` function needs to return `compatible_brand_ids` in its output
-3. **Seed data**: A complete published ruleset with sports, players, brands, traits, and seller blacklist entries
+### 1. Published Ruleset Version
+- One `ruleset_versions` row with `status = 'published'` and `published_at = now()`
 
-## Implementation
+### 2. Sports (5 rows)
+- Football (sort_order 1)
+- Basketball (sort_order 2)
+- Baseball (sort_order 3)
+- Hockey (sort_order 4)
+- WNBA (sort_order 5)
 
-### Single Database Migration
+### 3. Players (~80 rows across all sports)
 
-One migration that does everything:
+**Football (~18):** Saquon Barkley, Jayden Daniels, Travis Hunter, Caleb Williams, Drake Maye, Bo Nix, Marvin Harrison Jr, Malik Nabers, Brock Bowers, Jaxon Smith-Njigba, CJ Stroud, Ladd McConkey, Adonai Mitchell, Rome Odunze, Jahmyr Gibbs, Josh Allen, Patrick Mahomes, Joe Burrow
 
-1. **Add column**: `ALTER TABLE rule_items ADD COLUMN compatible_brand_ids uuid[] NOT NULL DEFAULT '{}'`
+**Basketball (~18):** Victor Wembanyama, Anthony Edwards, Luka Doncic, Cooper Flagg, Ace Bailey, Dylan Harper, Zaccharie Risacher, Stephon Castle, Reed Sheppard, Donovan Clingan, Ja Morant, Shai Gilgeous-Alexander, Jayson Tatum, LeBron James, Bronny James, Tyrese Maxey, Paolo Banchero, Chet Holmgren
 
-2. **Update RPC**: Recreate `get_published_ruleset_snapshot()` to include `compatible_brand_ids` in the rule_items JSON output
+**Baseball (~15):** Jackson Holliday, Elly De La Cruz, Paul Skenes, Shohei Ohtani, Junior Caminero, Jasson Dominguez, Colton Cowser, Wyatt Langford, Evan Carter, Corbin Carroll, Gunnar Henderson, Bobby Witt Jr, Pete Crow-Armstrong, James Wood, Dylan Crews
 
-3. **Seed a published ruleset** with:
-   - 1 published ruleset version
-   - 5 sports: Football, Basketball, Baseball, Hockey, WNBA
-   - ~80 players across all sports (current hot rookies and stars)
-   - Brands per sport (Prizm, Topps Chrome, Bowman, etc.)
-   - Traits per sport (Numbered, Auto, Silver Prizm, Rookie, etc.) with brand compatibility mappings
-   - ~10 seller blacklist patterns (comc, probstein123, etc.)
+**Hockey (~18):** Connor Bedard, Macklin Celebrini, Matvei Michkov, Connor McDavid, Ivan Demidov, Cale Makar, Cole Caufield, Matthew Knies, Logan Stankoven, Mason McTavish, Leo Carlsson, Adam Fantilli, Will Smith, Brock Faber, Lane Hutson, Shane Wright, Logan Cooley, Wyatt Johnston
 
-### No Frontend Changes
+**WNBA (~12):** Caitlin Clark, Angel Reese, Cameron Brink, Paige Bueckers, JuJu Watkins, Aaliyah Edwards, Kamilla Cardoso, Rickea Jackson, Napheesa Collier, Sabrina Ionescu, Breanna Stewart, A'ja Wilson
 
-Zero code changes needed. The frontend is complete and will work as soon as the database has data.
+### 4. Brands (rule_items with kind='brand')
 
-## Result
+**Football:** Prizm, Donruss Optic, Mosaic, Select, Contenders
 
-After this migration, the Sports Card Lab tab will be fully functional -- select a sport, pick a player, choose a brand, and see live eBay listings with PSA 10 guides, gem rates, and profit calculations. Exactly like the standalone app, minus the paywall.
+**Basketball:** Prizm, Donruss Optic, Mosaic, Select, Contenders, Topps Chrome
+
+**Baseball:** Topps Chrome, Bowman Chrome, Topps, Bowman, Logofractor Chrome
+
+**Hockey:** Upper Deck Series 1, Upper Deck Series 2, SP Authentic, Upper Deck Exclusives
+
+**WNBA:** Prizm, Select
+
+### 5. Traits (rule_items with kind='trait')
+
+**Football/Basketball shared:** Silver Prizm, Numbered, Auto, Color Blast, Downtown, Rookie, Honeycomb, Stained Glass, Die Cut, Tiger Stripe, Mojo, Holo
+
+**Baseball:** Refractor, Numbered, Auto, Rookie, Sapphire, Gold
+
+**Hockey:** Young Guns, Numbered, Auto, Rookie, Exclusives, High Gloss, Outburst
+
+**WNBA:** Silver Prizm, Numbered, Auto, Rookie
+
+Brand compatibility will be set using subqueries (e.g., Silver Prizm is compatible with Prizm brand only).
+
+### 6. Seller Blacklist (~10 entries)
+- comc_consignment, probstein123, pwcc_auctions, blowout_cards, dacardworld, cherry_collectibles, steel_city_collectibles, midwest_cards, burbank_sportscards, pristine_auction
+
+## Technical Details
+
+- Single migration file with all INSERTs wrapped in a DO block so brand IDs can be referenced by traits
+- Uses variables for the ruleset_version_id and brand UUIDs
+- All data inserted in one transaction
+- No frontend changes needed
+
+## Files Changed
+
+| File | Change |
+|---|---|
+| New migration SQL | Seed complete Sports Card Lab dataset |
 
