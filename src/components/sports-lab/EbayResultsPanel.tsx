@@ -54,9 +54,10 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
     if (key !== lastSearchRef.current) {
       lastSearchRef.current = key;
       loadAllTriggeredRef.current = false;
-      search(searchParams);
-    }
-  }, [searchParams, search]);
+    search(searchParams);
+  }
+  return () => { lastSearchRef.current = ''; };
+}, [searchParams, search]);
 
   useEffect(() => { onLoadingChange?.(isLoading); }, [isLoading, onLoadingChange]);
   useEffect(() => { onResultCountChange?.(listings.length); }, [listings.length, onResultCountChange]);
