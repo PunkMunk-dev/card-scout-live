@@ -84,7 +84,7 @@ export function TabNavigation() {
     <header className="sticky top-0 z-50 border-b border-border/50 bg-card/80 backdrop-blur-md">
       <div className="container flex h-12 items-center gap-6">
         <span className="text-base font-bold font-display tracking-tight shrink-0">
-          AI Card Finder
+          OmniMarket™
         </span>
         <nav className="flex items-center gap-1">{navItems}</nav>
       </div>
