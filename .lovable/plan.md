@@ -1,76 +1,30 @@
 
 
-# Improve Junk Filtering for Misspelled Terms
+# Update eBay Secrets and Test Card Finder
 
-## Problem
+## Steps
 
-The current `isJunkTitle` function uses exact word-boundary regex matching against a keyword list. Sellers sometimes misspell or split words in titles (e.g., "Lof ot Two" instead of "Lot of Two"), which bypasses the filter entirely.
+### 1. Update eBay API Secrets
 
-## Approach
+Update the two existing secrets with the values you provided:
 
-Add a **fuzzy junk detection layer** to `isJunkTitle` in `supabase/functions/ebay-search/index.ts` that catches common misspellings and split-word patterns, while keeping the existing exact-match logic as the primary filter.
+- **EBAY_CLIENT_ID**: `ConnorHu-CardSigh-PRD-fe0563e1b-ec62741c`
+- **EBAY_CLIENT_SECRET**: `PRD-e0563e1b72b2-630b-4350-baa4-0c71`
 
-### File: `supabase/functions/ebay-search/index.ts`
+### 2. Test the Connection
 
-**A. Add fuzzy/pattern-based junk detection** (~lines 161-167)
+After updating secrets, search for **"Charizard VMAX"** in Card Finder to verify:
+- The eBay OAuth token exchange succeeds
+- Search results are returned
+- Cards display correctly in the grid
 
-After the existing exact keyword check, add a second pass that catches:
+### 3. Verify Filters
 
-1. **Multi-word lot patterns** -- regex patterns for phrases like "lot of", "set of", "X cards", "X card lot" regardless of minor misspellings:
-   - `/\b\d+\s*(cards?|card\s*lot)\b/i` -- "10 cards", "5 card lot"
-   - `/\blot\s+of\b/i` -- already caught, but add split-word variant
-   - `/\bl\s*o\s*t\b/i` -- catches "l o t", "l ot", "lo t" (spaced-out "lot")
-   - `/\b\d+x\b/i` -- "2x", "4x" (quantity indicators)
-   - `/\bx\s*\d+\b/i` -- "x2", "x 3"
+Quick check that the "Ungraded" filter still works correctly with the new credentials.
 
-2. **Quantity indicators** that strongly signal bulk/lot listings:
-   - `/\(\s*\d+\s*\)/` -- "(10)", "(25)" -- quantities in parentheses
-   - `/\b\d{2,}\s*card\b/i` -- "50 card", "100 card"
+### Technical Notes
 
-3. **Common misspelling patterns**:
-   - `/\bselaed\b|\bseled\b|\bseal\b/i` -- misspellings of "sealed"
-   - `/\bbulck\b|\bbluk\b/i` -- misspellings of "bulk"
-
-**B. Add new exact keywords** to `JUNK_KEYWORDS` array (~line 129-134):
-- `'grab bag'`, `'pick your'`, `'you pick'`, `'choose your'`, `'u pick'`, `'your choice'`
-
-### Technical Details
-
-The updated `isJunkTitle` function will look like:
-
-```text
-function isJunkTitle(title: string): boolean {
-  const lowerTitle = title.toLowerCase();
-  
-  // Pass 1: exact keyword matching (existing)
-  const exactMatch = JUNK_KEYWORDS.some(keyword => {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-    return regex.test(lowerTitle);
-  });
-  if (exactMatch) return true;
-  
-  // Pass 2: fuzzy/pattern-based detection
-  const junkPatterns = [
-    /\bl\s*o\s*t\b/i,              // spaced-out "lot"
-    /\b\d+\s*cards?\b/i,           // "10 cards", "5 card"
-    /\b\d+\s*card\s*lot\b/i,       // "10 card lot"
-    /\b\d+x\b|\bx\s*\d+\b/i,      // "2x", "x3"
-    /\(\s*\d+\s*\)/,               // "(10)" quantity in parens
-    /\bselaed\b|\bseled\b/i,       // misspelled "sealed"
-    /\bbulck\b|\bbluk\b/i,         // misspelled "bulk"
-  ];
-  
-  return junkPatterns.some(p => p.test(lowerTitle));
-}
-```
-
-**Risk note**: The `/\bl\s*o\s*t\b/i` pattern could theoretically match odd substrings, but `\b` word boundaries keep it safe. The `\d+\s*cards?` pattern is very safe since single-card listings never say "1 cards" in the title.
-
-### Summary
-
-| Change | What |
-|--------|------|
-| Expand `JUNK_KEYWORDS` | Add pick/choose terms |
-| Add fuzzy patterns to `isJunkTitle` | Catch misspellings and split words |
-| Keep existing logic | Exact keyword matching remains the primary filter |
+- The `ebay-search` edge function uses these secrets via `Deno.env.get('EBAY_CLIENT_ID')` and `Deno.env.get('EBAY_CLIENT_SECRET')` to obtain an OAuth token from eBay's API.
+- No code changes are needed -- only secret values need updating.
+- The other secrets (RAPIDAPI_KEY, VITE_XIMILAR_API_TOKEN, XIMILAR_API_TOKEN) are not needed for Card Finder's core eBay search functionality.
 
