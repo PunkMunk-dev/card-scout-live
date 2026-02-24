@@ -1,63 +1,56 @@
 
 
-# Consolidate Sports Lab Watchlist into Shared WatchlistContext
+# Fix Sports Lab Quick Search Hanging on Loading Skeletons
 
-## Problem
+## Root Cause
 
-Sports Lab maintains a separate `sports-watchlist` localStorage entry alongside the shared `ebay-card-watchlist`. This dual-storage causes desync issues (e.g., clearing watchlist from Card Finder doesn't clear the sports-specific store).
+React 18 StrictMode double-mounts components in development. The search flow in `EbayResultsPanel` has a race condition:
 
-## Approach
+1. First mount: `search()` sets `isLoading = true` and starts a 400ms debounce timer
+2. StrictMode cleanup: clears the debounce timer (which would have made the actual fetch)
+3. Re-mount: the useEffect sees the same search key in `lastSearchRef`, so it skips calling `search()` again
+4. Result: infinite loading state -- the fetch never fires
 
-Eliminate `SportsWatchlistContext` as a stateful provider. Replace it with a thin hook (`useSportsWatchlist`) that delegates entirely to the shared `WatchlistContext`, using the existing `sportsListingToEbayItem` adapter for conversions.
+## Fix
 
-## Changes
+### File: `src/components/sports-lab/EbayResultsPanel.tsx`
 
-### 1. `src/contexts/SportsWatchlistContext.tsx` -- Rewrite to thin wrapper
+Reset `lastSearchRef.current` in the cleanup of the search-trigger useEffect. This way, on re-mount the key check will pass and `search()` will be called again with a fresh timer.
 
-Remove all local state, localStorage reads/writes, and the Provider component. Replace with a simple hook:
-
+**Current code (lines 63-70):**
 ```typescript
-export function useSportsWatchlist() {
-  const shared = useSharedWatchlist();
-  
-  return {
-    watchlist: shared.watchlist,  // EbayItem[] (shared shape)
-    isWatched: shared.isInWatchlist,
-    toggleWatchlist: (listing: EbayListing) => {
-      const item = sportsListingToEbayItem(listing);
-      shared.toggleWatchlist(item);
-      return !shared.isInWatchlist(listing.itemId);
-    },
-    removeFromWatchlist: shared.removeFromWatchlist,
-    clearWatchlist: shared.clearWatchlist,
-    count: shared.count,
-  };
-}
+useEffect(() => {
+  if (!searchParams.playerName) return;
+  const key = JSON.stringify({ ... });
+  if (key !== lastSearchRef.current) {
+    lastSearchRef.current = key;
+    loadAllTriggeredRef.current = false;
+    search(searchParams);
+  }
+}, [searchParams, search]);
 ```
 
-Export the `WatchlistItem` type re-pointed to the shared `WatchlistItem` from `@/types/ebay`.
+**Fixed code:**
+```typescript
+useEffect(() => {
+  if (!searchParams.playerName) return;
+  const key = JSON.stringify({ ... });
+  if (key !== lastSearchRef.current) {
+    lastSearchRef.current = key;
+    loadAllTriggeredRef.current = false;
+    search(searchParams);
+  }
+  return () => {
+    lastSearchRef.current = '';
+  };
+}, [searchParams, search]);
+```
 
-### 2. `src/App.tsx` -- Remove SportsWatchlistProvider
+Adding a cleanup that resets `lastSearchRef` ensures that when StrictMode re-mounts, the key check passes and `search()` is called again with a fresh debounce timer that will actually execute the fetch.
 
-Remove the `<SportsWatchlistProvider>` wrapper since there's no longer a separate provider. The shared `<WatchlistProvider>` already wraps everything.
+## Impact
 
-### 3. `src/components/sports-lab/WatchlistPanel.tsx` -- Adapt to shared item shape
+- Fixes the Quick Search mode in Sports Lab (currently completely broken -- shows infinite skeletons)
+- Fixes the Guided Search mode as well (same code path)
+- No behavioral change in production (StrictMode double-mount only happens in development, but the cleanup is harmless in production since the effect only re-runs when searchParams actually change)
 
-The watchlist items are now `WatchlistItem` (from `@/types/ebay`) with shape `{ itemId, title, price: { value, currency }, imageUrl?, itemUrl?, ... }` instead of the sports `EbayListing`. Update rendering:
-- Price: use `item.price.value` / `item.price.currency` instead of `item.price` (number)
-- Image: use `item.imageUrl` (same field name)
-- Instead of passing to `EbayListingCard` (which expects sports `EbayListing`), render a simpler watchlist card inline matching the existing layout
-
-### 4. `src/components/sports-lab/WatchlistStar.tsx` -- No changes needed
-
-Already calls `useSportsWatchlist()` which will now delegate to the shared context. The `toggleWatchlist` signature still accepts an `EbayListing` and handles conversion internally.
-
-### 5. Cleanup
-
-- Remove the `sports-watchlist` localStorage key reference (users' old data will be orphaned but harmless)
-- Remove `SportsWatchlistProvider` export
-- Remove `addToWatchlist` from the sports hook (not used directly -- only `toggleWatchlist` is called)
-
-## Migration Note
-
-Users who had items in `sports-watchlist` but not in `ebay-card-watchlist` will lose those items. Since the toggle already syncs both stores, this should only affect edge cases.
