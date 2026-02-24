@@ -199,7 +199,7 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
   // Require at least 85% of name-like terms to match
   const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
   const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
-  const nameTermsMatch = nameMatchRatio >= 0.85;
+  const nameTermsMatch = nameMatchRatio >= 0.75;
   
   // At least 50% of other terms (numbers, short words) should match
   const otherMatchCount = otherTerms.filter(term => lowerTitle.includes(term)).length;
@@ -254,7 +254,7 @@ async function searchEbay(
   const marketplaceId = Deno.env.get('EBAY_MARKETPLACE_ID') || 'EBAY_US';
 
   // Append junk exclusions to the query so eBay filters them server-side
-  const exclusions = '-lot -bundle -bulk -sealed -booster -box -pack -case -repack -mystery -wax -cello -blaster';
+  const exclusions = '-lot -bundle -bulk -sealed -booster -pack -case -repack -mystery -wax -cello -blaster';
   const enrichedQuery = `${query} ${exclusions}`;
 
   const params = new URLSearchParams({
@@ -390,7 +390,7 @@ serve(async (req) => {
     const clampedLimit = Math.min(Math.max(limit, 1), 50);
     
     // Request more items to compensate for client-side filtering
-    const requestLimit = Math.min(clampedLimit * 2, 50);
+    const requestLimit = Math.min(clampedLimit * 3, 50);
     
     // IMPORTANT: eBay requires offset to be a multiple of limit
     // So we must calculate offset using requestLimit, not clampedLimit
