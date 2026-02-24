@@ -1,67 +1,63 @@
 
 
-# Align TCG Card UI with Sports Lab Card Design
+# Consolidate Sports Lab Watchlist into Shared WatchlistContext
 
-## Overview
+## Problem
 
-Restyle the TCG `TerminalCard` to match the Sports Lab `EbayListingCard` visual pattern: gradient overlay on image with price, rounded pill badges, and the same layout structure.
+Sports Lab maintains a separate `sports-watchlist` localStorage entry alongside the shared `ebay-card-watchlist`. This dual-storage causes desync issues (e.g., clearing watchlist from Card Finder doesn't clear the sports-specific store).
 
-## Visual Changes
+## Approach
 
-### Image Area
-- Add bottom gradient overlay (`bg-gradient-to-t from-black/90 via-black/50 to-transparent`)
-- Move price + shipping onto the image overlay (bottom-left), matching Sports Lab placement
-- Top-left: "eBay" pill using `rounded-full bg-black/50 backdrop-blur-sm text-[11px] font-semibold`
-- Top-right: Watchlist star (same `bg-black/50` circle style) + Auction pill (orange text) if auction type
-- Auction time remaining shown next to price on the overlay (bottom-right) instead of a separate badge
+Eliminate `SportsWatchlistContext` as a stateful provider. Replace it with a thin hook (`useSportsWatchlist`) that delegates entirely to the shared `WatchlistContext`, using the existing `sportsListingToEbayItem` adapter for conversions.
 
-### Below Image Area
-- Title: `text-sm font-medium line-clamp-2 min-h-[2.5rem]` (already matches)
-- Replace the row of outline `Button` components with rounded pill links matching Sports Lab:
-  - **PSA 10 pill**: `rounded-full bg-destructive/80 text-destructive-foreground text-[11px] font-semibold` -- links to eBay sold PSA 10 comps
-  - **Gem pill**: `rounded-full bg-blue-500/80 text-white text-[11px] font-semibold` -- links to gemrate.com
-- Remove the View button (entire card is clickable via wrapping in an `<a>` tag, like Sports Lab)
-- Copy button at bottom with `border-t border-border` separator, matching Sports Lab
+## Changes
 
-### Removed Elements
-- Remove set name / rarity tag row (not present in Sports Lab cards)
-- Remove rank badge (not in Sports Lab)
-- Remove separate View/Comps/Gem/Copy/Star button row
+### 1. `src/contexts/SportsWatchlistContext.tsx` -- Rewrite to thin wrapper
 
-## Technical Details
+Remove all local state, localStorage reads/writes, and the Provider component. Replace with a simple hook:
 
-### File: `src/components/tcg-lab/TerminalCard.tsx` -- Full rewrite
-
-**Structure change:**
-```
-Card wrapper (border, rounded-lg, shadow)
-  <a> wrapping entire card (clickable to eBay)
-    Image area (aspect-square)
-      Gradient overlay (bottom)
-      "eBay" pill (top-left)
-      Watchlist star (top-right, using shared watchlist context)
-      Auction pill (top-right, if auction)
-      Price + shipping (bottom-left on overlay)
-      Time remaining (bottom-right on overlay, if auction)
-    Content area (p-3)
-      Title (text-sm, line-clamp-2)
-      Pills row (PSA 10 + Gem, rounded-full)
-      Copy button (bottom, border-t separator)
+```typescript
+export function useSportsWatchlist() {
+  const shared = useSharedWatchlist();
+  
+  return {
+    watchlist: shared.watchlist,  // EbayItem[] (shared shape)
+    isWatched: shared.isInWatchlist,
+    toggleWatchlist: (listing: EbayListing) => {
+      const item = sportsListingToEbayItem(listing);
+      shared.toggleWatchlist(item);
+      return !shared.isInWatchlist(listing.itemId);
+    },
+    removeFromWatchlist: shared.removeFromWatchlist,
+    clearWatchlist: shared.clearWatchlist,
+    count: shared.count,
+  };
+}
 ```
 
-**Key implementation notes:**
-- Wrap card content in `<a href={listing.itemWebUrl}>` like Sports Lab
-- Use inline styled pills (`<a>` tags with `rounded-full` classes) instead of shadcn `Badge`/`Button`
-- Watchlist star uses existing `useSharedWatchlist` context but styled as `bg-black/50 backdrop-blur-sm rounded-full` button
-- Copy button uses `Check`/`Copy` icon toggle pattern from Sports Lab
-- Remove `rank`, `activeSort`, `setName`, `rarityTag` props (no longer displayed)
-- Keep `cleanTitle` logic for emoji stripping
+Export the `WatchlistItem` type re-pointed to the shared `WatchlistItem` from `@/types/ebay`.
 
-### File: `src/components/tcg-lab/TerminalGrid.tsx` -- Minor update
+### 2. `src/App.tsx` -- Remove SportsWatchlistProvider
 
-Remove `activeSort` prop pass-through to `TerminalCard` since rank/sort badges are removed.
+Remove the `<SportsWatchlistProvider>` wrapper since there's no longer a separate provider. The shared `<WatchlistProvider>` already wraps everything.
 
-### File: `src/components/tcg-lab/TerminalView.tsx` -- Minor update
+### 3. `src/components/sports-lab/WatchlistPanel.tsx` -- Adapt to shared item shape
 
-Remove `activeSort` from `TerminalCard`/`TerminalGrid` usage if passed there.
+The watchlist items are now `WatchlistItem` (from `@/types/ebay`) with shape `{ itemId, title, price: { value, currency }, imageUrl?, itemUrl?, ... }` instead of the sports `EbayListing`. Update rendering:
+- Price: use `item.price.value` / `item.price.currency` instead of `item.price` (number)
+- Image: use `item.imageUrl` (same field name)
+- Instead of passing to `EbayListingCard` (which expects sports `EbayListing`), render a simpler watchlist card inline matching the existing layout
 
+### 4. `src/components/sports-lab/WatchlistStar.tsx` -- No changes needed
+
+Already calls `useSportsWatchlist()` which will now delegate to the shared context. The `toggleWatchlist` signature still accepts an `EbayListing` and handles conversion internally.
+
+### 5. Cleanup
+
+- Remove the `sports-watchlist` localStorage key reference (users' old data will be orphaned but harmless)
+- Remove `SportsWatchlistProvider` export
+- Remove `addToWatchlist` from the sports hook (not used directly -- only `toggleWatchlist` is called)
+
+## Migration Note
+
+Users who had items in `sports-watchlist` but not in `ebay-card-watchlist` will lose those items. Since the toggle already syncs both stores, this should only affect edge cases.
