@@ -1,56 +1,48 @@
 
 
-# Fix Sports Lab Quick Search Hanging on Loading Skeletons
+# Show Watchlisted Cards in Card Finder Search Area
 
-## Root Cause
+## What Changes
 
-React 18 StrictMode double-mounts components in development. The search flow in `EbayResultsPanel` has a race condition:
+1. **Card Finder (Index page)**: Add a starred-cards dropdown next to the search bar. When the user has watchlisted cards (from any lab), a star icon with a count badge appears beside the search input. Clicking it opens a dropdown showing thumbnail, title, and price of each watchlisted card with quick actions (remove, open on eBay, and "search this" to auto-populate the search bar with that card's title).
 
-1. First mount: `search()` sets `isLoading = true` and starts a 400ms debounce timer
-2. StrictMode cleanup: clears the debounce timer (which would have made the actual fetch)
-3. Re-mount: the useEffect sees the same search key in `lastSearchRef`, so it skips calling `search()` again
-4. Result: infinite loading state -- the fetch never fires
+2. **Remove watchlist count badges from Sports and TCG tabs** in the tab navigation bar -- the counts will now live in the Card Finder search area instead.
 
-## Fix
+3. **Remove the old WatchlistPanel button** from the Card Finder toolbar (the Heart button + Sheet). The new dropdown replaces it.
 
-### File: `src/components/sports-lab/EbayResultsPanel.tsx`
+---
 
-Reset `lastSearchRef.current` in the cleanup of the search-trigger useEffect. This way, on re-mount the key check will pass and `search()` will be called again with a fresh timer.
+## Technical Details
 
-**Current code (lines 63-70):**
-```typescript
-useEffect(() => {
-  if (!searchParams.playerName) return;
-  const key = JSON.stringify({ ... });
-  if (key !== lastSearchRef.current) {
-    lastSearchRef.current = key;
-    loadAllTriggeredRef.current = false;
-    search(searchParams);
-  }
-}, [searchParams, search]);
-```
+### 1. New component: `src/components/WatchlistDropdown.tsx`
 
-**Fixed code:**
-```typescript
-useEffect(() => {
-  if (!searchParams.playerName) return;
-  const key = JSON.stringify({ ... });
-  if (key !== lastSearchRef.current) {
-    lastSearchRef.current = key;
-    loadAllTriggeredRef.current = false;
-    search(searchParams);
-  }
-  return () => {
-    lastSearchRef.current = '';
-  };
-}, [searchParams, search]);
-```
+A Popover-based dropdown (using existing Radix Popover) that:
+- Trigger: a Star icon button with a count badge (only renders when `watchlist.length > 0`)
+- Content: a scrollable list of watchlist items showing image, title, price, remove button, external link, and a "Search" button that calls `onSearchItem(item.title)`
+- Clear All button at the bottom
+- Reads from `useSharedWatchlist()` for the unified watchlist
 
-Adding a cleanup that resets `lastSearchRef` ensures that when StrictMode re-mounts, the key check passes and `search()` is called again with a fresh debounce timer that will actually execute the fetch.
+### 2. Update `src/pages/Index.tsx`
 
-## Impact
+- Replace `<WatchlistPanel>` import with `<WatchlistDropdown>`
+- Move the dropdown next to the SearchBar inside the search section (not the toolbar)
+- Pass an `onSearchItem` callback that sets the query and triggers a search
+- Remove WatchlistPanel from the toolbar row
 
-- Fixes the Quick Search mode in Sports Lab (currently completely broken -- shows infinite skeletons)
-- Fixes the Guided Search mode as well (same code path)
-- No behavioral change in production (StrictMode double-mount only happens in development, but the cleanup is harmless in production since the effect only re-runs when searchParams actually change)
+### 3. Update `src/components/TabNavigation.tsx`
+
+- Remove `WatchlistBadge` rendering for `sports` and `tcg` tabs (keep the badge for `cards` tab or remove all -- since the dropdown is now in the search area, remove all watchlist badges from tabs entirely)
+- Remove `useTcgWatchlist` and `useSportsWatchlist` imports (no longer needed here)
+- Simplify `useWatchlistCounts` -- remove it entirely since badges are gone
+
+### 4. Update `src/components/SearchBar.tsx`
+
+- Add an optional `initialQuery` prop so the parent can programmatically set the input value when a watchlist item is clicked
+- Or alternatively, the parent can control the query externally -- simpler approach: make SearchBar accept a `value` prop alongside `onChange` to support controlled mode when searching from watchlist
+
+### Files modified:
+- `src/components/WatchlistDropdown.tsx` (new)
+- `src/pages/Index.tsx` (swap WatchlistPanel for WatchlistDropdown, move next to search)
+- `src/components/TabNavigation.tsx` (remove watchlist badges)
+- `src/components/SearchBar.tsx` (support external query injection)
 
