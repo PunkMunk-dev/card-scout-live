@@ -9,8 +9,6 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { EbaySearchParams, SortOption, EbayListing } from '@/types/sportsEbay';
 
-const GRADING_COST = 25;
-
 function sortListings(listings: EbayListing[], sortOption: SortOption): EbayListing[] {
   const sorted = [...listings];
   switch (sortOption) {
@@ -38,7 +36,7 @@ const PRICE_RANGES: { value: PriceRange; label: string; min: number; max: number
 ];
 
 export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPanelProps>(function EbayResultsPanel({ searchParams, traitLabels, sportKey, onResultCountChange, onLoadingChange, onReset }: EbayResultsPanelProps, ref) {
-  const { listings, isLoading, isLoadingMore, isLoadingAll, error, hasMore, search, loadMore, loadAll, cancelLoadAll } = useSportsEbaySearch();
+  const { listings, isLoading, isLoadingMore, isLoadingAll, error, hasMore, search, loadMore, loadAll, cancelLoadAll, retry } = useSportsEbaySearch();
   const lastSearchRef = useRef<string>('');
   const [sortOption, setSortOption] = useState<SortOption>('quality-high');
   const [showAuctionsOnly, setShowAuctionsOnly] = useState(false);
@@ -62,15 +60,16 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
   useEffect(() => { onLoadingChange?.(isLoading); }, [isLoading, onLoadingChange]);
   useEffect(() => { onResultCountChange?.(listings.length); }, [listings.length, onResultCountChange]);
 
+  // IntersectionObserver for infinite scroll - only when items exist and no error
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel || isLoadingAll) return;
+    if (!sentinel || isLoadingAll || error) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && hasMore && !isLoadingMore && !isLoading && !isLoadingAll) loadMore();
+      if (entry.isIntersecting && hasMore && !isLoadingMore && !isLoading && !isLoadingAll && !error && listings.length > 0) loadMore();
     }, { threshold: 0.1, rootMargin: '200px' });
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, isLoading, isLoadingAll, loadMore]);
+  }, [hasMore, isLoadingMore, isLoading, isLoadingAll, loadMore, error, listings.length]);
 
   const filteredListings = useMemo(() => {
     let filtered = listings.filter(l => l.price !== null && l.price >= 10);
@@ -85,12 +84,13 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
     return filtered;
   }, [listings, showAuctionsOnly, priceRange, traitLabels]);
 
+  // Auto-trigger loadAll once after initial results come in
   useEffect(() => {
-    if (!isLoading && listings.length > 0 && hasMore && !isLoadingAll && !loadAllTriggeredRef.current) {
+    if (!isLoading && listings.length > 0 && hasMore && !isLoadingAll && !loadAllTriggeredRef.current && !error) {
       loadAllTriggeredRef.current = true;
       loadAll(() => filteredCountRef.current);
     }
-  }, [isLoading, listings.length > 0, hasMore]);
+  }, [isLoading, listings.length > 0, hasMore, error]);
 
   const sortedListings = useMemo(() => sortListings(filteredListings, sortOption), [filteredListings, sortOption]);
 
@@ -98,9 +98,20 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
     <div className="space-y-4"><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}</div></div>
   );
 
-  if (error) return <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>;
+  if (error && listings.length === 0) return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="rounded-lg border shadow-sm bg-card px-10 py-12 max-w-md">
+        <AlertCircle className="w-10 h-10 text-destructive mb-4 mx-auto" />
+        <h2 className="text-lg font-bold mb-2">Search Error</h2>
+        <p className="text-sm text-muted-foreground mb-6">{error}</p>
+        <Button variant="outline" size="sm" onClick={retry} className="gap-2">
+          <RotateCcw className="h-3.5 w-3.5" />Retry
+        </Button>
+      </div>
+    </div>
+  );
 
-  if (listings.length === 0) return (
+  if (!isLoading && listings.length === 0 && !error) return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="rounded-lg border shadow-sm bg-card px-10 py-12 max-w-md">
         <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-5 mx-auto"><Target className="w-7 h-7 text-muted-foreground" /></div>
@@ -114,12 +125,23 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
   return (
     <div ref={ref} className="space-y-4">
       {(isLoadingAll || isLoadingMore) && <div className="h-0.5 w-full rounded-full overflow-hidden bg-muted/30"><div className="h-full bg-primary animate-pulse" style={{ width: '60%' }} /></div>}
+
+      {/* Error banner when we have partial results */}
+      {error && listings.length > 0 && (
+        <Alert variant="destructive" className="flex items-center justify-between">
+          <AlertDescription className="flex-1">{error}</AlertDescription>
+          <Button variant="outline" size="sm" onClick={retry} className="ml-4 gap-1.5 shrink-0">
+            <RotateCcw className="h-3 w-3" />Retry
+          </Button>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between bg-secondary/30 rounded-md px-3 py-2.5 flex-nowrap overflow-x-auto border border-border">
         <div className="flex items-center gap-2 whitespace-nowrap">
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-card border border-border text-xs tabular-nums">
             <span className="font-semibold">{sortedListings.length}</span>
             {listings.length !== sortedListings.length && <span className="text-muted-foreground">/ {listings.length}</span>}
-            <span className="text-muted-foreground ml-0.5">{hasMore ? 'loaded · more available' : 'cards'}</span>
+            <span className="text-muted-foreground ml-0.5">{isLoadingAll ? 'loading…' : hasMore ? 'loaded · more available' : 'cards'}</span>
           </span>
         </div>
         <div className="flex items-center gap-2 flex-nowrap">
@@ -132,7 +154,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
             <SelectTrigger className="w-[100px] h-7 text-xs"><SelectValue placeholder="Price" /></SelectTrigger>
             <SelectContent>{PRICE_RANGES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
           </Select>
-          {hasMore && !isLoadingAll && <button onClick={() => loadAll(() => filteredCountRef.current)} className="px-2.5 py-1 text-xs font-semibold rounded-full border bg-transparent text-muted-foreground border-border hover:border-primary/50 whitespace-nowrap">Load more</button>}
+          {hasMore && !isLoadingAll && !error && <button onClick={() => loadAll(() => filteredCountRef.current)} className="px-2.5 py-1 text-xs font-semibold rounded-full border bg-transparent text-muted-foreground border-border hover:border-primary/50 whitespace-nowrap">Load more</button>}
           {isLoadingAll && <button onClick={cancelLoadAll} className="px-2.5 py-1 text-xs font-semibold rounded-full border bg-orange-500/10 text-orange-500 border-orange-500/30 flex items-center gap-1.5 whitespace-nowrap"><Loader2 className="h-3 w-3 animate-spin" />Cancel</button>}
           <div className="flex items-center gap-1.5">
             <ArrowUpDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
@@ -152,7 +174,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {sortedListings.map((listing, i) => <EbayListingCard key={`${listing.itemId}-${i}`} listing={listing} sportKey={sportKey} isAuctionMode={showAuctionsOnly} />)}
       </div>
-      {hasMore && <div ref={sentinelRef} className="flex items-center justify-center py-8">
+      {hasMore && !error && <div ref={sentinelRef} className="flex items-center justify-center py-8">
         {isLoadingMore ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin text-primary" /><span className="text-sm">Loading more cards...</span></div> : <div className="h-8" />}
       </div>}
     </div>
