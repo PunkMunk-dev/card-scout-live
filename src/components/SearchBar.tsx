@@ -32,7 +32,7 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBar
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Paste full card name (e.g., 2023 Bowman Chrome Sapphire #67 Shohei Ohtani Angels)"
+            placeholder="Search any card (e.g., 2023 Bowman Chrome Shohei Ohtani, Charizard VMAX, One Piece OP01 Luffy)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-12 pr-10 h-14 text-base bg-card border-border/50 shadow-sm focus-visible:ring-primary/30"
