@@ -109,7 +109,7 @@ export function TerminalCard({ listing, setName, rarityTag, rank, activeSort }: 
             </span>
           )}
           {listing.shipping && parseFloat(listing.shipping.cost) > 0 && (
-            <span className="text-[10px] text-muted-foreground font-mono">+${listing.shipping.cost}</span>
+            <span className="text-xs text-muted-foreground">+${listing.shipping.cost}</span>
           )}
         </div>
 

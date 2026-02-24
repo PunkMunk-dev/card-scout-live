@@ -21,17 +21,19 @@ export function ResultsHeader({
   return (
     <div className="flex items-center justify-between h-8 px-4 border-b border-border/20 bg-secondary/10">
       <p className="text-xs text-muted-foreground">
-        {total.toLocaleString()} listings
+        Showing: <span className="text-foreground">{total.toLocaleString()} listings</span>
       </p>
       
       <Button
+        size="sm"
         variant="outline"
+        className="h-6 text-[10px] px-2"
         onClick={onLoadMore}
         disabled={isLoadingMore || !hasMore}
       >
         {isLoadingMore ? (
           <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
             Loading...
           </>
         ) : hasMore ? (

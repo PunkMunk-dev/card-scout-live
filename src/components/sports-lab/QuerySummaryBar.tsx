@@ -24,8 +24,8 @@ export function QuerySummaryBar({ playerName, sportLabel, brandLabel, showAllBra
       <div className="flex items-center justify-between gap-4 text-xs w-full">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-muted-foreground">Showing:</span>
-          <span className="font-medium text-muted-foreground truncate">
-            {parts.map((part, i) => (<span key={i}>{i > 0 && <span className="mx-1.5 opacity-50">·</span>}{part}</span>))}
+          <span className="text-foreground truncate">
+            {parts.map((part, i) => (<span key={i}>{i > 0 && <span className="mx-1.5 text-muted-foreground/50">·</span>}{part}</span>))}
           </span>
         </div>
         {hasQuery && (
