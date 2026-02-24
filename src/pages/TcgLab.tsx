@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TcgHeader } from '@/components/tcg-lab/TcgHeader';
-import { TcgEmptyState } from '@/components/tcg-lab/TcgEmptyState';
 import { TerminalView } from '@/components/tcg-lab/TerminalView';
+import { GuidedSearchEmptyState } from '@/components/shared/GuidedSearchEmptyState';
 import { useSets } from '@/hooks/useTcgData';
 import type { Game, TcgTarget } from '@/types/tcg';
 
@@ -20,12 +20,6 @@ export default function TcgLab() {
   const handleGameChange = (game: Game) => {
     setSelectedGame(game);
     setSelectedTarget(null);
-    setSelectedSetId(null);
-  };
-
-  const handleTrendingSelect = (target: TcgTarget, game: Game) => {
-    setSelectedGame(game);
-    setSelectedTarget(target);
     setSelectedSetId(null);
   };
 
@@ -71,10 +65,7 @@ export default function TcgLab() {
             onLoadingChange={setIsSearchLoading}
           />
         ) : (
-          <TcgEmptyState 
-            selectedGame={selectedGame}
-            onSelectTarget={handleTrendingSelect} 
-          />
+          <GuidedSearchEmptyState />
         )}
       </main>
     </div>
