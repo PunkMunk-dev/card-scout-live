@@ -41,10 +41,10 @@ export default function SportsLab() {
 
   const filteredPlayers = useMemo(() => snapshot?.players.filter(p => p.sport_key === state.sport_key) ?? [], [snapshot?.players, state.sport_key]);
   const filteredRuleItems = useMemo(() => snapshot?.rule_items.filter(ri => ri.sport_key === state.sport_key) ?? [], [snapshot?.rule_items, state.sport_key]);
-  const selectedPlayerNames = filteredPlayers.filter(p => state.selected_player_ids.includes(p.id)).map(p => p.name);
+  const selectedPlayerNames = useMemo(() => filteredPlayers.filter(p => state.selected_player_ids.includes(p.id)).map(p => p.name), [filteredPlayers, state.selected_player_ids]);
   const selectedBrand = filteredRuleItems.find(ri => ri.kind === 'brand' && state.selected_rule_item_ids.includes(ri.id));
   const selectedTraitIds = state.selected_rule_item_ids.filter(id => { const item = filteredRuleItems.find(ri => ri.id === id); return item && item.kind === 'trait'; });
-  const selectedTraitLabels = filteredRuleItems.filter(ri => ri.kind === 'trait' && state.selected_rule_item_ids.includes(ri.id)).map(ri => ri.label);
+  const selectedTraitLabels = useMemo(() => filteredRuleItems.filter(ri => ri.kind === 'trait' && state.selected_rule_item_ids.includes(ri.id)).map(ri => ri.label), [filteredRuleItems, state.selected_rule_item_ids]);
 
   const hasPlayer = state.selected_player_ids.length > 0;
   const hasBrandOrShowAll = !!selectedBrand || state.show_all_brands;
