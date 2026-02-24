@@ -1,6 +1,20 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import type { EbayListing, EbaySearchParams, EbaySearchResponse, Psa10PriceResponse } from '@/types/sportsEbay';
+
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+
+async function invokeEdgeFunction<T>(name: string, body: object): Promise<T> {
+  const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`Edge function error: ${res.status}`);
+  return res.json();
+}
 
 interface UseSportsEbaySearchResult {
   listings: EbayListing[];
@@ -58,10 +72,11 @@ export function useSportsEbaySearch(): UseSportsEbaySearchResult {
     debounceTimerRef.current = setTimeout(async () => {
       abortControllerRef.current = new AbortController();
       try {
-        const { data, error: fnError } = await supabase.functions.invoke<EbaySearchResponse>('sports-ebay-search', { body: params });
+        console.log('[SportsSearch] Fetching:', params.playerName);
+        const data = await invokeEdgeFunction<EbaySearchResponse>('sports-ebay-search', params);
         if (abortControllerRef.current?.signal.aborted) return;
-        if (fnError) throw new Error(fnError.message || 'Failed to search eBay');
         if (!data?.success) throw new Error(data?.error || 'Search failed');
+        console.log('[SportsSearch] Got', data.listings.length, 'listings');
 
         paginationRef.current = { currentParams: params, nextOffset: data.nextOffset, nextPageNumber: data.nextPageNumber };
         setHasMore(data.hasMore ?? false);
@@ -91,10 +106,10 @@ export function useSportsEbaySearch(): UseSportsEbaySearchResult {
 
     setIsLoadingMore(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke<EbaySearchResponse>('sports-ebay-search', {
-        body: { ...currentParams, offset: nextOffset, pageNumber: nextPageNumber },
+      const data = await invokeEdgeFunction<EbaySearchResponse>('sports-ebay-search', {
+        ...currentParams, offset: nextOffset, pageNumber: nextPageNumber,
       });
-      if (fnError || !data?.success) throw new Error('Failed to load more');
+      if (!data?.success) throw new Error('Failed to load more');
 
       paginationRef.current = { currentParams, nextOffset: data.nextOffset, nextPageNumber: data.nextPageNumber };
       setHasMore(data.hasMore ?? false);
@@ -129,11 +144,11 @@ export function useSportsEbaySearch(): UseSportsEbaySearchResult {
         if ((nextOffset && nextOffset > 2000) || (nextPageNumber && nextPageNumber > 20)) break;
         if (!nextOffset && !nextPageNumber) break;
 
-        const { data, error: fnError } = await supabase.functions.invoke<EbaySearchResponse>('sports-ebay-search', {
-          body: { ...currentParams, offset: nextOffset, pageNumber: nextPageNumber },
+        const data = await invokeEdgeFunction<EbaySearchResponse>('sports-ebay-search', {
+          ...currentParams, offset: nextOffset, pageNumber: nextPageNumber,
         });
         if (loadAllAbortRef.current?.signal.aborted) break;
-        if (fnError || !data?.success) break;
+        if (!data?.success) break;
 
         moreAvailable = data.hasMore ?? false;
         paginationRef.current = { currentParams, nextOffset: data.nextOffset, nextPageNumber: data.nextPageNumber };
@@ -160,8 +175,8 @@ export function useSportsEbaySearch(): UseSportsEbaySearchResult {
 
   const fetchPsa10Price = async (params: EbaySearchParams) => {
     try {
-      const { data } = await supabase.functions.invoke<Psa10PriceResponse>('sports-ebay-sold-psa', {
-        body: { playerName: params.playerName, brand: params.brand },
+      const data = await invokeEdgeFunction<Psa10PriceResponse>('sports-ebay-sold-psa', {
+        playerName: params.playerName, brand: params.brand,
       });
       if (!data?.success || data.marketValue === null) return;
       setListings(prev => prev.map(l => ({ ...l, psa10MarketValue: data.marketValue, psa10MarketValueConfidence: data.marketValueConfidence, psa10SoldComps: data.soldComps })));
