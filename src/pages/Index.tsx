@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
+import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
@@ -207,11 +209,24 @@ export default function Index() {
             </div>
           </div>
         ) : hasSearched && items.length > 0 ? (
-          <ListingGrid 
-            items={items}
-            isInWatchlist={isInWatchlist}
-            onToggleWatchlist={toggleWatchlist}
-          />
+          <>
+            <ListingGrid 
+              items={items}
+              isInWatchlist={isInWatchlist}
+              onToggleWatchlist={toggleWatchlist}
+            />
+            {nextPage && (
+              <div className="flex justify-center pt-6">
+                <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
+                  {isLoadingMore ? (
+                    <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Loading…</>
+                  ) : (
+                    'Load more'
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
