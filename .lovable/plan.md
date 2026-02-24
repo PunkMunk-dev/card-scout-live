@@ -1,79 +1,42 @@
 
 
-# Phase 3: Polish and Unify
+# Finish Sports Card Lab -- Seed Database
 
-Now that all three tools (Card Finder, TCG Lab, Sports Lab) are ported, this phase focuses on visual consistency, mobile UX, and reliability.
+## Current State
 
----
+The Sports Card Lab is fully ported and functionally identical to the standalone version (minus auth/Stripe, which was intentionally deferred). All frontend components, hooks, edge functions, and types are in place.
 
-## 3.1 Unified Tab Navigation (Mobile)
+**The only reason it shows "No published ruleset available" is because the database tables are empty.** Once we seed the data, it will work exactly like the standalone app.
 
-Currently the tab labels are hidden on small screens (`hidden sm:inline`), leaving only tiny icons. Improve this:
+## What's Missing
 
-- Show abbreviated labels on mobile (e.g., "Cards", "TCG", "Sports")
-- Add bottom-bar navigation on mobile as an alternative to the top tabs
-- Highlight active tab with an underline indicator for better visibility
+1. **Schema fix**: The `rule_items` table needs a `compatible_brand_ids` column (UUID array) so traits can be filtered by which brands they apply to
+2. **RPC update**: The `get_published_ruleset_snapshot()` function needs to return `compatible_brand_ids` in its output
+3. **Seed data**: A complete published ruleset with sports, players, brands, traits, and seller blacklist entries
 
-**Files**: `src/components/TabNavigation.tsx`
+## Implementation
 
----
+### Single Database Migration
 
-## 3.2 Consistent Page Layout
+One migration that does everything:
 
-Each page has slightly different layout patterns. Normalize them:
+1. **Add column**: `ALTER TABLE rule_items ADD COLUMN compatible_brand_ids uuid[] NOT NULL DEFAULT '{}'`
 
-- Card Finder has its own watchlist bar and decorative blobs -- wrap in a consistent layout shell
-- TCG Lab uses `min-h-[calc(100vh-48px)]` -- standardize across all pages
-- Sports Lab has the same calc -- keep consistent
+2. **Update RPC**: Recreate `get_published_ruleset_snapshot()` to include `compatible_brand_ids` in the rule_items JSON output
 
-**Files**: `src/pages/Index.tsx`, `src/pages/TcgLab.tsx`, `src/pages/SportsLab.tsx`
+3. **Seed a published ruleset** with:
+   - 1 published ruleset version
+   - 5 sports: Football, Basketball, Baseball, Hockey, WNBA
+   - ~80 players across all sports (current hot rookies and stars)
+   - Brands per sport (Prizm, Topps Chrome, Bowman, etc.)
+   - Traits per sport (Numbered, Auto, Silver Prizm, Rookie, etc.) with brand compatibility mappings
+   - ~10 seller blacklist patterns (comc, probstein123, etc.)
 
----
+### No Frontend Changes
 
-## 3.3 Error Boundaries
+Zero code changes needed. The frontend is complete and will work as soon as the database has data.
 
-Add React error boundaries around each tab's content so one tab crashing doesn't take down the entire app.
+## Result
 
-- Create a reusable `ErrorBoundary` component with a "Try Again" button
-- Wrap each `Route` element with the boundary
-
-**Files**: `src/components/ErrorBoundary.tsx`, `src/App.tsx`
-
----
-
-## 3.4 Loading States
-
-Add route-level `Suspense` boundaries with consistent skeleton fallbacks so lazy-loaded pages show a uniform loading state.
-
-- Lazy-load `TcgLab` and `SportsLab` pages (they're heavy)
-- Add a shared `PageSkeleton` component
-
-**Files**: `src/App.tsx`, `src/components/PageSkeleton.tsx`
-
----
-
-## 3.5 Shared Watchlist Infrastructure (optional, lightweight)
-
-Currently each tool has its own watchlist. For now, just add a watchlist count badge on the tab navigation for whichever tool has items, so users can see at a glance.
-
-- Card Finder watchlist count from `useWatchlist`
-- TCG watchlist count from `useTcgWatchlist`
-- Sports watchlist count from `useSportsWatchlist`
-
-**Files**: `src/components/TabNavigation.tsx`
-
----
-
-## Summary
-
-| Change | Files |
-|---|---|
-| Mobile-friendly tab nav | 1 |
-| Consistent page layouts | 3 |
-| Error boundaries | 2 |
-| Lazy loading + suspense | 2 |
-| Watchlist badges on tabs | 1 |
-| **Total** | **~7 files** |
-
-This is a focused polish pass -- no new features, just making the merged app feel like a single cohesive product.
+After this migration, the Sports Card Lab tab will be fully functional -- select a sport, pick a player, choose a brand, and see live eBay listings with PSA 10 guides, gem rates, and profit calculations. Exactly like the standalone app, minus the paywall.
 
