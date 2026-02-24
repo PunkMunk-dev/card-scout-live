@@ -1,49 +1,50 @@
 
 
-# Refresh Sports Lab Player List from Updated CSV
+# Speed Up Sports Lab Search + Fix Player-Only Search
 
-## Summary of Changes
+## Problem 1: Search doesn't visually trigger until player AND brand are selected
+Even though the code logic already sets `show_all_brands: true` when a player is first selected, there's a **400ms debounce** delay during which the UI shows "No listings found" instead of a loading skeleton. The `isLoading` flag is only set *inside* the debounce callback (after 400ms), so for that initial period the component renders with `isLoading=false` and `listings=[]`, which triggers the "No listings found" empty state.
 
-Comparing the uploaded CSV against the current database, here are the differences:
+## Problem 2: 400ms debounce is unnecessary for guided clicks
+The debounce exists to handle rapid typing in quick-search mode. For guided mode (dropdown clicks), there's no need to debounce -- the search should fire immediately.
 
-### Football (2 swaps)
-- **Remove**: Ashton Jeanty, Travis Hunter
-- **Add**: Cam Skattebo, Tyler Loveland
+## Changes
 
-### Basketball (10 additions)
-- **Add**: VJ Edgecombe (from main list)
-- **Add from "extras" section at bottom of CSV**: Jeremy Sochan, Alperen Sengun, Jalen Green, Jalen Suggs, Evan Mobley, Franz Wagner, Scottie Barnes, Josh Giddey, Chet Holmgren
-- (Paolo Banchero and Cade Cunningham already exist, so skip duplicates)
+### 1. Set `isLoading` immediately in `useSportsEbaySearch.ts`
+Move `setIsLoading(true)` out of the `setTimeout` callback so the loading skeleton appears the instant `search()` is called, not 400ms later.
 
-### Hockey (17 additions)
-- **Add**: Andrei Kuzmenko, Yaroslav Askarov, Devon Levi, Dustin Wolf, Simon Edvinsson, Marco Kasper, Connor Bedard, Leo Carlsson, Zach Benson, Pavel Mintyukov, Connor Zary, Matthew Poitras, Kevin Korchinski, Logan Cooley, Adam Fantilli, Simon Nemec, Matt Savoie, Cutter Gauthier, Lane Hutson, Logan Stankoven, Jesper Wallstedt, Brad Lambert, Macklin Celebrini, Matvei Michkov, Jett Luchanko, Will Smith, Jonathan Lekkerimaki, Ivan Demidov, Snuggerud
-- (Some like Celebrini are already in the DB; only net-new ones will be inserted)
+### 2. Reduce debounce to 150ms
+The 400ms debounce is too slow. Reducing to 150ms still prevents rapid-fire duplicate requests while feeling much snappier. This benefits both guided mode clicks and quick search typing.
 
-### WNBA (12 additions)
-- **Add**: Kelsey Plum, Napheesa Collier, Brittney Griner, Aaliyah Edwards, Hailey Van Lith, Sonia Citron, JuJu Watkins, Hannah Hidalgo, Azzi Fudd, Sarah Strong, Flau'jee Johnson, Olivia Miles
+### 3. Reduce `LOAD_ALL_DELAY_MS` from 200ms to 100ms
+The inter-page delay during the "load all" phase adds unnecessary latency. Cutting it in half speeds up total load time for fetching additional pages.
 
-### Baseball (1 note update)
-- Jacob Wilson gets note "2025 RC" added (already exists as a player)
+## Technical Details
 
-### Brands/Traits
-- No structural changes needed; existing brands and traits already cover the CSV
+**File: `src/hooks/useSportsEbaySearch.ts`**
 
-## Technical Approach
+- Line 53: Change `DEBOUNCE_MS` from `400` to `150`
+- Line 55: Change `LOAD_ALL_DELAY_MS` from `200` to `100`
+- Lines 90-104: Move `setIsLoading(true)` and `setListings([])` to run immediately when `search()` is called, before the debounce timer. This ensures the loading skeleton shows instantly instead of "No listings found" flashing for 150-400ms.
 
-A single database migration will:
-1. Delete all existing players for the ruleset version
-2. Re-insert the complete updated list (cleanest approach to avoid partial updates)
-3. Update Jacob Wilson's note to "2025 RC"
+The structure changes from:
+```text
+search() called
+  -> clear old timers
+  -> setTimeout(400ms):
+       setIsLoading(true)    <-- too late!
+       fetch(...)
+```
 
-No code changes are needed -- the app already reads players from the database dynamically.
+To:
+```text
+search() called
+  -> clear old timers
+  -> setIsLoading(true)      <-- immediate
+  -> setListings([])         <-- clear stale results
+  -> setTimeout(150ms):
+       fetch(...)
+```
 
-### Player Counts After Update
-| Sport | Current | Updated |
-|-------|---------|---------|
-| Baseball | 17 | 17 |
-| Football | 21 | 21 |
-| Basketball | 18 | 27 |
-| Hockey | 24 | 44 |
-| WNBA | 12 | 24 |
-| **Total** | **92** | **133** |
+No other files need changes. The guided search already triggers correctly when only a player is selected (the `selectPlayer` function sets `show_all_brands: true` when no brand is selected). The fix is purely about the loading state timing and debounce speed.
 
