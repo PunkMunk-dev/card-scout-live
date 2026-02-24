@@ -35,14 +35,11 @@ export function TcgEmptyState({ selectedGame, onSelectTarget }: TcgEmptyStatePro
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
       <div className="flex flex-col items-center text-center w-full max-w-[540px] px-6">
-        <div className="relative mb-4">
-          <div className="absolute inset-0 bg-primary/5 blur-xl rounded-full scale-150" />
-          <div className="relative inline-flex items-center justify-center h-10 w-10 rounded-lg bg-secondary/40 border border-border/20">
-            <Icon className="h-5 w-5 text-muted-foreground" />
-          </div>
+        <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+          <Icon className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="text-[22px] font-semibold text-foreground tracking-tight leading-tight">{title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground/80 max-w-xs leading-relaxed">{subtitle}</p>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <p className="mt-2 text-sm text-muted-foreground max-w-sm leading-relaxed">{subtitle}</p>
         {selectedGame && (
           <div className="mt-7 w-full">
             <TrendingRail onSelectTarget={onSelectTarget} game={selectedGame} />

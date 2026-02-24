@@ -68,7 +68,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
             <div className="absolute bottom-0 left-0 right-0 p-3">
               <div className="flex items-baseline justify-between gap-2">
                 <div className="flex items-baseline gap-1.5">
-                  {listing.price !== null && <span className="text-xl font-extrabold text-white tabular-nums">${listing.price.toFixed(2)}</span>}
+                  {listing.price !== null && <span className="text-lg font-bold text-white tabular-nums">${listing.price.toFixed(2)}</span>}
                   {listing.shippingCost !== null && listing.shippingCost > 0 && <span className="text-[11px] text-white/50">+${listing.shippingCost.toFixed(2)} ship</span>}
                 </div>
                 {isAuctionMode && isAuction && timeRemaining && <span className={cn("text-[11px] font-medium", isEndingSoon ? "text-orange-400" : "text-white/60")}>{timeRemaining}</span>}
@@ -76,7 +76,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
             </div>
           </div>
           <div className="p-3 space-y-2.5">
-            <h3 className="text-[15px] font-semibold leading-tight line-clamp-2 min-h-[2.5rem]">{listing.title}</h3>
+            <h3 className="text-sm font-medium leading-snug line-clamp-2 min-h-[2.5rem]">{listing.title}</h3>
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               <a href={ebaySoldUrl} target="_blank" rel="noopener noreferrer" className="min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-destructive/80 text-destructive-foreground hover:bg-destructive transition-colors">PSA 10</a>
               <GemRateBadge searchContext={listing.searchContext} fallbackUrl={gemRateUrl} />
