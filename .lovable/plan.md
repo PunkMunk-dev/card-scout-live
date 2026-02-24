@@ -1,71 +1,67 @@
 
-# Fix: Sports Lab Quick Search Infinite Loop Bug
+
+# Fix: Sports Lab Quick Search Stuck on Loading Skeletons (StrictMode)
+
+## Problem
+
+The previous fix correctly memoized `searchParams` but incorrectly removed the `lastSearchRef` cleanup from the search effect. This breaks React StrictMode compatibility:
+
+1. On first mount, the effect calls `search()`, setting `isLoading=true` and starting a debounce timer
+2. StrictMode simulates unmount -- the hook's cleanup clears the debounce timer and aborts the fetch
+3. StrictMode remounts -- the effect runs again, but the dedup key still matches (no cleanup reset it), so the search is skipped
+4. `isLoading` stays `true` forever, showing infinite skeletons with no API call
 
 ## Root Cause
 
-The Sports Lab Quick Search has an infinite loop that prevents results from ever displaying:
+Removing the cleanup was wrong in isolation. The infinite loop from before was caused by **two** bugs working together:
+- Unmemoized `searchParams` (new reference every render)
+- Cleanup resetting the dedup ref (allowing re-trigger)
 
-1. In `SportsLab.tsx`, the `searchParams` prop is created **inline** without memoization:
-   ```
-   <EbayResultsPanel searchParams={{ playerName: quickSearchQuery.trim(), freeFormSearch: true }} ...
-   ```
-   This creates a new object reference on every render.
+Now that `searchParams` is properly memoized, the cleanup is safe to restore -- it will only reset on genuine unmount/remount, not on every render cycle.
 
-2. In `EbayResultsPanel.tsx`, the search effect (line 51-60) has a cleanup function that resets `lastSearchRef.current = ''` whenever the effect re-runs.
+## Fix
 
-3. When search results come back, state updates (listings, loading flags, result counts) cause the parent `SportsLab` to re-render, which creates a new `searchParams` object, which triggers the effect cleanup (resetting the ref), which makes the key-check pass, which fires `search()` again -- clearing all listings and starting over.
+### File: `src/components/sports-lab/EbayResultsPanel.tsx`
 
-**The cycle**: search fires -> results arrive -> state updates -> parent re-renders -> new searchParams ref -> effect cleanup resets ref -> effect fires search again -> loop forever.
-
-## Fix (2 changes)
-
-### 1. Memoize `searchParams` in `SportsLab.tsx`
-
-Wrap the quick-search `searchParams` in `useMemo` so the object reference stays stable when `quickSearchQuery` hasn't changed:
+Restore the cleanup function in the search effect (line 51-59):
 
 ```typescript
-const quickSearchParams = useMemo(() => ({
-  playerName: quickSearchQuery.trim(),
-  freeFormSearch: true as const,
-}), [quickSearchQuery]);
-```
-
-Then pass `quickSearchParams` to `EbayResultsPanel` instead of the inline object.
-
-### 2. Remove the cleanup that resets `lastSearchRef` in `EbayResultsPanel.tsx`
-
-The cleanup on line 59 (`return () => { lastSearchRef.current = ''; }`) defeats the purpose of the dedup check. Remove it so that `lastSearchRef` only resets when a genuinely new search key comes in:
-
-```typescript
-// Before (line 51-60)
+// Current (broken for StrictMode)
 useEffect(() => {
   if (!searchParams.playerName) return;
-  const key = JSON.stringify({ ... });
-  if (key !== lastSearchRef.current) {
-    lastSearchRef.current = key;
-    loadAllTriggeredRef.current = false;
-    search(searchParams);
-  }
-  return () => { lastSearchRef.current = ''; };  // BUG: resets on every re-run
-}, [searchParams, search]);
-
-// After
-useEffect(() => {
-  if (!searchParams.playerName) return;
-  const key = JSON.stringify({ ... });
+  const key = JSON.stringify({ playerName: searchParams.playerName, brand: searchParams.brand, traits: searchParams.traits });
   if (key !== lastSearchRef.current) {
     lastSearchRef.current = key;
     loadAllTriggeredRef.current = false;
     search(searchParams);
   }
 }, [searchParams, search]);
+
+// Fixed (restore cleanup)
+useEffect(() => {
+  if (!searchParams.playerName) return;
+  const key = JSON.stringify({ playerName: searchParams.playerName, brand: searchParams.brand, traits: searchParams.traits });
+  if (key !== lastSearchRef.current) {
+    lastSearchRef.current = key;
+    loadAllTriggeredRef.current = false;
+    search(searchParams);
+  }
+  return () => { lastSearchRef.current = ''; };
+}, [searchParams, search]);
 ```
+
+## Why This Is Now Safe
+
+With both fixes in place:
+- Memoized `searchParams` ensures the effect only re-runs when the query genuinely changes (no new object reference on every render)
+- The cleanup ensures StrictMode's simulated unmount/remount correctly re-triggers the search on the second mount
+- No infinite loop because `searchParams` reference is stable between renders
 
 ## Technical Details
 
 | File | Change |
 |------|--------|
-| `src/pages/SportsLab.tsx` | Memoize quick-search params with `useMemo` |
-| `src/components/sports-lab/EbayResultsPanel.tsx` | Remove cleanup function from search effect (line 59) |
+| `src/components/sports-lab/EbayResultsPanel.tsx` | Restore `return () => { lastSearchRef.current = ''; };` in search effect |
 
-Both changes together break the infinite loop: the memoized params prevent unnecessary effect triggers, and removing the cleanup prevents the dedup check from being bypassed on legitimate re-runs.
+Single one-line change. The memoization fix in `SportsLab.tsx` from the previous edit remains correct and unchanged.
+
