@@ -1,90 +1,45 @@
 
 
-# End-to-End Testing & Bug Fix Plan
+# Auto-Search on Player Selection (Sports Lab)
 
-## Issues Found
+## The Problem
 
-### 1. Console Warning: `forwardRef` on `EbayResultsPanel` and `SkeletonCard` (Sports Lab)
+When a user selects a player in Sports Lab, nothing happens until they also pick a brand or click "All Brands." This is because the `ResultsGrid` component only renders when `hasBrandOrShowAll` is true, and on a fresh player selection `show_all_brands` defaults to `false`.
 
-Two React warnings appear:
-- "Function components cannot be given refs. Check the render method of `ResultsGrid`" -- `EbayResultsPanel` receives a ref but is not wrapped in `React.forwardRef`
-- "Function components cannot be given refs. Check the render method of `EbayResultsPanel`" -- `SkeletonCard` receives a ref but is not wrapped in `React.forwardRef`
+## The Fix
 
-These are non-breaking warnings but indicate something is passing refs to these components unexpectedly. The fix is to wrap both `EbayResultsPanel` and `SkeletonCard` in `React.forwardRef`.
-
-### 2. CORS Header Mismatch on `ebay-search` Edge Function (Card Finder)
-
-The `ebay-search` function (used by the Card Finder / Index page) has an incomplete `Access-Control-Allow-Headers`:
-
-```
-'authorization, x-client-info, apikey, content-type'
-```
-
-It is missing the newer Supabase client headers that the current SDK sends:
-
-```
-x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version
-```
-
-The `sports-ebay-search` function already has the correct headers. This mismatch can cause CORS preflight failures for the Card Finder page on certain browsers/versions.
-
-### 3. Sports Lab "No listings found" for Jayden Daniels
-
-The session replay shows the user selecting Football > Jayden Daniels and seeing "No listings found". This is likely a transient eBay API issue or the aggressive filtering removing all results. No code bug -- the edge function logic is correct. However, we should verify the search is firing correctly.
-
-## Fixes
-
-### File: `src/components/sports-lab/EbayResultsPanel.tsx`
-- Wrap the component in `React.forwardRef` to accept the ref properly and silence the warning
-
-### File: `src/components/sports-lab/SkeletonCard.tsx`
-- Wrap the component in `React.forwardRef` to accept the ref properly and silence the warning
-
-### File: `supabase/functions/ebay-search/index.ts`
-- Update `corsHeaders['Access-Control-Allow-Headers']` to include the full set of Supabase client headers, matching the pattern used in `sports-ebay-search`
+Automatically set `show_all_brands = true` whenever a player is selected, so the search fires immediately. This is a one-line change.
 
 ## Technical Details
 
-### `EbayResultsPanel.tsx` change
-```tsx
-// Before
-export function EbayResultsPanel({ ... }: EbayResultsPanelProps) {
+### File: `src/hooks/useSportsQueryBuilderState.ts`
 
-// After
-export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPanelProps>(
-  function EbayResultsPanel({ ... }, ref) {
-    // existing body, add ref to root div
-  }
-);
-```
+In the `selectPlayer` callback, change the logic so `show_all_brands` always becomes `true` when a player is picked (instead of only when there are existing selections):
 
-### `SkeletonCard.tsx` change
-```tsx
-// Before
-export function SkeletonCard() {
-
-// After
-export const SkeletonCard = React.forwardRef<HTMLDivElement>(
-  function SkeletonCard(_props, ref) {
-    return <div ref={ref} ...>
-  }
-);
-```
-
-### `ebay-search/index.ts` CORS fix
+**Before (line 22-27):**
 ```ts
-// Before
-'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-
-// After
-'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+const selectPlayer = useCallback((playerId: string) => {
+  setState(prev => {
+    const hasExisting = prev.selected_rule_item_ids.length > 0 || prev.show_all_brands;
+    return { ...prev, selected_player_ids: [playerId], show_all_brands: hasExisting ? prev.show_all_brands : (prev.sport_key !== null) };
+  });
+}, []);
 ```
 
-## Summary
+**After:**
+```ts
+const selectPlayer = useCallback((playerId: string) => {
+  setState(prev => ({
+    ...prev,
+    selected_player_ids: [playerId],
+    show_all_brands: prev.show_all_brands || prev.selected_rule_item_ids.length === 0,
+  }));
+}, []);
+```
 
-| Issue | Impact | Fix |
-|---|---|---|
-| forwardRef warnings on EbayResultsPanel/SkeletonCard | Console noise, potential future breakage | Wrap both in React.forwardRef |
-| ebay-search CORS headers incomplete | Card Finder may fail on some browsers | Add missing headers to match other functions |
-| Sports "No listings found" | Transient eBay API / filtering result | No code change needed -- API and filters are correct |
+This means:
+- First player pick (no brand selected yet): auto-sets `show_all_brands = true`, search fires immediately
+- Switching players after a brand is already selected: keeps the current brand/show-all state unchanged
+
+No other files need changes -- the existing `canSearchGuided` / `hasBrandOrShowAll` check in `SportsLab.tsx` will evaluate to `true` and render the `ResultsGrid`.
 
