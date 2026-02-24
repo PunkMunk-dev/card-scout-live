@@ -57,9 +57,6 @@ export function EbayResultsPanel({ searchParams, traitLabels, sportKey, onResult
       loadAllTriggeredRef.current = false;
       search(searchParams);
     }
-    return () => {
-      lastSearchRef.current = '';
-    };
   }, [searchParams, search]);
 
   useEffect(() => { onLoadingChange?.(isLoading); }, [isLoading, onLoadingChange]);
