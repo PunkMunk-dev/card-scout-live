@@ -2,41 +2,17 @@ import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useSharedWatchlist } from '@/contexts/WatchlistContext';
-import { useTcgWatchlist } from '@/hooks/useTcgWatchlist';
-import { useSportsWatchlist } from '@/contexts/SportsWatchlistContext';
 
 const tabs = [
-  { to: '/', label: 'Card Finder', shortLabel: 'Cards', icon: Search as typeof Search | null, watchlistKey: 'cards' as const },
-  { to: '/tcg', label: 'TCG Lab', shortLabel: 'TCG', icon: null, watchlistKey: 'tcg' as const },
-  { to: '/sports', label: 'Sports Lab', shortLabel: 'Sports', icon: null, watchlistKey: 'sports' as const },
+  { to: '/', label: 'Card Finder', shortLabel: 'Cards', icon: Search as typeof Search | null },
+  { to: '/tcg', label: 'TCG Lab', shortLabel: 'TCG', icon: null },
+  { to: '/sports', label: 'Sports Lab', shortLabel: 'Sports', icon: null },
 ];
-
-function WatchlistBadge({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
-      {count > 99 ? '99+' : count}
-    </span>
-  );
-}
-
-function useWatchlistCounts() {
-  const { count: cardsCount } = useSharedWatchlist();
-  const { data: tcgWatchlist } = useTcgWatchlist();
-  const { count: sportsCount } = useSportsWatchlist();
-  return {
-    cards: cardsCount,
-    tcg: tcgWatchlist?.length ?? 0,
-    sports: sportsCount,
-  };
-}
 
 export function TabNavigation() {
   const isMobile = useIsMobile();
-  const counts = useWatchlistCounts();
 
-  const navItems = tabs.map(({ to, label, shortLabel, icon: Icon, watchlistKey }) => (
+  const navItems = tabs.map(({ to, label, shortLabel, icon: Icon }) => (
     <NavLink
       key={to}
       to={to}
@@ -58,12 +34,8 @@ export function TabNavigation() {
       {({ isActive }) => (
         <>
           {Icon && (
-            <span className="relative">
-              <Icon className={cn(isMobile ? 'h-5 w-5' : 'h-4 w-4')} strokeWidth={isActive ? 2.5 : 2} />
-              <WatchlistBadge count={counts[watchlistKey]} />
-            </span>
+            <Icon className={cn(isMobile ? 'h-5 w-5' : 'h-4 w-4')} strokeWidth={isActive ? 2.5 : 2} />
           )}
-          {!Icon && <WatchlistBadge count={counts[watchlistKey]} />}
           <span>{isMobile ? shortLabel : label}</span>
           {!isMobile && isActive && (
             <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary" />

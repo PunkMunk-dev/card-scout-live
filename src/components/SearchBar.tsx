@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,17 @@ interface SearchBarProps {
   onClear?: () => void;
   isLoading: boolean;
   showClear?: boolean;
+  externalQuery?: string;
 }
 
-export function SearchBar({ onSearch, onClear, isLoading, showClear }: SearchBarProps) {
+export function SearchBar({ onSearch, onClear, isLoading, showClear, externalQuery }: SearchBarProps) {
   const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (externalQuery !== undefined && externalQuery !== query) {
+      setQuery(externalQuery);
+    }
+  }, [externalQuery]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
