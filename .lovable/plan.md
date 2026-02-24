@@ -1,36 +1,58 @@
 
 
-# Fix: Show More Cards in Sports Lab
+# Fix: Sports Lab Search Stuck on Loading Skeletons
 
-## Root Causes
+## Root Cause
 
-Three issues are causing fewer cards to display than expected:
+React 18 StrictMode double-mount behavior causes the search to never execute:
 
-### 1. Hardcoded $10 minimum price filter
-Every listing under $10 is hidden, even when "All Prices" is selected. The "All Prices" option itself has a `min: 10` setting, so there's no way for users to see cheaper cards. Many legitimate listings (base cards, low-value parallels) are $1-$9 and are being silently removed.
+1. **First mount**: The search effect runs, sets `lastSearchRef.current = key`, calls `search()` which sets `isLoading=true` and starts a 150ms debounce timer
+2. **StrictMode unmount**: The cleanup effect in `useSportsEbaySearch` clears the debounce timer (the actual fetch never runs)
+3. **Second mount**: The search effect runs again, but `lastSearchRef.current` already equals `key`, so `search()` is never called
+4. **Result**: `isLoading` stays `true` forever, skeletons show indefinitely, no network request fires
 
-### 2. Auctions hidden by default
-When "Auctions" toggle is off, ALL auction listings are removed. Many cards are listed as auction-only, so they disappear entirely. Users should see both Buy It Now AND auction cards by default.
+This was introduced when we moved `setIsLoading(true)` outside the debounce timer. Previously, `isLoading` was set inside the timer callback, so when the timer was cleared on unmount, `isLoading` remained `false` and the component showed the empty state instead of infinite skeletons.
 
-### 3. Load-all stops too early
-The auto-loader stops after fetching 200 filtered cards or 10 pages. With the aggressive price and auction filters removing so many results, users end up seeing far fewer cards than are actually available.
+## Fix
 
-## Changes
+**File: `src/components/sports-lab/EbayResultsPanel.tsx`**
 
-### File: `src/components/sports-lab/EbayResultsPanel.tsx`
+Reset `lastSearchRef.current` in a cleanup function for the search effect. This ensures that when React StrictMode remounts the component, the search key comparison sees a fresh state and re-triggers `search()`.
 
-1. **Remove the hardcoded $10 minimum** from the base filter -- only apply price minimums when a specific price range is selected
-2. **Change "All Prices" range** to `min: 0` so it truly shows all prices
-3. **Stop hiding auctions by default** -- show all listings (BIN + Auction) together. The "Auctions" toggle becomes "Auctions Only" to filter down to just auctions when desired
-4. **Add a "Buy It Now" toggle** so users can filter to BIN-only if they want, but default is showing everything
+Change the search effect from:
+```text
+useEffect(() => {
+    if (!searchParams.playerName) return;
+    const key = JSON.stringify(...);
+    if (key !== lastSearchRef.current) {
+      lastSearchRef.current = key;
+      loadAllTriggeredRef.current = false;
+      search(searchParams);
+    }
+  }, [searchParams, search]);
+```
 
-### File: `src/hooks/useSportsEbaySearch.ts`
+To:
+```text
+useEffect(() => {
+    if (!searchParams.playerName) return;
+    const key = JSON.stringify(...);
+    if (key !== lastSearchRef.current) {
+      lastSearchRef.current = key;
+      loadAllTriggeredRef.current = false;
+      search(searchParams);
+    }
+    return () => { lastSearchRef.current = ''; };
+  }, [searchParams, search]);
+```
 
-5. **Increase `MAX_LOAD_ALL_PAGES`** from 10 to 20, allowing more results to be fetched automatically
+Adding `return () => { lastSearchRef.current = ''; }` resets the ref on cleanup, so the second StrictMode mount will see a fresh key and re-call `search()`.
 
-## Expected Impact
+## Files Changed
 
-- Cards under $10 will now appear (significant increase in visible results)
-- Auction listings will appear alongside Buy It Now listings by default
-- More pages will load automatically, showing 2x more total results
+| File | Change |
+|------|--------|
+| `src/components/sports-lab/EbayResultsPanel.tsx` | Add cleanup to search effect that resets `lastSearchRef` |
+
+This is a one-line fix that resolves the infinite loading skeleton issue.
 
