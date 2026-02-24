@@ -131,9 +131,6 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
         listings={processedResults?.listings}
         isLoading={isLoading}
         error={error}
-        setName={selectedSet?.set_name}
-        tierLabel=""
-        activeSort={sort}
       />
     </div>
   );

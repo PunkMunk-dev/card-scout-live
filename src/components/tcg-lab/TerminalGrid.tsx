@@ -2,20 +2,17 @@ import React from 'react';
 import { TerminalCard } from './TerminalCard';
 import { PackageX } from 'lucide-react';
 import { ResultsSkeletonGrid } from './ResultsSkeletonGrid';
-import type { EbayListing, SearchFilters } from '@/types/tcg';
+import type { EbayListing } from '@/types/tcg';
 import type { ProcessedListing } from '@/types/tcgFilters';
 
 interface TerminalGridProps {
   listings: (EbayListing | ProcessedListing)[] | undefined;
   isLoading: boolean;
   error: Error | null;
-  setName?: string;
-  tierLabel?: string;
-  activeSort?: SearchFilters['sort'];
 }
 
 export const TerminalGrid = React.forwardRef<HTMLDivElement, TerminalGridProps>(
-  ({ listings, isLoading, error, setName, tierLabel, activeSort }, ref) => {
+  ({ listings, isLoading, error }, ref) => {
     if (isLoading) return <ResultsSkeletonGrid />;
 
     if (error) {
@@ -43,10 +40,6 @@ export const TerminalGrid = React.forwardRef<HTMLDivElement, TerminalGridProps>(
           <TerminalCard
             key={listing.itemId}
             listing={listing}
-            setName={setName}
-            rarityTag={tierLabel}
-            rank={index + 1}
-            activeSort={activeSort}
           />
         ))}
       </div>
