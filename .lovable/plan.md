@@ -1,138 +1,79 @@
 
 
-# Phase 2: Port Sports Card Lab into AI Card Finder
+# Phase 3: Polish and Unify
 
-## Overview
-
-Port the Sports Card Lab query builder into the existing project as the `/sports` tab, replacing the current placeholder. Since subscriptions are deferred, there is no auth/Stripe dependency -- this simplifies the migration significantly.
+Now that all three tools (Card Finder, TCG Lab, Sports Lab) are ported, this phase focuses on visual consistency, mobile UX, and reliability.
 
 ---
 
-## What gets built
+## 3.1 Unified Tab Navigation (Mobile)
 
-The Sports Lab tab will have:
-- A guided query builder (select sport, player, brand, traits) that searches eBay for raw sports cards
-- A quick search mode for free-form searches
-- PSA 10 market value overlay on each card (sold comps from eBay Finding API)
-- Gem Rate badges (PSA 10 pop data from eBay Browse API)
-- Local watchlist (localStorage-based, same pattern as original)
-- Sorting by newest, price, quality, profit potential, ending soonest
-- Auction mode toggle and price range filters
-- Infinite scroll with auto-load-all
+Currently the tab labels are hidden on small screens (`hidden sm:inline`), leaving only tiny icons. Improve this:
+
+- Show abbreviated labels on mobile (e.g., "Cards", "TCG", "Sports")
+- Add bottom-bar navigation on mobile as an alternative to the top tabs
+- Highlight active tab with an underline indicator for better visibility
+
+**Files**: `src/components/TabNavigation.tsx`
 
 ---
 
-## Database changes
+## 3.2 Consistent Page Layout
 
-Create the Sports Card Lab schema in this project's database. This includes:
+Each page has slightly different layout patterns. Normalize them:
 
-**Tables:**
-- `ruleset_versions` -- versioned rulesets (draft/published/archived)
-- `sports` -- sport options per ruleset (e.g., Football, Basketball)
-- `players` -- player list per sport per ruleset
-- `rule_items` -- brands, traits, notes per sport per ruleset
-- `seller_blacklist` -- seller patterns to exclude per ruleset
-- `user_roles` -- admin role management (enum: admin, user)
+- Card Finder has its own watchlist bar and decorative blobs -- wrap in a consistent layout shell
+- TCG Lab uses `min-h-[calc(100vh-48px)]` -- standardize across all pages
+- Sports Lab has the same calc -- keep consistent
 
-**Functions (RPC):**
-- `get_published_ruleset_snapshot()` -- single call returns all published data as JSONB
-- `has_role()` -- security definer for RLS role checks
-- `publish_ruleset_version()` -- atomic publish (admin only)
-- `clone_published_to_draft()` -- admin convenience
-- `create_empty_draft()` -- admin convenience
-
-**RLS Policies:**
-- Public can read published rulesets and their child data
-- Admins (via `has_role()`) can manage all data
-- `user_roles` restricted to admins only
-
-**Data seeding:**
-- The tables will be empty initially -- you will need to populate them through the admin functions or direct inserts after migration
+**Files**: `src/pages/Index.tsx`, `src/pages/TcgLab.tsx`, `src/pages/SportsLab.tsx`
 
 ---
 
-## Edge functions (4 new)
+## 3.3 Error Boundaries
 
-1. **`sports-ebay-search`** -- Main eBay search for raw sports cards (Browse API + Finding API fallback, with filtering for graded cards, excluded sellers, excluded brands, pagination)
-2. **`sports-ebay-sold-psa`** -- PSA 10 sold comps lookup via Finding API (market value with confidence scoring, outlier rejection, recency weighting)
-3. **`sports-ebay-gem-rate`** -- Gem Rate lookup via Browse API (searches PSA 10 listings, fetches item details for pop data)
-4. **`sports-ebay-psa10-active`** -- PSA 10 active listings (lowest BIN price as market value)
+Add React error boundaries around each tab's content so one tab crashing doesn't take down the entire app.
 
-All use existing `EBAY_CLIENT_ID` / `EBAY_CLIENT_SECRET` secrets (already configured). The Sports Card Lab used `EBAY_APP_ID` as the secret name -- we will map to `EBAY_CLIENT_ID` in the new functions.
+- Create a reusable `ErrorBoundary` component with a "Try Again" button
+- Wrap each `Route` element with the boundary
 
----
-
-## Frontend files (new, all namespaced under `sports-lab/`)
-
-**Types:**
-- `src/types/sportsEbay.ts` -- EbayListing, EbaySearchParams, SortOption, etc.
-- `src/types/sportsQueryBuilder.ts` -- RulesetSnapshot, Player, RuleItem, QueryBuilderState, etc.
-
-**Lib:**
-- `src/lib/sportsCardsProUrl.ts` -- URL builders for eBay sold PSA 10 and GemRate links
-- `src/lib/sportsSubscriptionTiers.ts` -- Tier definitions (all users get "pro" access since subscriptions are deferred)
-
-**Hooks:**
-- `src/hooks/useSportsEbaySearch.ts` -- eBay search with debounce, pagination, PSA 10 enrichment
-- `src/hooks/useSportsRulesetSnapshot.ts` -- Fetches published ruleset via RPC
-- `src/hooks/useSportsQueryBuilderState.ts` -- Local state machine for query builder selections
-- `src/hooks/useSportsGemRate.ts` -- Gem Rate data fetching
-- `src/hooks/useSportsSearchLimit.ts` -- Search limit (all unlimited since no paywall)
-
-**Context:**
-- `src/contexts/SportsWatchlistContext.tsx` -- Local watchlist (localStorage)
-
-**Components (under `src/components/sports-lab/`):**
-- `QueryHeader.tsx` -- Sticky header with sport/player/brand/trait dropdowns
-- `QueryHeaderDropdown.tsx` -- Reusable dropdown component
-- `QuerySummaryBar.tsx` -- Summary pills below header
-- `SearchModeToggle.tsx` -- Guided vs Quick search toggle
-- `QuickSearchInput.tsx` -- Free-form search input
-- `EbayResultsPanel.tsx` -- Results container with sorting, filtering, pagination
-- `EbayListingCard.tsx` -- Individual card with PSA 10 guide, profit calc, watchlist star
-- `ResultsGrid.tsx` -- Wrapper that converts query state to search params
-- `GemRateBadge.tsx` -- Inline gem rate badge with lazy loading
-- `SoldCompsDialog.tsx` -- Modal showing PSA 10 sold comparables
-- `WatchlistPanel.tsx` -- Watchlist drawer content
-- `WatchlistStar.tsx` -- Star toggle for watchlist
-- `SkeletonCard.tsx` -- Loading skeleton
-- `SportSelect.tsx` -- Sport selector
-- `UserMenu.tsx` -- Simplified (no auth actions since subscriptions deferred)
-
-**Page:**
-- `src/pages/SportsLab.tsx` -- Replace placeholder with full query builder page
-
-**Styles:**
-- Add Sports Lab CSS tokens to `src/index.css` (custom card styling, glass panels, gold metallic text, etc.)
+**Files**: `src/components/ErrorBoundary.tsx`, `src/App.tsx`
 
 ---
 
-## Files modified
+## 3.4 Loading States
 
-- `src/index.css` -- Add Sports Lab design tokens and utility classes
-- `src/pages/SportsLab.tsx` -- Replace placeholder with full implementation
-- `src/App.tsx` -- Wrap with SportsWatchlistProvider
+Add route-level `Suspense` boundaries with consistent skeleton fallbacks so lazy-loaded pages show a uniform loading state.
 
----
+- Lazy-load `TcgLab` and `SportsLab` pages (they're heavy)
+- Add a shared `PageSkeleton` component
 
-## What is NOT included (deferred)
-
-- Authentication (login/signup) -- no auth required
-- Stripe subscriptions -- all features free
-- Admin panel for managing rulesets -- manage via database directly
-- `check-subscription`, `create-checkout`, `customer-portal` edge functions
+**Files**: `src/App.tsx`, `src/components/PageSkeleton.tsx`
 
 ---
 
-## Technical details
+## 3.5 Shared Watchlist Infrastructure (optional, lightweight)
 
-| Item | Count |
+Currently each tool has its own watchlist. For now, just add a watchlist count badge on the tab navigation for whichever tool has items, so users can see at a glance.
+
+- Card Finder watchlist count from `useWatchlist`
+- TCG watchlist count from `useTcgWatchlist`
+- Sports watchlist count from `useSportsWatchlist`
+
+**Files**: `src/components/TabNavigation.tsx`
+
+---
+
+## Summary
+
+| Change | Files |
 |---|---|
-| New database tables | 6 |
-| New database functions | 5 |
-| New edge functions | 4 |
-| New frontend files | ~25 |
-| Modified files | 3 |
+| Mobile-friendly tab nav | 1 |
+| Consistent page layouts | 3 |
+| Error boundaries | 2 |
+| Lazy loading + suspense | 2 |
+| Watchlist badges on tabs | 1 |
+| **Total** | **~7 files** |
 
-The Sports Lab edge functions will use `EBAY_CLIENT_ID` (mapped from the original project's `EBAY_APP_ID`) and `EBAY_CLIENT_SECRET`, both already configured as secrets.
+This is a focused polish pass -- no new features, just making the merged app feel like a single cohesive product.
 
