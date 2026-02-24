@@ -57,10 +57,13 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
     buyingOptions: showAuctionsOnly ? 'AUCTION' : undefined,
   };
 
+  // Include game in query key to prevent cross-game collisions
   const { data: listings, isLoading, error } = useQuery({
-    queryKey: ['terminal-listings', activeQuery, filters, showAuctionsOnly],
+    queryKey: ['terminal-listings', 'tcg', game, activeQuery, filters, showAuctionsOnly],
     queryFn: () => searchActiveListings(activeQuery, filters),
     enabled: !!activeQuery,
+    retry: 1,
+    staleTime: 60_000,
   });
 
   useEffect(() => { onLoadingChange(isLoading); }, [isLoading, onLoadingChange]);

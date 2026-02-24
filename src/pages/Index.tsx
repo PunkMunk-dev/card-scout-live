@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/SearchBar";
@@ -30,6 +30,8 @@ export default function Index() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(!!initialQuery);
   const [sort, setSort] = useState<SortOption>("best");
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Auto-search on mount if query param exists
   useEffect(() => {
@@ -47,8 +49,16 @@ export default function Index() {
     append: boolean = false,
     overrideSort?: SortOption
   ) => {
+    if (!searchQuery.trim()) return;
+
+    // Abort previous in-flight request
+    if (abortRef.current) abortRef.current.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+
     if (page === 1) {
       setIsLoading(true);
+      setError(null);
     } else {
       setIsLoadingMore(true);
     }
@@ -64,6 +74,8 @@ export default function Index() {
         buyingOptions: deriveBuyingOptions(activeSort),
       });
 
+      if (ac.signal.aborted) return;
+
       if (append) {
         setItems(prev => {
           const existingIds = new Set(prev.map(item => item.itemId));
@@ -74,15 +86,26 @@ export default function Index() {
         setItems(response.items);
       }
       
+      // Only show total from items we actually have, not eBay's pre-filter total
       setTotal(response.total);
-      setNextPage(response.nextPage);
+      setNextPage(response.items.length > 0 ? response.nextPage : null);
       setHasSearched(true);
-    } catch (error) {
-      console.error('Search error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to search eBay');
+      setError(null);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      const msg = err instanceof Error ? err.message : 'Failed to search eBay';
+      console.error('Search error:', err);
+      setError(msg);
+      if (!append) {
+        setItems([]);
+        setNextPage(null);
+      }
+      toast.error(msg);
     } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
+      if (!ac.signal.aborted) {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
     }
   }, [sort]);
 
@@ -90,6 +113,7 @@ export default function Index() {
     setQuery(newQuery);
     setSearchParams(newQuery ? { q: newQuery } : {}, { replace: true });
     setItems([]);
+    setError(null);
     performSearch(newQuery, 1, false);
   };
 
@@ -98,6 +122,7 @@ export default function Index() {
     setQuery(title);
     setSearchParams(title ? { q: title } : {}, { replace: true });
     setItems([]);
+    setError(null);
     performSearch(title, 1, false);
   };
 
@@ -109,10 +134,12 @@ export default function Index() {
     setTotal(0);
     setNextPage(null);
     setHasSearched(false);
+    setError(null);
+    if (abortRef.current) abortRef.current.abort();
   };
 
   const handleLoadMore = () => {
-    if (nextPage && query) {
+    if (nextPage && query && !isLoadingMore) {
       performSearch(query, nextPage, true);
     }
   };
@@ -121,7 +148,15 @@ export default function Index() {
     setSort(newSort);
     if (query && hasSearched) {
       setItems([]);
+      setError(null);
       performSearch(query, 1, false, newSort);
+    }
+  };
+
+  const handleRetry = () => {
+    if (query) {
+      setError(null);
+      performSearch(query, 1, false);
     }
   };
 
@@ -162,6 +197,15 @@ export default function Index() {
       <main className="container py-6">
         {isLoading ? (
           <LoadingGrid />
+        ) : error && items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="rounded-lg border shadow-sm bg-card px-10 py-12 max-w-md">
+              <p className="text-sm text-destructive mb-4">{error}</p>
+              <button onClick={handleRetry} className="text-sm font-medium text-primary hover:underline">
+                Retry Search
+              </button>
+            </div>
+          </div>
         ) : hasSearched && items.length > 0 ? (
           <ListingGrid 
             items={items}
