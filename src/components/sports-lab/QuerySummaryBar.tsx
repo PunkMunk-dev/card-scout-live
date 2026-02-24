@@ -3,11 +3,12 @@ import { cn } from '@/lib/utils';
 interface QuerySummaryBarProps {
   playerName?: string; sportLabel?: string; brandLabel?: string; showAllBrands?: boolean;
   traitLabels?: string[]; resultCount?: number; isLoading?: boolean;
+  idleMessage?: string;
 }
 
-export function QuerySummaryBar({ playerName, sportLabel, brandLabel, showAllBrands, traitLabels = [], resultCount, isLoading }: QuerySummaryBarProps) {
+export function QuerySummaryBar({ playerName, sportLabel, brandLabel, showAllBrands, traitLabels = [], resultCount, isLoading, idleMessage = 'Select a player to begin searching' }: QuerySummaryBarProps) {
   if (!playerName) return (
-    <div className="px-4 py-2 border-b border-border"><p className="text-xs text-muted-foreground">Select a player to begin searching</p></div>
+    <div className="px-4 py-2 border-b border-border"><p className="text-xs text-muted-foreground">{idleMessage}</p></div>
   );
 
   const parts: string[] = [];
