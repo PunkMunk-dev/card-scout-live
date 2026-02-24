@@ -1,82 +1,49 @@
 
-# Bug Report: 3-Way Integration Testing Results
 
-## Test Summary
+# Refresh Sports Lab Player List from Updated CSV
 
-Tested Card Finder, TCG Lab, and Sports Lab across navigation, search, and watchlist flows.
+## Summary of Changes
 
-## Bugs Found
+Comparing the uploaded CSV against the current database, here are the differences:
 
-### Bug 1: TCG Lab Header Watchlist Badge Never Shows Count (Code Bug)
-**Severity**: Medium
-**Location**: `src/components/tcg-lab/TcgHeader.tsx` (line 56-58)
+### Football (2 swaps)
+- **Remove**: Ashton Jeanty, Travis Hunter
+- **Add**: Cam Skattebo, Tyler Loveland
 
-The TCG Lab header star button reads from `useTcgWatchlist()`, which queries the **database** (`tcg_watchlist` table). However, the actual star toggles on TCG Lab cards use `useSharedWatchlist()`, which reads from **localStorage** (`ebay-card-watchlist`). These are two completely separate systems.
+### Basketball (10 additions)
+- **Add**: VJ Edgecombe (from main list)
+- **Add from "extras" section at bottom of CSV**: Jeremy Sochan, Alperen Sengun, Jalen Green, Jalen Suggs, Evan Mobley, Franz Wagner, Scottie Barnes, Josh Giddey, Chet Holmgren
+- (Paolo Banchero and Cade Cunningham already exist, so skip duplicates)
 
-**Result**: You can star cards in TCG Lab, and those stars persist and show correctly in Card Finder (badge shows "2"), but the TCG Lab header star never displays a count.
+### Hockey (17 additions)
+- **Add**: Andrei Kuzmenko, Yaroslav Askarov, Devon Levi, Dustin Wolf, Simon Edvinsson, Marco Kasper, Connor Bedard, Leo Carlsson, Zach Benson, Pavel Mintyukov, Connor Zary, Matthew Poitras, Kevin Korchinski, Logan Cooley, Adam Fantilli, Simon Nemec, Matt Savoie, Cutter Gauthier, Lane Hutson, Logan Stankoven, Jesper Wallstedt, Brad Lambert, Macklin Celebrini, Matvei Michkov, Jett Luchanko, Will Smith, Jonathan Lekkerimaki, Ivan Demidov, Snuggerud
+- (Some like Celebrini are already in the DB; only net-new ones will be inserted)
 
-**Fix**: Replace `useTcgWatchlist()` in `TcgHeader` with `useSharedWatchlist()` so the header badge count matches what the card star toggles actually save.
+### WNBA (12 additions)
+- **Add**: Kelsey Plum, Napheesa Collier, Brittney Griner, Aaliyah Edwards, Hailey Van Lith, Sonia Citron, JuJu Watkins, Hannah Hidalgo, Azzi Fudd, Sarah Strong, Flau'jee Johnson, Olivia Miles
 
-### Bug 2: Sports Lab Empty -- No Published Ruleset (Data Issue)
-**Severity**: High (blocks entire Sports Lab)
-**Location**: Database tables
+### Baseball (1 note update)
+- Jacob Wilson gets note "2025 RC" added (already exists as a player)
 
-The following tables are all empty after the remix:
-- `sports` (0 rows)
-- `players` (0 rows)
-- `rule_items` (0 rows)
-- `ruleset_versions` (0 rows with `published_at`)
+### Brands/Traits
+- No structural changes needed; existing brands and traits already cover the CSV
 
-**Result**: Sports Lab shows "No published ruleset available yet" and is completely non-functional.
+## Technical Approach
 
-**Fix**: Seed the database with initial sport/player/rule data, or provide an admin flow to populate it.
+A single database migration will:
+1. Delete all existing players for the ruleset version
+2. Re-insert the complete updated list (cleanest approach to avoid partial updates)
+3. Update Jacob Wilson's note to "2025 RC"
 
-### Bug 3: TCG Lab Guided Mode Empty -- No Targets (Data Issue)
-**Severity**: Medium (Quick Search still works)
-**Location**: Database table `tcg_targets` (0 rows)
+No code changes are needed -- the app already reads players from the database dynamically.
 
-The Guided mode dropdown has no targets to select because the `tcg_targets` table is empty.
+### Player Counts After Update
+| Sport | Current | Updated |
+|-------|---------|---------|
+| Baseball | 17 | 17 |
+| Football | 21 | 21 |
+| Basketball | 18 | 27 |
+| Hockey | 24 | 44 |
+| WNBA | 12 | 24 |
+| **Total** | **92** | **133** |
 
-**Result**: Users can only use Quick Search mode in TCG Lab.
-
-**Fix**: Seed `tcg_targets` and `tcg_sets` tables with initial data (Pokemon and One Piece card targets).
-
-### Bug 4: Card Finder Search Query Lost on Navigation (Minor UX)
-**Severity**: Low
-**Location**: `src/pages/Index.tsx`
-
-When navigating away from Card Finder (e.g., to TCG Lab) and back, the search query is cleared. This is expected React behavior (component unmounts), but it's a minor UX annoyance.
-
-**Fix**: Persist search query in URL search params or in a context/localStorage.
-
-## What Works Well
-
-- Card Finder search returns results correctly (eBay API connected)
-- Shared watchlist (localStorage) works across Card Finder and TCG Lab card stars
-- Card Finder watchlist badge persists across navigation (shows correct count)
-- TCG Lab Quick Search mode works end-to-end with results, filtering, and sorting
-- Navigation between all three tabs is smooth with lazy loading
-- BIN/Auction badges, pricing, and shipping info display correctly
-
-## Recommended Fix Priority
-
-1. **TCG Lab header watchlist badge** -- quick one-line code fix
-2. **Seed database tables** -- needed for Sports Lab and TCG Lab Guided mode
-3. **Search query persistence** -- optional UX improvement
-
-## Technical Details
-
-### Fix for Bug 1 (TcgHeader watchlist badge)
-In `src/components/tcg-lab/TcgHeader.tsx`:
-- Remove import of `useTcgWatchlist` from `@/hooks/useTcgWatchlist`
-- Import `useSharedWatchlist` from `@/contexts/WatchlistContext`
-- Replace `const { data: watchlist } = useTcgWatchlist()` with `const { count: watchlistCount } = useSharedWatchlist()`
-- Remove the derived `const watchlistCount = watchlist?.length || 0` line
-
-### Fix for Bugs 2 and 3 (Database seeding)
-Create a database migration that inserts starter data:
-- TCG targets for Pokemon (e.g., Charizard, Pikachu, Mewtwo) and One Piece
-- TCG sets (e.g., Vivid Voltage, Evolving Skies, Darkness Ablaze)
-- Sports data (sports, players, rule_items, and a published ruleset_version)
-
-This requires understanding the exact schema and relationships between these tables before writing seed data.
