@@ -7,6 +7,7 @@ import { QuerySummaryBar } from './QuerySummaryBar';
 import { SearchModeToggle, type SearchMode } from './SearchModeToggle';
 import { QuickSearchInput } from './QuickSearchInput';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import type { Sport, Player, RuleItem } from '@/types/sportsQueryBuilder';
 
@@ -68,8 +69,11 @@ export function QueryHeader({
               {searchMode === 'quick' && <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} placeholder="Search any card..." className="mt-2" />}
             </div>
             <div className="flex items-center gap-2">
-              <Button variant={watchlistOpen ? 'default' : 'outline'} size="sm" onClick={onWatchlistToggle} className="gap-1.5">
-                <Star className="h-3.5 w-3.5 text-yellow-500" />Watchlist{watchlistCount > 0 && ` (${watchlistCount})`}
+              <Button variant="ghost" size="sm" onClick={onWatchlistToggle} className="h-8 gap-1.5 text-muted-foreground hover:text-foreground">
+                <Star className="h-3.5 w-3.5" />
+                {watchlistCount > 0 && (
+                  <Badge variant="outline" className="h-4 min-w-4 justify-center px-1 text-[9px] font-mono">{watchlistCount}</Badge>
+                )}
               </Button>
               <Sheet><SheetTrigger asChild><Button variant="outline" size="sm" className="gap-1.5"><Filter className="h-3.5 w-3.5" />Filters</Button></SheetTrigger>
                 <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl"><SheetHeader><SheetTitle>Search Filters</SheetTitle></SheetHeader>
@@ -92,8 +96,11 @@ export function QueryHeader({
             </div>
             <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end flex-wrap">
               {searchMode === 'quick' ? <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} className="max-w-lg" /> : filterControls}
-              <Button variant={watchlistOpen ? 'default' : 'ghost'} size="sm" onClick={onWatchlistToggle} className="h-9 px-3 gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />Watchlist{watchlistCount > 0 && <span className="ml-0.5 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-foreground/10">{watchlistCount}</span>}
+              <Button variant="ghost" size="sm" onClick={onWatchlistToggle} className="h-8 gap-1.5 text-muted-foreground hover:text-foreground">
+                <Star className="h-3.5 w-3.5" />
+                {watchlistCount > 0 && (
+                  <Badge variant="outline" className="h-4 min-w-4 justify-center px-1 text-[9px] font-mono">{watchlistCount}</Badge>
+                )}
               </Button>
             </div>
           </div>
