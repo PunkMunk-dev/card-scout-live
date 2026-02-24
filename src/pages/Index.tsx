@@ -6,7 +6,7 @@ import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
-import { WatchlistPanel } from "@/components/WatchlistPanel";
+import { WatchlistDropdown } from "@/components/WatchlistDropdown";
 import { searchEbay } from "@/lib/ebay-api";
 import { useSharedWatchlist } from "@/contexts/WatchlistContext";
 import type { EbayItem, SortOption } from "@/types/ebay";
@@ -19,6 +19,7 @@ function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE
 
 export default function Index() {
   const [query, setQuery] = useState("");
+  const [externalQuery, setExternalQuery] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<EbayItem[]>([]);
   const [total, setTotal] = useState(0);
   const [nextPage, setNextPage] = useState<number | null>(null);
@@ -27,7 +28,7 @@ export default function Index() {
   const [hasSearched, setHasSearched] = useState(false);
   const [sort, setSort] = useState<SortOption>("best");
 
-  const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useSharedWatchlist();
+  const { watchlist, isInWatchlist, toggleWatchlist } = useSharedWatchlist();
 
   const performSearch = useCallback(async (
     searchQuery: string, 
@@ -80,8 +81,16 @@ export default function Index() {
     performSearch(newQuery, 1, false);
   };
 
+  const handleSearchFromWatchlist = (title: string) => {
+    setExternalQuery(title);
+    setQuery(title);
+    setItems([]);
+    performSearch(title, 1, false);
+  };
+
   const handleClear = () => {
     setQuery("");
+    setExternalQuery(undefined);
     setItems([]);
     setTotal(0);
     setNextPage(null);
@@ -106,35 +115,30 @@ export default function Index() {
     <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
       {/* Search Section */}
       <section className="bg-card border-b border-border">
-        <div className="container py-6">
+        <div className="container py-6 flex items-center gap-2">
           <SearchBar 
             onSearch={handleSearch} 
             onClear={handleClear}
             isLoading={isLoading} 
             showClear={hasSearched}
+            externalQuery={externalQuery}
           />
+          <WatchlistDropdown onSearchItem={handleSearchFromWatchlist} />
         </div>
       </section>
 
       {/* Toolbar: sort + watchlist + results count */}
       {hasSearched && (
         <div className="border-b border-border bg-card/50">
-          <div className="container flex items-center justify-between gap-4 h-11">
-            <div className="flex items-center gap-4">
-              <SearchFilters sort={sort} onSortChange={handleSortChange} />
-              <ResultsHeader 
-                query={query} 
-                total={total} 
-                showing={items.length}
-                hasMore={!!nextPage}
-                isLoadingMore={isLoadingMore}
-                onLoadMore={handleLoadMore}
-              />
-            </div>
-            <WatchlistPanel
-              watchlist={watchlist}
-              onRemove={removeFromWatchlist}
-              onClear={clearWatchlist}
+          <div className="container flex items-center gap-4 h-11">
+            <SearchFilters sort={sort} onSortChange={handleSortChange} />
+            <ResultsHeader 
+              query={query} 
+              total={total} 
+              showing={items.length}
+              hasMore={!!nextPage}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={handleLoadMore}
             />
           </div>
         </div>
