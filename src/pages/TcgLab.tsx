@@ -33,7 +33,7 @@ export default function TcgLab() {
   const selectedSet = sets.find(s => s.id === selectedSetId);
 
   return (
-    <div className="min-h-[calc(100vh-48px)] bg-background relative">
+    <div className="min-h-[calc(100vh-48px)] bg-background relative pb-16 sm:pb-0">
       <TcgHeader
         selectedGame={selectedGame}
         onGameChange={handleGameChange}

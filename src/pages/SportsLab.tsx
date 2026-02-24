@@ -71,7 +71,7 @@ export default function SportsLab() {
   );
 
   return (
-    <div className="min-h-[calc(100vh-48px)] flex flex-col">
+    <div className="min-h-[calc(100vh-48px)] flex flex-col pb-16 sm:pb-0">
       <QueryHeader
         sports={snapshot.sports} players={filteredPlayers} ruleItems={filteredRuleItems}
         sportKey={state.sport_key} selectedPlayerId={state.selected_player_ids[0] ?? null}
