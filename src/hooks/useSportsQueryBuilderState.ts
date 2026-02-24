@@ -21,10 +21,11 @@ export function useSportsQueryBuilderState(ruleItems: RuleItem[] = []) {
   }, []);
 
   const selectPlayer = useCallback((playerId: string) => {
-    setState(prev => {
-      const hasExisting = prev.selected_rule_item_ids.length > 0 || prev.show_all_brands;
-      return { ...prev, selected_player_ids: [playerId], show_all_brands: hasExisting ? prev.show_all_brands : (prev.sport_key !== null) };
-    });
+    setState(prev => ({
+      ...prev,
+      selected_player_ids: [playerId],
+      show_all_brands: prev.show_all_brands || prev.selected_rule_item_ids.length === 0,
+    }));
   }, []);
 
   const selectBrand = useCallback((brandId: string) => {
