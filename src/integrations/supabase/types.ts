@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      tcg_sets: {
+        Row: {
+          created_at: string
+          game: string
+          id: string
+          set_name: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          game: string
+          id?: string
+          set_name: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          game?: string
+          id?: string
+          set_name?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      tcg_targets: {
+        Row: {
+          created_at: string
+          game: string
+          id: string
+          name: string
+          priority: number
+          tags: string | null
+        }
+        Insert: {
+          created_at?: string
+          game: string
+          id?: string
+          name: string
+          priority?: number
+          tags?: string | null
+        }
+        Update: {
+          created_at?: string
+          game?: string
+          id?: string
+          name?: string
+          priority?: number
+          tags?: string | null
+        }
+        Relationships: []
+      }
+      tcg_traits: {
+        Row: {
+          created_at: string
+          game: string
+          id: string
+          rarity_tier: string | null
+          search_terms: string
+          trait: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          game: string
+          id?: string
+          rarity_tier?: string | null
+          search_terms: string
+          trait: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          game?: string
+          id?: string
+          rarity_tier?: string | null
+          search_terms?: string
+          trait?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      tcg_watchlist: {
+        Row: {
+          created_at: string
+          game: string
+          id: string
+          listing_id: string | null
+          listing_image: string | null
+          listing_price: string | null
+          listing_title: string | null
+          query: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game: string
+          id?: string
+          listing_id?: string | null
+          listing_image?: string | null
+          listing_price?: string | null
+          listing_title?: string | null
+          query: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game?: string
+          id?: string
+          listing_id?: string | null
+          listing_image?: string | null
+          listing_price?: string | null
+          listing_title?: string | null
+          query?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

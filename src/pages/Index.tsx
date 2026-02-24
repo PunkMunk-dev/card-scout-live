@@ -104,19 +104,16 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold font-display">
-            AI Card Finder
-          </h1>
+      {/* Watchlist in top bar area */}
+      <div className="border-b border-border/50 bg-card/30">
+        <div className="container py-2 flex justify-end">
           <WatchlistPanel
             watchlist={watchlist}
             onRemove={removeFromWatchlist}
             onClear={clearWatchlist}
           />
         </div>
-      </header>
+      </div>
 
       {/* Search Section */}
       <section className="border-b border-border/50 bg-card/30">
