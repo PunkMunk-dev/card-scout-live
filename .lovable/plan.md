@@ -1,90 +1,138 @@
 
 
-# Merge TCG Lab and Sports Card Lab into AI Card Finder
+# Phase 2: Port Sports Card Lab into AI Card Finder
 
-## Scope Assessment
+## Overview
 
-This is a large multi-phase migration. Here's what each app brings:
-
-| Feature | TCG Lab | Sports Card Lab | AI Card Finder (current) |
-|---|---|---|---|
-| Edge Functions | 1 (ebay-search, different format) | 7 (ebay-search, gem-rate, sold-psa, checkout, subscription, portal) | 1 (ebay-search) |
-| Auth | None | Full auth + Stripe subscriptions | None |
-| Database tables | Uses sets/targets data | Rulesets, players, rule_items, user_roles, subscriptions | None |
-| Components | ~25 custom | ~25 custom (query-builder/) | ~8 custom |
-| Background images | 2 (pokemon-bg, one-piece-bg) | None | None |
-
-**This cannot be done in a single step.** I recommend breaking it into 3 phases, each a separate conversation.
+Port the Sports Card Lab query builder into the existing project as the `/sports` tab, replacing the current placeholder. Since subscriptions are deferred, there is no auth/Stripe dependency -- this simplifies the migration significantly.
 
 ---
 
-## Phase 1 -- Navigation Shell + TCG Lab (this session)
+## What gets built
 
-The simplest starting point: add a tabbed navigation header and port TCG Lab (no auth dependency).
-
-### 1.1 Add shared navigation header
-- Create a `TabNavigation` component with 3 tabs:
-  - **Card Finder** (current app, route `/`)
-  - **TCG Lab** (route `/tcg`)
-  - **Sports Lab** (route `/sports`) -- placeholder for now
-- Update `App.tsx` with new routes
-- Move current header into the tab layout
-
-### 1.2 Port TCG Lab frontend
-Copy from TCG Lab into namespaced directories to avoid collisions:
-- `src/pages/TcgLab.tsx` (adapted from TCG Lab's `Index.tsx`)
-- `src/components/tcg-lab/` -- all TCG Lab components (Header, ContextBar, TerminalView, etc.)
-- `src/hooks/useTcgData.ts`, `src/hooks/useRecommendations.ts`
-- `src/services/ebayService.ts` (renamed to `src/services/tcgEbayService.ts`)
-- `src/types/tcg.ts`, `src/types/tcgFilters.ts`
-- `src/lib/tcgFilters.ts`, `src/lib/deviceId.ts`
-- `src/components/icons/` (PokeballIcon, StrawHatIcon)
-- Copy background images into `src/assets/`
-
-### 1.3 Port TCG Lab edge function
-- Create `supabase/functions/tcg-ebay-search/index.ts` (separate from existing `ebay-search`)
-- Uses the same eBay credentials already configured
-- Supports `active` and `sold` actions with TCG-specific exclusion logic
-- Update `tcgEbayService.ts` to call `tcg-ebay-search`
-
-### 1.4 Files changed/created (estimated ~35 files)
-- `src/App.tsx` -- add routes
-- `src/components/TabNavigation.tsx` -- new shared nav
-- `src/pages/TcgLab.tsx` -- new page
-- `src/pages/SportsLab.tsx` -- placeholder page
-- `src/components/tcg-lab/*` -- ~15 component files
-- `src/hooks/useTcgData.ts`, `useRecommendations.ts`
-- `src/services/tcgEbayService.ts`
-- `src/types/tcg.ts`, `tcgFilters.ts`
-- `src/lib/tcgFilters.ts`, `deviceId.ts`
-- `src/components/icons/*` -- 2 icon files
-- `src/assets/*` -- 2 background images
-- `supabase/functions/tcg-ebay-search/index.ts` -- new edge function
+The Sports Lab tab will have:
+- A guided query builder (select sport, player, brand, traits) that searches eBay for raw sports cards
+- A quick search mode for free-form searches
+- PSA 10 market value overlay on each card (sold comps from eBay Finding API)
+- Gem Rate badges (PSA 10 pop data from eBay Browse API)
+- Local watchlist (localStorage-based, same pattern as original)
+- Sorting by newest, price, quality, profit potential, ending soonest
+- Auction mode toggle and price range filters
+- Infinite scroll with auto-load-all
 
 ---
 
-## Phase 2 -- Sports Card Lab (future session)
+## Database changes
 
-Port the query builder, which is more complex due to auth and subscriptions:
-- Recreate database tables (rulesets, players, rule_items, user_roles) in this project's backend
-- Port auth system (AuthContext, AuthPage)
-- Port Stripe subscription edge functions (requires Stripe secrets)
-- Port all query-builder components into `src/components/sports-lab/`
-- Port remaining edge functions (gem-rate, sold-psa, etc.)
+Create the Sports Card Lab schema in this project's database. This includes:
 
-## Phase 3 -- Polish (future session)
+**Tables:**
+- `ruleset_versions` -- versioned rulesets (draft/published/archived)
+- `sports` -- sport options per ruleset (e.g., Football, Basketball)
+- `players` -- player list per sport per ruleset
+- `rule_items` -- brands, traits, notes per sport per ruleset
+- `seller_blacklist` -- seller patterns to exclude per ruleset
+- `user_roles` -- admin role management (enum: admin, user)
 
-- Unified styling across all 3 tabs
-- Shared watchlist across tools
-- Mobile-responsive tab navigation
-- Loading states and error boundaries per tab
+**Functions (RPC):**
+- `get_published_ruleset_snapshot()` -- single call returns all published data as JSONB
+- `has_role()` -- security definer for RLS role checks
+- `publish_ruleset_version()` -- atomic publish (admin only)
+- `clone_published_to_draft()` -- admin convenience
+- `create_empty_draft()` -- admin convenience
+
+**RLS Policies:**
+- Public can read published rulesets and their child data
+- Admins (via `has_role()`) can manage all data
+- `user_roles` restricted to admins only
+
+**Data seeding:**
+- The tables will be empty initially -- you will need to populate them through the admin functions or direct inserts after migration
 
 ---
 
-## What gets built now (Phase 1)
+## Edge functions (4 new)
 
-After this session you'll have:
-- A tabbed app with Card Finder and TCG Lab fully working
-- A "Sports Lab" placeholder tab ready for Phase 2
-- All 3 tools accessible under one domain once published
+1. **`sports-ebay-search`** -- Main eBay search for raw sports cards (Browse API + Finding API fallback, with filtering for graded cards, excluded sellers, excluded brands, pagination)
+2. **`sports-ebay-sold-psa`** -- PSA 10 sold comps lookup via Finding API (market value with confidence scoring, outlier rejection, recency weighting)
+3. **`sports-ebay-gem-rate`** -- Gem Rate lookup via Browse API (searches PSA 10 listings, fetches item details for pop data)
+4. **`sports-ebay-psa10-active`** -- PSA 10 active listings (lowest BIN price as market value)
+
+All use existing `EBAY_CLIENT_ID` / `EBAY_CLIENT_SECRET` secrets (already configured). The Sports Card Lab used `EBAY_APP_ID` as the secret name -- we will map to `EBAY_CLIENT_ID` in the new functions.
+
+---
+
+## Frontend files (new, all namespaced under `sports-lab/`)
+
+**Types:**
+- `src/types/sportsEbay.ts` -- EbayListing, EbaySearchParams, SortOption, etc.
+- `src/types/sportsQueryBuilder.ts` -- RulesetSnapshot, Player, RuleItem, QueryBuilderState, etc.
+
+**Lib:**
+- `src/lib/sportsCardsProUrl.ts` -- URL builders for eBay sold PSA 10 and GemRate links
+- `src/lib/sportsSubscriptionTiers.ts` -- Tier definitions (all users get "pro" access since subscriptions are deferred)
+
+**Hooks:**
+- `src/hooks/useSportsEbaySearch.ts` -- eBay search with debounce, pagination, PSA 10 enrichment
+- `src/hooks/useSportsRulesetSnapshot.ts` -- Fetches published ruleset via RPC
+- `src/hooks/useSportsQueryBuilderState.ts` -- Local state machine for query builder selections
+- `src/hooks/useSportsGemRate.ts` -- Gem Rate data fetching
+- `src/hooks/useSportsSearchLimit.ts` -- Search limit (all unlimited since no paywall)
+
+**Context:**
+- `src/contexts/SportsWatchlistContext.tsx` -- Local watchlist (localStorage)
+
+**Components (under `src/components/sports-lab/`):**
+- `QueryHeader.tsx` -- Sticky header with sport/player/brand/trait dropdowns
+- `QueryHeaderDropdown.tsx` -- Reusable dropdown component
+- `QuerySummaryBar.tsx` -- Summary pills below header
+- `SearchModeToggle.tsx` -- Guided vs Quick search toggle
+- `QuickSearchInput.tsx` -- Free-form search input
+- `EbayResultsPanel.tsx` -- Results container with sorting, filtering, pagination
+- `EbayListingCard.tsx` -- Individual card with PSA 10 guide, profit calc, watchlist star
+- `ResultsGrid.tsx` -- Wrapper that converts query state to search params
+- `GemRateBadge.tsx` -- Inline gem rate badge with lazy loading
+- `SoldCompsDialog.tsx` -- Modal showing PSA 10 sold comparables
+- `WatchlistPanel.tsx` -- Watchlist drawer content
+- `WatchlistStar.tsx` -- Star toggle for watchlist
+- `SkeletonCard.tsx` -- Loading skeleton
+- `SportSelect.tsx` -- Sport selector
+- `UserMenu.tsx` -- Simplified (no auth actions since subscriptions deferred)
+
+**Page:**
+- `src/pages/SportsLab.tsx` -- Replace placeholder with full query builder page
+
+**Styles:**
+- Add Sports Lab CSS tokens to `src/index.css` (custom card styling, glass panels, gold metallic text, etc.)
+
+---
+
+## Files modified
+
+- `src/index.css` -- Add Sports Lab design tokens and utility classes
+- `src/pages/SportsLab.tsx` -- Replace placeholder with full implementation
+- `src/App.tsx` -- Wrap with SportsWatchlistProvider
+
+---
+
+## What is NOT included (deferred)
+
+- Authentication (login/signup) -- no auth required
+- Stripe subscriptions -- all features free
+- Admin panel for managing rulesets -- manage via database directly
+- `check-subscription`, `create-checkout`, `customer-portal` edge functions
+
+---
+
+## Technical details
+
+| Item | Count |
+|---|---|
+| New database tables | 6 |
+| New database functions | 5 |
+| New edge functions | 4 |
+| New frontend files | ~25 |
+| Modified files | 3 |
+
+The Sports Lab edge functions will use `EBAY_CLIENT_ID` (mapped from the original project's `EBAY_APP_ID`) and `EBAY_CLIENT_SECRET`, both already configured as secrets.
 
