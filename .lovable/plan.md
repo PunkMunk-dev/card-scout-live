@@ -1,32 +1,71 @@
 
-# Make Sports Lab Dropdowns Sequential Like TCG Lab
 
-## Change
+# Unified Empty State for Sports Lab and TCG Lab
 
-Currently, the Player dropdown is always visible regardless of whether a Sport is selected. Update it so the Player dropdown only appears **after** a Sport is selected, mirroring the TCG Lab flow (TCG -> Chase/Bounty).
+## Goal
+
+Remove the decorative backgrounds and varying wording from both labs' empty states. Replace with a single, clean, identical empty state component that says **"Select from dropdown for guided search"**.
+
+## What Changes
+
+### 1. Create a shared `GuidedSearchEmptyState` component
+
+A new file `src/components/shared/GuidedSearchEmptyState.tsx` -- a minimal, visually clean empty state used by both labs:
+
+- A small muted icon (e.g. `Search` from lucide) in a rounded circle
+- Text: **"Select from dropdown for guided search"**
+- No decorative background icons, no pokeballs, no straw hats, no varying titles
+- Clean, centered layout matching the existing muted style both labs already use for intermediate states
+
+### 2. Update `src/pages/TcgLab.tsx`
+
+Replace the `<TcgEmptyState>` usage with the new shared component. This covers:
+- No game selected (guided mode)
+- Game selected but no chase selected (guided mode)  
+- Quick mode with empty query
+
+### 3. Update `src/pages/SportsLab.tsx`
+
+Replace the three inline empty state blocks (lines 89-107) with the same shared component:
+- Quick mode with fewer than 3 characters
+- No player selected
+- No brand selected
+
+All three states will now show the same message.
+
+### 4. Remove `src/components/tcg-lab/TcgEmptyState.tsx`
+
+No longer needed since both labs use the shared component.
 
 ## Technical Details
 
-### `src/components/sports-lab/QueryHeader.tsx`
+**New file: `src/components/shared/GuidedSearchEmptyState.tsx`**
 
-In the `filterControls` block (line 53), wrap the Player dropdown with a `sportKey` condition:
-
-**Before:**
 ```tsx
-<QueryHeaderDropdown label="Player" ... />
+import { Search } from 'lucide-react';
+
+export function GuidedSearchEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+        <Search className="w-6 h-6 text-muted-foreground" />
+      </div>
+      <p className="text-sm text-muted-foreground max-w-md">
+        Select from dropdown for guided search
+      </p>
+    </div>
+  );
+}
 ```
 
-**After:**
-```tsx
-{sportKey && <QueryHeaderDropdown label="Player" ... />}
-```
+**`src/pages/SportsLab.tsx`** -- Replace lines 89-100 (quick empty + player empty + brand empty) with `<GuidedSearchEmptyState />`.
 
-This is a one-line change. The rest of the cascade (Brand appears after Player, Traits appear after Brand) already works the same way.
+**`src/pages/TcgLab.tsx`** -- Replace `<TcgEmptyState ...>` with `<GuidedSearchEmptyState />`. Remove the `TcgEmptyState` import and the `handleTrendingSelect` callback (no longer needed).
 
-### `src/components/sports-lab/QuerySummaryBar.tsx`
+| File | Change |
+|------|--------|
+| `src/components/shared/GuidedSearchEmptyState.tsx` | New shared empty state component |
+| `src/pages/SportsLab.tsx` | Replace 3 inline empty states with shared component |
+| `src/pages/TcgLab.tsx` | Replace `TcgEmptyState` with shared component |
+| `src/components/tcg-lab/TcgEmptyState.tsx` | Delete (no longer used) |
 
-Update the idle message used in the Sports Lab `QueryHeader` to say "Select a sport to begin searching" instead of "Select a player to begin searching", since the first step is now sport selection.
-
-### `src/components/sports-lab/QueryHeader.tsx` (Summary Bar)
-
-Pass `idleMessage="Select a sport to begin searching"` to the `QuerySummaryBar` component so the empty state tip matches the new flow.
