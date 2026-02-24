@@ -104,20 +104,9 @@ export default function Index() {
 
   return (
     <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
-      {/* Watchlist in top bar area */}
-      <div className="border-b border-border/50 bg-card/30">
-        <div className="container py-2 flex justify-end">
-          <WatchlistPanel
-            watchlist={watchlist}
-            onRemove={removeFromWatchlist}
-            onClear={clearWatchlist}
-          />
-        </div>
-      </div>
-
       {/* Search Section */}
-      <section className="border-b border-border/50 bg-card/30">
-        <div className="container py-8">
+      <section className="bg-card border-b border-border">
+        <div className="container py-6">
           <SearchBar 
             onSearch={handleSearch} 
             onClear={handleClear}
@@ -127,35 +116,40 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Main Content */}
-      <main className="container py-6 relative">
-        {hasSearched && (
-          <SearchFilters
-            sort={sort}
-            onSortChange={handleSortChange}
-          />
-        )}
+      {/* Toolbar: sort + watchlist + results count */}
+      {hasSearched && (
+        <div className="border-b border-border bg-card/50">
+          <div className="container flex items-center justify-between gap-4 h-11">
+            <div className="flex items-center gap-4">
+              <SearchFilters sort={sort} onSortChange={handleSortChange} />
+              <ResultsHeader 
+                query={query} 
+                total={total} 
+                showing={items.length}
+                hasMore={!!nextPage}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={handleLoadMore}
+              />
+            </div>
+            <WatchlistPanel
+              watchlist={watchlist}
+              onRemove={removeFromWatchlist}
+              onClear={clearWatchlist}
+            />
+          </div>
+        </div>
+      )}
 
+      {/* Main Content */}
+      <main className="container py-6">
         {isLoading ? (
-          <div className="mt-6">
-            <LoadingGrid />
-          </div>
+          <LoadingGrid />
         ) : hasSearched && items.length > 0 ? (
-          <div className="space-y-6">
-            <ResultsHeader 
-              query={query} 
-              total={total} 
-              showing={items.length}
-              hasMore={!!nextPage}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={handleLoadMore}
-            />
-            <ListingGrid 
-              items={items}
-              isInWatchlist={isInWatchlist}
-              onToggleWatchlist={toggleWatchlist}
-            />
-          </div>
+          <ListingGrid 
+            items={items}
+            isInWatchlist={isInWatchlist}
+            onToggleWatchlist={toggleWatchlist}
+          />
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (

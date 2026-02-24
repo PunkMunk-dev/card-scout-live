@@ -4,116 +4,111 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
-@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
-
 @layer base {
   :root {
-    /* Clean light background #F9F9F9 */
-    --background: 0 0% 98%;
-    --foreground: 224 30% 15%;
+    /* Clean light background */
+    --background: 220 14% 96%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 30% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 30% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Blue primary #4F76F6 */
-    --primary: 224 90% 64%;
+    /* Blue primary */
+    --primary: 224 76% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 31.8182% 91.3725%;
-    --secondary-foreground: 224 30% 25%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 222 47% 20%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 224 15% 45%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
 
-    /* Mint green accent #77F2A1 */
-    --accent: 145 82% 71%;
-    --accent-foreground: 145 60% 15%;
+    /* Accent — teal/mint */
+    --accent: 168 76% 42%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Red for destructive actions */
-    --destructive: 0 84% 60%;
+    /* Red for destructive */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 224 20% 90%;
-    --input: 224 20% 90%;
-    --ring: 224 90% 64%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 224 76% 48%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    /* Custom semantic colors */
-    --auction: 0 84% 60%;
+    /* Semantic marketplace colors */
+    --auction: 25 95% 53%;
     --auction-foreground: 0 0% 100%;
-    --buy-now: 145 50% 48%;
+    --buy-now: 152 60% 40%;
     --buy-now-foreground: 0 0% 100%;
-    --price: 224 90% 50%;
-    --shipping: 224 15% 45%;
+    --price: 222 47% 11%;
+    --shipping: 220 9% 46%;
 
-    /* Success color using mint green */
-    --success: 145 82% 45%;
+    --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 224 30% 25%;
-    --sidebar-primary: 224 90% 64%;
+    --sidebar-foreground: 222 47% 20%;
+    --sidebar-primary: 224 76% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 82% 90%;
-    --sidebar-accent-foreground: 145 60% 20%;
-    --sidebar-border: 224 20% 92%;
-    --sidebar-ring: 224 90% 64%;
+    --sidebar-accent: 168 76% 92%;
+    --sidebar-accent-foreground: 168 76% 20%;
+    --sidebar-border: 220 13% 90%;
+    --sidebar-ring: 224 76% 48%;
   }
 
   .dark {
-    --background: 224 30% 8%;
-    --foreground: 224 15% 95%;
+    --background: 222 47% 6%;
+    --foreground: 220 14% 96%;
 
-    --card: 224 25% 12%;
-    --card-foreground: 224 15% 95%;
+    --card: 222 40% 10%;
+    --card-foreground: 220 14% 96%;
 
-    --popover: 224 25% 12%;
-    --popover-foreground: 224 15% 95%;
+    --popover: 222 40% 10%;
+    --popover-foreground: 220 14% 96%;
 
-    /* Blue primary #4F76F6 - slightly adjusted for dark */
-    --primary: 224 90% 68%;
-    --primary-foreground: 224 40% 10%;
+    --primary: 224 76% 58%;
+    --primary-foreground: 222 47% 6%;
 
-    --secondary: 224 20% 18%;
-    --secondary-foreground: 224 15% 90%;
+    --secondary: 222 30% 16%;
+    --secondary-foreground: 220 14% 90%;
 
-    --muted: 224 20% 15%;
-    --muted-foreground: 224 15% 60%;
+    --muted: 222 30% 14%;
+    --muted-foreground: 220 9% 56%;
 
-    /* Mint green accent */
-    --accent: 145 82% 60%;
-    --accent-foreground: 145 60% 10%;
+    --accent: 168 60% 45%;
+    --accent-foreground: 222 47% 6%;
 
-    --destructive: 0 72% 45%;
+    --destructive: 0 60% 44%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 224 20% 18%;
-    --input: 224 20% 18%;
-    --ring: 224 90% 60%;
+    --border: 222 25% 16%;
+    --input: 222 25% 16%;
+    --ring: 224 76% 55%;
 
-    --auction: 0 72% 55%;
+    --auction: 25 80% 52%;
     --auction-foreground: 0 0% 100%;
-    --buy-now: 145 45% 52%;
+    --buy-now: 152 50% 48%;
     --buy-now-foreground: 0 0% 100%;
-    --price: 224 90% 75%;
-    --shipping: 224 15% 55%;
+    --price: 220 14% 96%;
+    --shipping: 220 9% 50%;
 
-    --success: 145 82% 50%;
+    --success: 152 50% 48%;
     --success-foreground: 0 0% 100%;
 
-    --sidebar-background: 224 25% 10%;
-    --sidebar-foreground: 224 15% 95%;
-    --sidebar-primary: 224 90% 68%;
+    --sidebar-background: 222 40% 8%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 224 76% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 145 60% 20%;
-    --sidebar-accent-foreground: 145 82% 80%;
-    --sidebar-border: 224 20% 18%;
-    --sidebar-ring: 224 90% 60%;
+    --sidebar-accent: 168 40% 16%;
+    --sidebar-accent-foreground: 168 60% 80%;
+    --sidebar-border: 222 25% 16%;
+    --sidebar-ring: 224 76% 55%;
   }
 }
 

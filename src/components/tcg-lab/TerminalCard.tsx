@@ -60,10 +60,10 @@ export function TerminalCard({ listing, setName, rarityTag, rank, activeSort }: 
 
   return (
     <div className={cn(
-      "group flex flex-col bg-card border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow",
+      "group flex flex-col bg-card border rounded-lg overflow-hidden shadow-card hover:shadow-cardHover transition-all duration-200",
       rank === 1 && isPriceSorted
         ? "border-primary/40 ring-1 ring-primary/20"
-        : "border-border/30"
+        : "border-border/40"
     )}>
       <div className="aspect-square relative overflow-hidden bg-muted">
         <div className="absolute top-2 left-2 z-10 flex gap-1">
