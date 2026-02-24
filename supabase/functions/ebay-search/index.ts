@@ -149,9 +149,11 @@ function extractCoreTerm(query: string): string {
   return cleaned.trim() || query;
 }
 
-const GRADED_KEYWORDS = ['psa', 'bgs', 'sgc', 'cgc', 'beckett', 'graded'];
+const GRADED_KEYWORDS = ['psa', 'bgs', 'sgc', 'cgc', 'beckett', 'graded', 'ccic', 'ace', 'mnt', 'tag', 'cga', 'ags', 'hga'];
 
-function isGradedItem(title: string): boolean {
+function isGradedItem(title: string, condition?: string): boolean {
+  const lowerCondition = (condition || '').toLowerCase();
+  if (lowerCondition.includes('graded')) return true;
   const lowerTitle = title.toLowerCase();
   return GRADED_KEYWORDS.some(keyword => lowerTitle.includes(keyword));
 }
@@ -418,7 +420,7 @@ serve(async (req) => {
     // Filter graded vs raw cards based on sort option
     if (sort === 'graded') {
       // Show only graded cards when "Graded" sort is selected
-      normalizedItems = normalizedItems.filter(item => isGradedItem(item.title));
+      normalizedItems = normalizedItems.filter(item => isGradedItem(item.title, item.condition));
       
       // Fallback: if no graded cards found for exact query, search for similar graded cards
       if (normalizedItems.length === 0) {
@@ -430,7 +432,7 @@ serve(async (req) => {
         
         // Apply same filters to fallback results
         fallbackItems = fallbackItems.filter(item => !isJunkTitle(item.title));
-        fallbackItems = fallbackItems.filter(item => isGradedItem(item.title));
+        fallbackItems = fallbackItems.filter(item => isGradedItem(item.title, item.condition));
         
         // Apply buying options filter to fallback results
         if (buyingOptions !== 'ALL') {
@@ -441,7 +443,7 @@ serve(async (req) => {
       }
     } else if (sort === 'raw') {
       // Show only ungraded/raw cards
-      normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title));
+      normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title, item.condition));
     } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
       // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
   }
