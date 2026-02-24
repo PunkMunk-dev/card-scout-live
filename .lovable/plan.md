@@ -1,58 +1,57 @@
 
 
-# Fix: Sports Lab Search Stuck on Loading Skeletons
+# Loosen Card Finder Filters
 
-## Root Cause
+## Summary
 
-React 18 StrictMode double-mount behavior causes the search to never execute:
+Three targeted changes to the `ebay-search` edge function to let more listings through.
 
-1. **First mount**: The search effect runs, sets `lastSearchRef.current = key`, calls `search()` which sets `isLoading=true` and starts a 150ms debounce timer
-2. **StrictMode unmount**: The cleanup effect in `useSportsEbaySearch` clears the debounce timer (the actual fetch never runs)
-3. **Second mount**: The search effect runs again, but `lastSearchRef.current` already equals `key`, so `search()` is never called
-4. **Result**: `isLoading` stays `true` forever, skeletons show indefinitely, no network request fires
+## Changes
 
-This was introduced when we moved `setIsLoading(true)` outside the debounce timer. Previously, `isLoading` was set inside the timer callback, so when the timer was cleared on unmount, `isLoading` remained `false` and the component showed the empty state instead of infinite skeletons.
+### File: `supabase/functions/ebay-search/index.ts`
 
-## Fix
+**1. Remove `-box` from server-side exclusions (line 257)**
 
-**File: `src/components/sports-lab/EbayResultsPanel.tsx`**
-
-Reset `lastSearchRef.current` in a cleanup function for the search effect. This ensures that when React StrictMode remounts the component, the search key comparison sees a fresh state and re-triggers `search()`.
-
-Change the search effect from:
+Change:
 ```text
-useEffect(() => {
-    if (!searchParams.playerName) return;
-    const key = JSON.stringify(...);
-    if (key !== lastSearchRef.current) {
-      lastSearchRef.current = key;
-      loadAllTriggeredRef.current = false;
-      search(searchParams);
-    }
-  }, [searchParams, search]);
+const exclusions = '-lot -bundle -bulk -sealed -booster -box -pack -case -repack -mystery -wax -cello -blaster';
 ```
-
 To:
 ```text
-useEffect(() => {
-    if (!searchParams.playerName) return;
-    const key = JSON.stringify(...);
-    if (key !== lastSearchRef.current) {
-      lastSearchRef.current = key;
-      loadAllTriggeredRef.current = false;
-      search(searchParams);
-    }
-    return () => { lastSearchRef.current = ''; };
-  }, [searchParams, search]);
+const exclusions = '-lot -bundle -bulk -sealed -booster -pack -case -repack -mystery -wax -cello -blaster';
 ```
 
-Adding `return () => { lastSearchRef.current = ''; }` resets the ref on cleanup, so the second StrictMode mount will see a fresh key and re-call `search()`.
+The word "box" appears in legitimate card names (e.g. "Box Topper", certain card sets). The `JUNK_KEYWORDS` list still catches "box", "boxes", and "hobby box" in the client-side junk filter, so actual junk listings won't slip through.
 
-## Files Changed
+**2. Reduce title-match threshold from 85% to 75% (line 202)**
 
-| File | Change |
-|------|--------|
-| `src/components/sports-lab/EbayResultsPanel.tsx` | Add cleanup to search effect that resets `lastSearchRef` |
+Change:
+```text
+const nameTermsMatch = nameMatchRatio >= 0.85;
+```
+To:
+```text
+const nameTermsMatch = nameMatchRatio >= 0.75;
+```
 
-This is a one-line fix that resolves the infinite loading skeleton issue.
+This allows listings that match 3 out of 4 query terms (75%) instead of requiring near-exact matches. Helps with alternate spellings, abbreviated names, and cards where the title uses different word order.
+
+**3. Increase over-fetch multiplier from 2x to 3x (line 393)**
+
+Change:
+```text
+const requestLimit = Math.min(clampedLimit * 2, 50);
+```
+To:
+```text
+const requestLimit = Math.min(clampedLimit * 3, 50);
+```
+
+With a default `clampedLimit` of 24, this fetches 50 items (capped) instead of 48, giving more headroom for filtering to still produce a full page of results. The eBay Browse API caps at 200 per request, so 50 is well within limits.
+
+## Impact
+
+- More results survive filtering per page
+- "Box Topper" and similar legitimate listings will appear
+- Slightly looser title matching allows more variant listings through while the junk filter still catches garbage
 
