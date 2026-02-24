@@ -60,12 +60,12 @@ export function TerminalCard({ listing, setName, rarityTag, rank, activeSort }: 
 
   return (
     <div className={cn(
-      "group flex flex-col bg-card/30 border rounded-lg overflow-hidden transition-colors",
+      "group flex flex-col bg-card border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow",
       rank === 1 && isPriceSorted
         ? "border-primary/40 ring-1 ring-primary/20"
-        : "border-border/20 hover:border-border/40"
+        : "border-border/30"
     )}>
-      <div className="aspect-[3/4] relative overflow-hidden bg-secondary/20">
+      <div className="aspect-square relative overflow-hidden bg-muted">
         <div className="absolute top-2 left-2 z-10 flex gap-1">
           {isTopRanked && (
             <Badge variant="secondary" className="text-[10px] font-mono gap-1">
@@ -92,7 +92,7 @@ export function TerminalCard({ listing, setName, rarityTag, rank, activeSort }: 
       </div>
 
       <div className="flex flex-col gap-1.5 p-3">
-        <p className="text-xs text-foreground/90 line-clamp-2 leading-relaxed min-h-[2rem]">{cleanTitle}</p>
+        <p className="text-sm font-medium line-clamp-2 leading-snug min-h-[2.5rem]">{cleanTitle}</p>
 
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           {setName && <span>{setName}</span>}
@@ -104,7 +104,7 @@ export function TerminalCard({ listing, setName, rarityTag, rank, activeSort }: 
           {listing.listingType === 'AUCTION' && listing.price.value === '0.00' ? (
             <span className="text-xs text-muted-foreground italic">No bids yet</span>
           ) : (
-            <span className="text-sm font-semibold text-foreground font-mono tabular-nums flex items-center gap-1">
+            <span className="text-lg font-bold tabular-nums flex items-center gap-1">
               ${listing.price.value}
             </span>
           )}

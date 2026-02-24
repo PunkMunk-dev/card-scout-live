@@ -87,22 +87,22 @@ export default function SportsLab() {
         {searchMode === 'quick' ? (
           !canSearchQuick ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4"><Search className="w-8 h-8 text-muted-foreground" /></div>
-              <h2 className="text-lg font-bold mb-2">Quick Search</h2>
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4"><Search className="w-6 h-6 text-muted-foreground" /></div>
+              <h2 className="text-lg font-semibold mb-2">Quick Search</h2>
               <p className="text-sm text-muted-foreground/70 max-w-md">Type at least 3 characters to search for any card on eBay.</p>
             </div>
           ) : <EbayResultsPanel searchParams={{ playerName: quickSearchQuery.trim(), freeFormSearch: true }} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />
         ) : (
           !hasPlayer ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4"><Target className="w-8 h-8 text-muted-foreground" /></div>
-              <h2 className="text-lg font-bold mb-2">Select a Player</h2>
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4"><Target className="w-6 h-6 text-muted-foreground" /></div>
+              <h2 className="text-lg font-semibold mb-2">Select a Player</h2>
               <p className="text-sm text-muted-foreground/70 max-w-md">Choose a player from the dropdown above to start searching.</p>
             </div>
           ) : !hasBrandOrShowAll ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4"><Target className="w-8 h-8 text-muted-foreground" /></div>
-              <h2 className="text-lg font-bold mb-2">Select a Brand</h2>
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4"><Target className="w-6 h-6 text-muted-foreground" /></div>
+              <h2 className="text-lg font-semibold mb-2">Select a Brand</h2>
               <p className="text-sm text-muted-foreground/70 max-w-md">Choose a brand or "All Brands" to search eBay.</p>
             </div>
           ) : <ResultsGrid playerNames={selectedPlayerNames} brandLabel={state.show_all_brands ? undefined : selectedBrand?.label} traitLabels={selectedTraitLabels} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />

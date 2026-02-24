@@ -19,8 +19,8 @@ export function ResultsHeader({
   onLoadMore 
 }: ResultsHeaderProps) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-border/50">
-      <p className="text-sm text-muted-foreground">
+    <div className="flex items-center justify-between h-8 px-4 border-b border-border/20 bg-secondary/10">
+      <p className="text-xs text-muted-foreground">
         {total.toLocaleString()} listings
       </p>
       

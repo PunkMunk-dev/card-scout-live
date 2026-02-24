@@ -7,8 +7,8 @@ interface EmptyStateProps {
 export function EmptyState({ query }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-        <Search className="h-8 w-8 text-muted-foreground" />
+      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+        <Search className="h-6 w-6 text-muted-foreground" />
       </div>
       <h3 className="text-lg font-semibold mb-2">No results found</h3>
       {query ? (

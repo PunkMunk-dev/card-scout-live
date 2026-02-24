@@ -63,11 +63,9 @@ export function QueryHeader({
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-sm font-bold truncate">Sports Card Lab</h1>
                 {onSearchModeChange && <SearchModeToggle mode={searchMode} onModeChange={onSearchModeChange} className="scale-90 origin-left" />}
               </div>
-              {searchMode === 'quick' ? <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} placeholder="Search any card..." className="mt-2" /> :
-                <p className="text-[10px] text-muted-foreground/60 tracking-wide">Data-Driven Card Selection</p>}
+              {searchMode === 'quick' && <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} placeholder="Search any card..." className="mt-2" />}
             </div>
             <div className="flex items-center gap-2">
               <Button variant={watchlistOpen ? 'default' : 'outline'} size="sm" onClick={onWatchlistToggle} className="gap-1.5">
@@ -90,7 +88,6 @@ export function QueryHeader({
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-wrap items-center justify-between py-4 gap-x-4 gap-y-2">
             <div className="flex items-center gap-4 flex-shrink-0">
-              <div><h1 className="text-lg font-bold">Sports Card Lab</h1><p className="text-xs text-muted-foreground/60">Data-Driven Card Selection</p></div>
               {onSearchModeChange && <SearchModeToggle mode={searchMode} onModeChange={onSearchModeChange} />}
             </div>
             <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end flex-wrap">
