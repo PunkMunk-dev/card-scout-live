@@ -1,74 +1,66 @@
 
 
-# Fix: Seed Sports Card Lab Database
+# Unify Watchlists into Card Finder
 
-## Problem
+## Goal
 
-The `get_published_ruleset_snapshot()` RPC returns empty data because the migration that was supposed to seed the database only included schema changes (adding `compatible_brand_ids` column and updating RPCs) but did NOT include the actual data inserts.
+When a user stars/watchlists a card in Sports Lab or TCG Lab, it also appears in the Card Finder watchlist (the main shared watchlist).
 
-## Solution
+## Current State
 
-Create a new database migration that seeds all the required data:
+- **Card Finder**: `useWatchlist` hook stores `EbayItem` objects in localStorage (`ebay-card-watchlist` key). Used only on the Card Finder page.
+- **Sports Lab**: `SportsWatchlistContext` stores `sportsEbay.EbayListing` objects in localStorage (`sports-watchlist` key). Completely separate.
+- **TCG Lab**: Has a Supabase-based watchlist (`tcg_watchlist` table) but no watchlist toggle buttons on individual cards yet.
 
-### 1. Published Ruleset Version
-- One `ruleset_versions` row with `status = 'published'` and `published_at = now()`
+## Changes
 
-### 2. Sports (5 rows)
-- Football (sort_order 1)
-- Basketball (sort_order 2)
-- Baseball (sort_order 3)
-- Hockey (sort_order 4)
-- WNBA (sort_order 5)
+### 1. Create a Shared Watchlist Context
 
-### 3. Players (~80 rows across all sports)
+Convert `useWatchlist` into a React context provider (`WatchlistProvider`) so it can be accessed from any page/component.
 
-**Football (~18):** Saquon Barkley, Jayden Daniels, Travis Hunter, Caleb Williams, Drake Maye, Bo Nix, Marvin Harrison Jr, Malik Nabers, Brock Bowers, Jaxon Smith-Njigba, CJ Stroud, Ladd McConkey, Adonai Mitchell, Rome Odunze, Jahmyr Gibbs, Josh Allen, Patrick Mahomes, Joe Burrow
+**New file**: `src/contexts/WatchlistContext.tsx`
+- Wraps the existing `useWatchlist` logic in a context provider
+- Exposes `addToWatchlist`, `removeFromWatchlist`, `isInWatchlist`, `toggleWatchlist`, `clearWatchlist`, `watchlist`, `count`
+- Accepts `EbayItem` (the Card Finder type) as input
 
-**Basketball (~18):** Victor Wembanyama, Anthony Edwards, Luka Doncic, Cooper Flagg, Ace Bailey, Dylan Harper, Zaccharie Risacher, Stephon Castle, Reed Sheppard, Donovan Clingan, Ja Morant, Shai Gilgeous-Alexander, Jayson Tatum, LeBron James, Bronny James, Tyrese Maxey, Paolo Banchero, Chet Holmgren
+### 2. Add Adapter Functions
 
-**Baseball (~15):** Jackson Holliday, Elly De La Cruz, Paul Skenes, Shohei Ohtani, Junior Caminero, Jasson Dominguez, Colton Cowser, Wyatt Langford, Evan Carter, Corbin Carroll, Gunnar Henderson, Bobby Witt Jr, Pete Crow-Armstrong, James Wood, Dylan Crews
+Create converter utilities to map Sports Lab and TCG Lab listing types into the Card Finder's `EbayItem` shape:
 
-**Hockey (~18):** Connor Bedard, Macklin Celebrini, Matvei Michkov, Connor McDavid, Ivan Demidov, Cale Makar, Cole Caufield, Matthew Knies, Logan Stankoven, Mason McTavish, Leo Carlsson, Adam Fantilli, Will Smith, Brock Faber, Lane Hutson, Shane Wright, Logan Cooley, Wyatt Johnston
+**New file**: `src/lib/watchlistAdapters.ts`
+- `sportsListingToEbayItem(listing: sportsEbay.EbayListing): EbayItem` -- maps price (number to string), imageUrl, itemWebUrl to itemUrl, etc.
+- `tcgListingToEbayItem(listing: tcg.EbayListing): EbayItem` -- maps price.value, image to imageUrl, listingType to buyingOption, etc.
 
-**WNBA (~12):** Caitlin Clark, Angel Reese, Cameron Brink, Paige Bueckers, JuJu Watkins, Aaliyah Edwards, Kamilla Cardoso, Rickea Jackson, Napheesa Collier, Sabrina Ionescu, Breanna Stewart, A'ja Wilson
+### 3. Wire Sports Lab Into Shared Watchlist
 
-### 4. Brands (rule_items with kind='brand')
+Modify `SportsWatchlistContext.tsx` to also call the shared watchlist's `addToWatchlist`/`removeFromWatchlist` when toggling, using the adapter to convert the sports listing format.
 
-**Football:** Prizm, Donruss Optic, Mosaic, Select, Contenders
+### 4. Add Watchlist Button to TCG Lab Cards
 
-**Basketball:** Prizm, Donruss Optic, Mosaic, Select, Contenders, Topps Chrome
+Modify `TerminalCard.tsx` to add a watchlist heart/star button that:
+- Calls the shared watchlist context (using the TCG adapter to convert the listing)
+- Shows filled/unfilled state based on `isInWatchlist`
 
-**Baseball:** Topps Chrome, Bowman Chrome, Topps, Bowman, Logofractor Chrome
+### 5. Mount the Provider
 
-**Hockey:** Upper Deck Series 1, Upper Deck Series 2, SP Authentic, Upper Deck Exclusives
+Wrap the app with `WatchlistProvider` in `App.tsx` (alongside the existing `SportsWatchlistProvider`).
 
-**WNBA:** Prizm, Select
+### 6. Update Card Finder Page
 
-### 5. Traits (rule_items with kind='trait')
-
-**Football/Basketball shared:** Silver Prizm, Numbered, Auto, Color Blast, Downtown, Rookie, Honeycomb, Stained Glass, Die Cut, Tiger Stripe, Mojo, Holo
-
-**Baseball:** Refractor, Numbered, Auto, Rookie, Sapphire, Gold
-
-**Hockey:** Young Guns, Numbered, Auto, Rookie, Exclusives, High Gloss, Outburst
-
-**WNBA:** Silver Prizm, Numbered, Auto, Rookie
-
-Brand compatibility will be set using subqueries (e.g., Silver Prizm is compatible with Prizm brand only).
-
-### 6. Seller Blacklist (~10 entries)
-- comc_consignment, probstein123, pwcc_auctions, blowout_cards, dacardworld, cherry_collectibles, steel_city_collectibles, midwest_cards, burbank_sportscards, pristine_auction
-
-## Technical Details
-
-- Single migration file with all INSERTs wrapped in a DO block so brand IDs can be referenced by traits
-- Uses variables for the ruleset_version_id and brand UUIDs
-- All data inserted in one transaction
-- No frontend changes needed
+Update `Index.tsx` to use the new context instead of the standalone hook.
 
 ## Files Changed
 
 | File | Change |
 |---|---|
-| New migration SQL | Seed complete Sports Card Lab dataset |
+| `src/contexts/WatchlistContext.tsx` | New -- shared watchlist context wrapping existing useWatchlist logic |
+| `src/lib/watchlistAdapters.ts` | New -- adapter functions for Sports and TCG listing types |
+| `src/contexts/SportsWatchlistContext.tsx` | Import shared watchlist, call adapters on toggle |
+| `src/components/tcg-lab/TerminalCard.tsx` | Add watchlist heart button using shared context |
+| `src/App.tsx` | Wrap app with WatchlistProvider |
+| `src/pages/Index.tsx` | Switch from useWatchlist hook to shared context |
+| `src/components/TabNavigation.tsx` | Update to use shared context for Card Finder badge count |
 
+## Result
+
+Watchlisting a card anywhere in the app adds it to the unified Card Finder watchlist, visible from the Card Finder tab's watchlist panel and reflected in the tab badge count.
