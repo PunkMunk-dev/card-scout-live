@@ -60,6 +60,7 @@ export type Database = {
       }
       rule_items: {
         Row: {
+          compatible_brand_ids: string[]
           id: string
           is_active: boolean
           is_default: boolean
@@ -72,6 +73,7 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          compatible_brand_ids?: string[]
           id?: string
           is_active?: boolean
           is_default?: boolean
@@ -84,6 +86,7 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          compatible_brand_ids?: string[]
           id?: string
           is_active?: boolean
           is_default?: boolean
