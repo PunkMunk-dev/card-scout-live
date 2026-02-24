@@ -1,43 +1,47 @@
 
 
-# Fix: Sports Lab Quick Search Stuck on Loading Skeletons (StrictMode)
+# Fix: Sports Lab Guided Search Infinite Loop + Code Cleanup
 
-## Problem
+## Problems Found
 
-The previous fix correctly memoized `searchParams` but incorrectly removed the `lastSearchRef` cleanup from the search effect. This breaks React StrictMode compatibility:
+### 1. Guided Search Infinite Loop (Critical)
+The guided search in Sports Lab has the same infinite loop bug that was fixed for quick search. In `SportsLab.tsx`, two arrays are derived inline on every render without memoization:
 
-1. On first mount, the effect calls `search()`, setting `isLoading=true` and starting a debounce timer
-2. StrictMode simulates unmount -- the hook's cleanup clears the debounce timer and aborts the fetch
-3. StrictMode remounts -- the effect runs again, but the dedup key still matches (no cleanup reset it), so the search is skipped
-4. `isLoading` stays `true` forever, showing infinite skeletons with no API call
+```
+line 44: const selectedPlayerNames = filteredPlayers.filter(...).map(p => p.name);
+line 47: const selectedTraitLabels = filteredRuleItems.filter(...).map(ri => ri.label);
+```
 
-## Root Cause
+These arrays get **new references on every render** and are passed to `ResultsGrid`, which uses them as `useMemo` dependencies. Since JavaScript compares arrays by reference, the memo recalculates every render, creating a new `searchParams` object, which triggers the search effect, which updates state, which re-renders, which creates new arrays -- infinite loop.
 
-Removing the cleanup was wrong in isolation. The infinite loop from before was caused by **two** bugs working together:
-- Unmemoized `searchParams` (new reference every render)
-- Cleanup resetting the dedup ref (allowing re-trigger)
+### 2. Broken Indentation in EbayResultsPanel.tsx
+The last edit introduced incorrect indentation on lines 57-60 of the search effect. The logic is correct but the formatting is broken.
 
-Now that `searchParams` is properly memoized, the cleanup is safe to restore -- it will only reset on genuine unmount/remount, not on every render cycle.
+## Fix Plan
 
-## Fix
-
-### File: `src/components/sports-lab/EbayResultsPanel.tsx`
-
-Restore the cleanup function in the search effect (line 51-59):
+### File 1: `src/pages/SportsLab.tsx`
+Wrap `selectedPlayerNames` and `selectedTraitLabels` in `useMemo` so their references stay stable between renders:
 
 ```typescript
-// Current (broken for StrictMode)
-useEffect(() => {
-  if (!searchParams.playerName) return;
-  const key = JSON.stringify({ playerName: searchParams.playerName, brand: searchParams.brand, traits: searchParams.traits });
-  if (key !== lastSearchRef.current) {
-    lastSearchRef.current = key;
-    loadAllTriggeredRef.current = false;
-    search(searchParams);
-  }
-}, [searchParams, search]);
+// Before (new array every render)
+const selectedPlayerNames = filteredPlayers.filter(p => state.selected_player_ids.includes(p.id)).map(p => p.name);
+const selectedTraitLabels = filteredRuleItems.filter(ri => ri.kind === 'trait' && ...).map(ri => ri.label);
 
-// Fixed (restore cleanup)
+// After (stable reference)
+const selectedPlayerNames = useMemo(() =>
+  filteredPlayers.filter(p => state.selected_player_ids.includes(p.id)).map(p => p.name),
+  [filteredPlayers, state.selected_player_ids]
+);
+const selectedTraitLabels = useMemo(() =>
+  filteredRuleItems.filter(ri => ri.kind === 'trait' && state.selected_rule_item_ids.includes(ri.id)).map(ri => ri.label),
+  [filteredRuleItems, state.selected_rule_item_ids]
+);
+```
+
+### File 2: `src/components/sports-lab/EbayResultsPanel.tsx`
+Fix the broken indentation in the search effect (lines 51-60) so it reads correctly:
+
+```typescript
 useEffect(() => {
   if (!searchParams.playerName) return;
   const key = JSON.stringify({ playerName: searchParams.playerName, brand: searchParams.brand, traits: searchParams.traits });
@@ -50,18 +54,12 @@ useEffect(() => {
 }, [searchParams, search]);
 ```
 
-## Why This Is Now Safe
+## Technical Summary
 
-With both fixes in place:
-- Memoized `searchParams` ensures the effect only re-runs when the query genuinely changes (no new object reference on every render)
-- The cleanup ensures StrictMode's simulated unmount/remount correctly re-triggers the search on the second mount
-- No infinite loop because `searchParams` reference is stable between renders
+| File | Change | Why |
+|------|--------|-----|
+| `src/pages/SportsLab.tsx` | Memoize `selectedPlayerNames` and `selectedTraitLabels` | Prevents new array references every render, breaking the infinite loop for guided search |
+| `src/components/sports-lab/EbayResultsPanel.tsx` | Fix indentation on lines 57-60 | Cosmetic fix from previous edit's broken formatting |
 
-## Technical Details
-
-| File | Change |
-|------|--------|
-| `src/components/sports-lab/EbayResultsPanel.tsx` | Restore `return () => { lastSearchRef.current = ''; };` in search effect |
-
-Single one-line change. The memoization fix in `SportsLab.tsx` from the previous edit remains correct and unchanged.
+No changes needed to Card Finder (`Index.tsx`) or TCG Lab (`TcgLab.tsx`) -- both are functioning correctly.
 
