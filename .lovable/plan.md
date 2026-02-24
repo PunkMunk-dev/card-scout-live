@@ -1,62 +1,51 @@
 
 
-# Fix: Sports Lab Search Not Firing
-
-## Problem
-
-When selecting a player in Sports Lab, the UI shows loading skeletons forever. The `supabase.functions.invoke('sports-ebay-search')` call never produces a network request, even though:
-- The edge function works perfectly when called directly (returns 72 listings for "Saquon Barkley")
-- Other Supabase client operations (RPC calls, table queries) work fine
-- CORS headers are correctly configured
+# Fix: Sports Lab Search Stuck on Loading Skeletons
 
 ## Root Cause
 
-The Supabase JS client's `functions.invoke` method appears to silently hang in this environment. This affects all sports edge function calls (`sports-ebay-search`, `sports-ebay-sold-psa`).
+React StrictMode (in `main.tsx`) double-mounts components in development. The interaction between `EbayResultsPanel`'s deduplication logic and the debounce cleanup causes the search to silently fail:
 
-## Solution
+1. First mount: `search()` is called, setting `isLoading = true` and recording the search key in `lastSearchRef`
+2. StrictMode unmount: cleanup clears the debounce timer before it fires
+3. Second mount: the useEffect checks `key !== lastSearchRef.current`, finds they match (ref persisted), and skips calling `search()` again
 
-Replace `supabase.functions.invoke` with direct `fetch` calls in `useSportsEbaySearch.ts`. The edge functions have `verify_jwt = false` and proper CORS headers, so direct fetch works without auth.
+The UI is stuck showing skeletons with `isLoading = true` and no fetch ever fires.
 
-### Changes
+## Fix
 
-**`src/hooks/useSportsEbaySearch.ts`**
+In `src/components/sports-lab/EbayResultsPanel.tsx`, reset `lastSearchRef.current` in a cleanup function so the deduplication check works correctly across StrictMode re-mounts.
 
-Create a small helper function that builds the edge function URL from env vars and makes a direct `fetch` POST:
+### Change
 
-```text
-const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+In the useEffect that triggers the search (around line 52-60), add a cleanup that resets `lastSearchRef`:
 
-async function invokeEdgeFunction<T>(name: string, body: object): Promise<T> {
-  const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`Edge function error: ${res.status}`);
-  return res.json();
-}
+```typescript
+useEffect(() => {
+  if (!searchParams.playerName) return;
+  const key = JSON.stringify({ ... });
+  if (key !== lastSearchRef.current) {
+    lastSearchRef.current = key;
+    loadAllTriggeredRef.current = false;
+    search(searchParams);
+  }
+  return () => {
+    lastSearchRef.current = '';  // <-- reset on cleanup
+  };
+}, [searchParams, search]);
 ```
 
-Then replace all 4 occurrences of `supabase.functions.invoke` in the file with `invokeEdgeFunction`:
-- `search()` function (line 61)
-- `loadMore()` function (line 94)
-- `loadAll()` function (line 132)
-- `fetchPsa10Price()` function (line 163)
+This ensures that when StrictMode re-mounts the component, the search deduplication check passes and `search()` is called again, properly firing the debounced fetch.
 
-Also add `console.log` breadcrumbs at key points (before/after fetch) for future debugging.
-
-### Files Changed
+## Files Changed
 
 | File | Change |
 |---|---|
-| `src/hooks/useSportsEbaySearch.ts` | Replace `supabase.functions.invoke` with direct `fetch` calls using helper function |
+| `src/components/sports-lab/EbayResultsPanel.tsx` | Add cleanup to reset `lastSearchRef.current` in search useEffect |
 
-### No Other Changes Needed
+## Impact
 
-- Edge functions: no changes (CORS already configured)
-- Frontend components: no changes
-- Types: no changes
+- Fixes the infinite skeleton loading in Sports Lab
+- No behavioral change in production (StrictMode is development-only)
+- The debounce in `useSportsEbaySearch` still works correctly since re-calling `search()` simply clears and restarts the timer
 
