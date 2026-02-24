@@ -1,57 +1,36 @@
 
 
-# Loosen Card Finder Filters
+# Add Visible "Load More" Button Below Card Finder Grid
 
-## Summary
+## Problem
 
-Three targeted changes to the `ebay-search` edge function to let more listings through.
+The Card Finder already has pagination logic (`handleLoadMore`, `nextPage`, `isLoadingMore`) and a small "Load more" link in the toolbar header, but it's tiny and easy to miss. Users don't realize they can load more results.
+
+## Solution
+
+Add a prominent "Load More" button centered below the `ListingGrid`, matching the pattern already used in `TerminalGrid` (TCG Lab).
 
 ## Changes
 
-### File: `supabase/functions/ebay-search/index.ts`
+### File: `src/pages/Index.tsx`
 
-**1. Remove `-box` from server-side exclusions (line 257)**
+Add a "Load More" button section after the `ListingGrid` component, inside the results branch:
 
-Change:
-```text
-const exclusions = '-lot -bundle -bulk -sealed -booster -box -pack -case -repack -mystery -wax -cello -blaster';
+- Import `Loader2` from lucide-react and `Button` from the UI library
+- After the `<ListingGrid>` render, add a conditional block: if `nextPage` exists, show a centered `<Button>` with "Load more" text (or a spinner + "Loading..." when `isLoadingMore` is true)
+- The button calls the existing `handleLoadMore` function
+
+The result block (lines 209-214) changes from just rendering `<ListingGrid>` to rendering the grid followed by the load-more button:
+
 ```
-To:
-```text
-const exclusions = '-lot -bundle -bulk -sealed -booster -pack -case -repack -mystery -wax -cello -blaster';
-```
-
-The word "box" appears in legitimate card names (e.g. "Box Topper", certain card sets). The `JUNK_KEYWORDS` list still catches "box", "boxes", and "hobby box" in the client-side junk filter, so actual junk listings won't slip through.
-
-**2. Reduce title-match threshold from 85% to 75% (line 202)**
-
-Change:
-```text
-const nameTermsMatch = nameMatchRatio >= 0.85;
-```
-To:
-```text
-const nameTermsMatch = nameMatchRatio >= 0.75;
+<ListingGrid items={items} ... />
+{nextPage && (
+  <div className="flex justify-center pt-6">
+    <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
+      {isLoadingMore ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Loading...</>) : 'Load more'}
+    </Button>
+  </div>
+)}
 ```
 
-This allows listings that match 3 out of 4 query terms (75%) instead of requiring near-exact matches. Helps with alternate spellings, abbreviated names, and cards where the title uses different word order.
-
-**3. Increase over-fetch multiplier from 2x to 3x (line 393)**
-
-Change:
-```text
-const requestLimit = Math.min(clampedLimit * 2, 50);
-```
-To:
-```text
-const requestLimit = Math.min(clampedLimit * 3, 50);
-```
-
-With a default `clampedLimit` of 24, this fetches 50 items (capped) instead of 48, giving more headroom for filtering to still produce a full page of results. The eBay Browse API caps at 200 per request, so 50 is well within limits.
-
-## Impact
-
-- More results survive filtering per page
-- "Box Topper" and similar legitimate listings will appear
-- Slightly looser title matching allows more variant listings through while the junk filter still catches garbage
-
+No other files need changes -- the pagination state management and API calls are already fully wired up.
