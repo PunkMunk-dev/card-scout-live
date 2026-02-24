@@ -14,6 +14,197 @@ export type Database = {
   }
   public: {
     Tables: {
+      players: {
+        Row: {
+          id: string
+          is_active: boolean
+          name: string
+          note: string | null
+          ruleset_version_id: string
+          sort_order: number
+          source_meta: Json
+          sport_key: string
+          tags: Json
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          name: string
+          note?: string | null
+          ruleset_version_id: string
+          sort_order?: number
+          source_meta?: Json
+          sport_key: string
+          tags?: Json
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          name?: string
+          note?: string | null
+          ruleset_version_id?: string
+          sort_order?: number
+          source_meta?: Json
+          sport_key?: string
+          tags?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_ruleset_version_id_fkey"
+            columns: ["ruleset_version_id"]
+            isOneToOne: false
+            referencedRelation: "ruleset_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rule_items: {
+        Row: {
+          id: string
+          is_active: boolean
+          is_default: boolean
+          kind: string
+          label: string
+          priority: number
+          ruleset_version_id: string
+          sport_key: string
+          tokens: Json
+          url: string | null
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          kind: string
+          label: string
+          priority?: number
+          ruleset_version_id: string
+          sport_key: string
+          tokens?: Json
+          url?: string | null
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          kind?: string
+          label?: string
+          priority?: number
+          ruleset_version_id?: string
+          sport_key?: string
+          tokens?: Json
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rule_items_ruleset_version_id_fkey"
+            columns: ["ruleset_version_id"]
+            isOneToOne: false
+            referencedRelation: "ruleset_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ruleset_versions: {
+        Row: {
+          change_notes: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          published_at: string | null
+          status: string
+          version: string
+        }
+        Insert: {
+          change_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          published_at?: string | null
+          status?: string
+          version: string
+        }
+        Update: {
+          change_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          published_at?: string | null
+          status?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      seller_blacklist: {
+        Row: {
+          id: string
+          is_active: boolean
+          label: string | null
+          pattern: string
+          priority: number
+          ruleset_version_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern: string
+          priority?: number
+          ruleset_version_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          pattern?: string
+          priority?: number
+          ruleset_version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_blacklist_ruleset_version_id_fkey"
+            columns: ["ruleset_version_id"]
+            isOneToOne: false
+            referencedRelation: "ruleset_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports: {
+        Row: {
+          id: string
+          key: string
+          label: string
+          ruleset_version_id: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          key: string
+          label: string
+          ruleset_version_id: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          key?: string
+          label?: string
+          ruleset_version_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_ruleset_version_id_fkey"
+            columns: ["ruleset_version_id"]
+            isOneToOne: false
+            referencedRelation: "ruleset_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tcg_sets: {
         Row: {
           created_at: string
@@ -131,15 +322,55 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clone_published_to_draft: {
+        Args: { p_name: string; p_version: string }
+        Returns: string
+      }
+      create_empty_draft: {
+        Args: { p_name: string; p_version: string }
+        Returns: string
+      }
+      get_published_ruleset_snapshot: { Args: never; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      publish_ruleset_version: {
+        Args: { p_ruleset_version_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -266,6 +497,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
