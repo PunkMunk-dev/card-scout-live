@@ -1,71 +1,51 @@
 
 
-# Unified Empty State for Sports Lab and TCG Lab
+# Fix Summary Bar Placement in TCG Lab
 
-## Goal
+## Problem
 
-Remove the decorative backgrounds and varying wording from both labs' empty states. Replace with a single, clean, identical empty state component that says **"Select from dropdown for guided search"**.
+The `QuerySummaryBar` in the TCG Lab is rendered **inside** the rounded card container (`bg-card/80 ... rounded-xl`), while in the Sports Lab it sits **outside** that container. This causes a visual inconsistency between the two labs.
 
-## What Changes
-
-### 1. Create a shared `GuidedSearchEmptyState` component
-
-A new file `src/components/shared/GuidedSearchEmptyState.tsx` -- a minimal, visually clean empty state used by both labs:
-
-- A small muted icon (e.g. `Search` from lucide) in a rounded circle
-- Text: **"Select from dropdown for guided search"**
-- No decorative background icons, no pokeballs, no straw hats, no varying titles
-- Clean, centered layout matching the existing muted style both labs already use for intermediate states
-
-### 2. Update `src/pages/TcgLab.tsx`
-
-Replace the `<TcgEmptyState>` usage with the new shared component. This covers:
-- No game selected (guided mode)
-- Game selected but no chase selected (guided mode)  
-- Quick mode with empty query
-
-### 3. Update `src/pages/SportsLab.tsx`
-
-Replace the three inline empty state blocks (lines 89-107) with the same shared component:
-- Quick mode with fewer than 3 characters
-- No player selected
-- No brand selected
-
-All three states will now show the same message.
-
-### 4. Remove `src/components/tcg-lab/TcgEmptyState.tsx`
-
-No longer needed since both labs use the shared component.
-
-## Technical Details
-
-**New file: `src/components/shared/GuidedSearchEmptyState.tsx`**
-
-```tsx
-import { Search } from 'lucide-react';
-
-export function GuidedSearchEmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
-        <Search className="w-6 h-6 text-muted-foreground" />
-      </div>
-      <p className="text-sm text-muted-foreground max-w-md">
-        Select from dropdown for guided search
-      </p>
-    </div>
-  );
-}
+**Sports Lab (correct):**
+```text
++-- sticky wrapper -------------------------+
+|  +-- rounded card ----------------------+ |
+|  |  toggle / dropdowns / watchlist      | |
+|  +--------------------------------------+ |
+|  QuerySummaryBar (outside card)           |
++-------------------------------------------+
 ```
 
-**`src/pages/SportsLab.tsx`** -- Replace lines 89-100 (quick empty + player empty + brand empty) with `<GuidedSearchEmptyState />`.
+**TCG Lab (current / broken):**
+```text
++-- sticky wrapper -------------------------+
+|  +-- rounded card ----------------------+ |
+|  |  toggle / dropdowns / watchlist      | |
+|  |  QuerySummaryBar (inside card)       | |
+|  +--------------------------------------+ |
++-------------------------------------------+
+```
 
-**`src/pages/TcgLab.tsx`** -- Replace `<TcgEmptyState ...>` with `<GuidedSearchEmptyState />`. Remove the `TcgEmptyState` import and the `handleTrendingSelect` callback (no longer needed).
+## Changes
 
-| File | Change |
-|------|--------|
-| `src/components/shared/GuidedSearchEmptyState.tsx` | New shared empty state component |
-| `src/pages/SportsLab.tsx` | Replace 3 inline empty states with shared component |
-| `src/pages/TcgLab.tsx` | Replace `TcgEmptyState` with shared component |
-| `src/components/tcg-lab/TcgEmptyState.tsx` | Delete (no longer used) |
+### `src/components/tcg-lab/TcgHeader.tsx`
 
+**Mobile (lines 187-188):** Move `{summaryBar}` from inside the card div to after it, so the structure becomes:
+
+```tsx
+        </div>  {/* end card div */}
+        {summaryBar}
+      </div>    {/* end sticky wrapper */}
+```
+
+**Desktop (lines 215-216):** Move `{summaryBar}` from inside `max-w-6xl` (which is inside the card div) to after the card div, wrapped in its own `max-w-6xl` container -- matching Sports Lab exactly:
+
+```tsx
+      </div>  {/* end card div */}
+      <div className="max-w-6xl mx-auto">
+        {summaryBar}
+      </div>
+    </div>    {/* end sticky wrapper */}
+```
+
+Two small moves, no logic changes. Both labs will then have identical summary bar placement.
