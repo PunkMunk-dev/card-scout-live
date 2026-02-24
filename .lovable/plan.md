@@ -1,45 +1,26 @@
 
 
-# Auto-Search on Player Selection (Sports Lab)
+# Clean Up Navigation Icons and Unify Dropdown Sizing
 
-## The Problem
+## Changes
 
-When a user selects a player in Sports Lab, nothing happens until they also pick a brand or click "All Brands." This is because the `ResultsGrid` component only renders when `hasBrandOrShowAll` is true, and on a fresh player selection `show_all_brands` defaults to `false`.
+### 1. Remove icons from TCG Lab and Sports Lab nav tabs
 
-## The Fix
+In `src/components/TabNavigation.tsx`, remove the `FlaskConical` and `Trophy` icons from the TCG and Sports tabs. Only the Card Finder tab keeps its `Search` icon. This declutters the navigation bar.
 
-Automatically set `show_all_brands = true` whenever a player is selected, so the search fires immediately. This is a one-line change.
+### 2. Match Sports Lab dropdown sizing to TCG Lab
+
+In `src/components/sports-lab/QueryHeaderDropdown.tsx`, update the button styling from `text-sm` to `text-xs` and adjust padding from `px-2.5 py-1.5` to `px-3 py-1.5` to match the TCG Lab's game toggle buttons. This applies to both `QueryHeaderDropdown` and `TraitsDropdown`.
 
 ## Technical Details
 
-### File: `src/hooks/useSportsQueryBuilderState.ts`
+### `src/components/TabNavigation.tsx`
+- Change tabs array: remove icon from TCG and Sports entries (set to `null` or conditionally render)
+- Alternatively, only render `<Icon>` for the Card Finder tab
 
-In the `selectPlayer` callback, change the logic so `show_all_brands` always becomes `true` when a player is picked (instead of only when there are existing selections):
+### `src/components/sports-lab/QueryHeaderDropdown.tsx`
+- `QueryHeaderDropdown` button (line 30): change `px-2.5 py-1.5 rounded-md text-sm` to `px-3 py-1.5 rounded-md text-xs`
+- `TraitsDropdown` button (line 97): change `px-2.5 py-1.5 rounded-md text-sm` to `px-3 py-1.5 rounded-md text-xs`
 
-**Before (line 22-27):**
-```ts
-const selectPlayer = useCallback((playerId: string) => {
-  setState(prev => {
-    const hasExisting = prev.selected_rule_item_ids.length > 0 || prev.show_all_brands;
-    return { ...prev, selected_player_ids: [playerId], show_all_brands: hasExisting ? prev.show_all_brands : (prev.sport_key !== null) };
-  });
-}, []);
-```
-
-**After:**
-```ts
-const selectPlayer = useCallback((playerId: string) => {
-  setState(prev => ({
-    ...prev,
-    selected_player_ids: [playerId],
-    show_all_brands: prev.show_all_brands || prev.selected_rule_item_ids.length === 0,
-  }));
-}, []);
-```
-
-This means:
-- First player pick (no brand selected yet): auto-sets `show_all_brands = true`, search fires immediately
-- Switching players after a brand is already selected: keeps the current brand/show-all state unchanged
-
-No other files need changes -- the existing `canSearchGuided` / `hasBrandOrShowAll` check in `SportsLab.tsx` will evaluate to `true` and render the `ResultsGrid`.
+These two changes create a visually consistent filter control style across both TCG Lab and Sports Lab.
 
