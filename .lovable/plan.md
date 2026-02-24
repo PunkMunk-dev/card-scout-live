@@ -1,37 +1,39 @@
 
 
-# Fix Remaining UI Inconsistencies
+# TCG Lab: Pokémon-themed Empty State Background + Tooltip
 
-Three small tweaks to finish the unification pass.
+## 1. Pokémon-themed Background for Empty State
 
-## Changes
+Replace the plain white/background empty state with a subtle Pokémon-themed decorative background. Since no background images exist in the project, we'll use CSS-rendered decorative elements -- large, faded Pokéball SVG silhouettes scattered behind the empty state content, similar to how the Card Finder previously had decorative blur circles.
 
-### 1. Remove `font-mono` from TCG shipping cost
-**File:** `src/components/tcg-lab/TerminalCard.tsx` (line 112)
-- Change `text-[10px] text-muted-foreground font-mono` to `text-xs text-muted-foreground`
-- Matches the shipping style used in Card Finder's `ListingCard`
+**File: `src/components/tcg-lab/TcgEmptyState.tsx`**
 
-### 2. Standardize context bar text colors
-Currently, `ContextBar` uses `text-foreground` for value spans (making them bold/bright), while `QuerySummaryBar` uses `text-muted-foreground` for everything. Align both to use `text-foreground` for the value portions (the actual names/counts), keeping the "Showing:" label as `text-muted-foreground`.
+- Wrap the empty state in a `relative overflow-hidden` container
+- Add 2-3 large, faded `PokeballIcon` elements positioned absolutely behind the content at ~3-5% opacity
+- These decorative pokéballs will be scattered at different sizes and rotations to create a subtle branded background
+- When `selectedGame` is `one_piece`, use the `StrawHatIcon` instead, keeping the theming game-aware
+- When no game is selected, show Pokéball icons as the default (since Pokémon is the primary TCG)
 
-**File:** `src/components/tcg-lab/ContextBar.tsx` -- no change needed (already correct pattern)
+Example layout of decorative elements:
+- Top-right: large (w-64 h-64) Pokéball at 4% opacity, rotated 15deg
+- Bottom-left: medium (w-48 h-48) Pokéball at 3% opacity, rotated -20deg
+- Center-left: small (w-32 h-32) Pokéball at 5% opacity, rotated 30deg
 
-**File:** `src/components/sports-lab/QuerySummaryBar.tsx` (line 27-28)
-- Change value spans from `font-medium text-muted-foreground` to `text-foreground` to match ContextBar
-- Change dot separator from `opacity-50` to `text-muted-foreground/50` to match ContextBar
+## 2. Tooltip on Empty State Title
 
-**File:** `src/components/ResultsHeader.tsx` (line 23-24)
-- Wrap count in a `text-foreground` span: `Showing: <span class="text-foreground">{total} listings</span>` to match the same pattern
+Add a tooltip to the empty state that says: **"Select a TCG for guided or use quick search to search market"**
 
-### 3. Shrink Load More button in Card Finder status bar
-**File:** `src/components/ResultsHeader.tsx` (lines 27-42)
-- Add `size="sm"` and reduce to `h-6 text-[10px] px-2` so it fits within the `h-8` bar
-- Shrink the loading spinner to `h-3 w-3`
+**File: `src/components/tcg-lab/TcgEmptyState.tsx`**
 
-## Summary
+- Import `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` from `@/components/ui/tooltip`
+- Wrap the title + subtitle block in a `Tooltip` component
+- The tooltip trigger will be the icon container (the round circle with the Terminal/Crosshair/Anchor icon)
+- Tooltip content: "Select a TCG for guided or use quick search to search market"
+- Use `side="bottom"` so it appears below the icon
+
+## Files Changed
 
 | File | Change |
 |---|---|
-| `src/components/tcg-lab/TerminalCard.tsx` | Remove `font-mono` from shipping span |
-| `src/components/sports-lab/QuerySummaryBar.tsx` | Use `text-foreground` for value text, match dot separator style |
-| `src/components/ResultsHeader.tsx` | Add "Showing:" label pattern, shrink Load More button to fit thin bar |
+| `src/components/tcg-lab/TcgEmptyState.tsx` | Add decorative Pokéball/StrawHat background icons + tooltip on the icon |
+
