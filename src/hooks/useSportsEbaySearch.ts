@@ -51,7 +51,7 @@ interface UseSportsEbaySearchResult {
 }
 
 const DEBOUNCE_MS = 150;
-const MAX_LOAD_ALL_PAGES = 10;
+const MAX_LOAD_ALL_PAGES = 20;
 const LOAD_ALL_DELAY_MS = 100;
 const MIN_FILTERED_TARGET = 200;
 
