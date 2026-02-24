@@ -53,7 +53,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
 
   return (
     <>
-      <Card className="overflow-hidden rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
+      <Card className="overflow-hidden rounded-lg border border-border/40 shadow-card hover:shadow-cardHover transition-all duration-200">
         <a href={listing.itemWebUrl} target="_blank" rel="noopener noreferrer" className="block h-full">
           <div className="aspect-square bg-muted overflow-hidden relative">
             {listing.imageUrl ? <img src={imageSrc || listing.imageUrl} alt={listing.title} className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]" loading="lazy" onError={handleImageError} /> :

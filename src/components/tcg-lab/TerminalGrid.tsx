@@ -38,7 +38,7 @@ export const TerminalGrid = React.forwardRef<HTMLDivElement, TerminalGridProps>(
     }
 
     return (
-      <div ref={ref} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div ref={ref} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {listings.map((listing, index) => (
           <TerminalCard
             key={listing.itemId}

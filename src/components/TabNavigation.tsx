@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Search, FlaskConical, Trophy } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -15,7 +15,7 @@ const tabs = [
 function WatchlistBadge({ count }: { count: number }) {
   if (count === 0) return null;
   return (
-    <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+    <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -46,22 +46,25 @@ export function TabNavigation() {
           'relative flex items-center gap-1.5 transition-colors font-medium',
           isMobile
             ? 'flex-col gap-0.5 py-2 px-3 text-[11px]'
-            : 'px-3 py-1.5 rounded-md text-xs',
+            : 'px-3.5 py-1.5 rounded-md text-sm',
           isActive
             ? isMobile
               ? 'text-primary'
-              : 'bg-primary/10 text-primary'
-            : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+              : 'text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
         )
       }
     >
       {({ isActive }) => (
         <>
           <span className="relative">
-            <Icon className={cn(isMobile ? 'h-5 w-5' : 'h-3.5 w-3.5')} />
+            <Icon className={cn(isMobile ? 'h-5 w-5' : 'h-4 w-4')} strokeWidth={isActive ? 2.5 : 2} />
             <WatchlistBadge count={counts[watchlistKey]} />
           </span>
           <span>{isMobile ? shortLabel : label}</span>
+          {!isMobile && isActive && (
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary" />
+          )}
           {isMobile && isActive && (
             <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-primary" />
           )}
@@ -72,7 +75,7 @@ export function TabNavigation() {
 
   if (isMobile) {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">
         <div className="flex items-center justify-around">
           {navItems}
         </div>
@@ -81,14 +84,12 @@ export function TabNavigation() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-card/80 backdrop-blur-md">
-      <div className="container">
-        <div className="flex h-10 items-center">
-          <span className="text-base font-bold font-display tracking-tight">
-            OmniMarket™
-          </span>
-        </div>
-        <nav className="flex items-center gap-1 pb-2">{navItems}</nav>
+    <header className="sticky top-0 z-50 border-b border-border bg-card backdrop-blur-md">
+      <div className="container flex h-12 items-center justify-between">
+        <span className="text-base font-bold font-display tracking-tight shrink-0">
+          OmniMarket™
+        </span>
+        <nav className="flex items-center gap-0.5">{navItems}</nav>
       </div>
     </header>
   );
