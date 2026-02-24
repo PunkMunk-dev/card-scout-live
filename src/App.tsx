@@ -8,6 +8,7 @@ import { TabNavigation } from "@/components/TabNavigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { SportsWatchlistProvider } from "@/contexts/SportsWatchlistContext";
+import { WatchlistProvider } from "@/contexts/WatchlistContext";
 import Index from "./pages/Index";
 
 const TcgLab = lazy(() => import("./pages/TcgLab"));
@@ -19,6 +20,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <WatchlistProvider>
       <SportsWatchlistProvider>
         <Toaster />
         <Sonner />
@@ -34,6 +36,7 @@ const App = () => (
           </Suspense>
         </BrowserRouter>
       </SportsWatchlistProvider>
+      </WatchlistProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

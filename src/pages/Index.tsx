@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
 import { WatchlistPanel } from "@/components/WatchlistPanel";
 import { searchEbay } from "@/lib/ebay-api";
-import { useWatchlist } from "@/hooks/useWatchlist";
+import { useSharedWatchlist } from "@/contexts/WatchlistContext";
 import type { EbayItem, SortOption } from "@/types/ebay";
 
 function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
@@ -27,7 +27,7 @@ export default function Index() {
   const [hasSearched, setHasSearched] = useState(false);
   const [sort, setSort] = useState<SortOption>("best");
 
-  const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
+  const { watchlist, isInWatchlist, toggleWatchlist, removeFromWatchlist, clearWatchlist } = useSharedWatchlist();
 
   const performSearch = useCallback(async (
     searchQuery: string, 
