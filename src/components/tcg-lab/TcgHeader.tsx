@@ -34,6 +34,8 @@ interface TcgHeaderProps {
   onModeChange: (mode: 'guided' | 'quick') => void;
   quickQuery: string;
   onQuickQueryChange: (query: string) => void;
+  totalCount: number;
+  isSearchLoading: boolean;
 }
 
 export function TcgHeader({
@@ -50,6 +52,8 @@ export function TcgHeader({
   onModeChange,
   quickQuery,
   onQuickQueryChange,
+  totalCount,
+  isSearchLoading,
 }: TcgHeaderProps) {
   const { data: watchlist } = useTcgWatchlist();
   const { data: targets = [] } = useTargets(selectedGame);
@@ -70,6 +74,45 @@ export function TcgHeader({
   };
 
   const chaseName = selectedGame === 'one_piece' ? 'Bounty' : 'Chase';
+  const selectedSet = sets.find(s => s.id === selectedSetId);
+  const hasActiveQuery = (mode === 'guided' && !!selectedTarget && !!selectedGame) || (mode === 'quick' && quickQuery.trim().length > 0);
+
+  const summaryBar = hasActiveQuery ? (
+    <div className="h-8 px-4 flex items-center border-t border-border/20">
+      <div className="flex items-center justify-between gap-4 text-xs w-full">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-muted-foreground">Showing:</span>
+          <span className="text-foreground truncate">
+            {mode === 'quick' ? (
+              quickQuery.trim()
+            ) : (
+              <>
+                {selectedTarget?.name}
+                {selectedGame !== 'one_piece' && (
+                  <>
+                    <span className="mx-1.5 text-muted-foreground/50">·</span>
+                    {selectedSet?.set_name ?? 'All Sets'}
+                  </>
+                )}
+                <span className="mx-1.5 text-muted-foreground/50">·</span>
+                Raw Singles
+              </>
+            )}
+          </span>
+        </div>
+        <div className="flex-shrink-0">
+          {isSearchLoading ? (
+            <span className="text-muted-foreground animate-pulse">Searching...</span>
+          ) : (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary border border-border text-muted-foreground tabular-nums">
+              {totalCount} cards
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
 
   const guidedFilters = (
     <div className="flex items-center gap-1.5 flex-wrap">
@@ -184,6 +227,7 @@ export function TcgHeader({
               )}
             </div>
           </div>
+          {summaryBar}
         </div>
       </div>
     );
@@ -211,6 +255,7 @@ export function TcgHeader({
               {watchlistButton}
             </div>
           </div>
+          {summaryBar}
         </div>
       </div>
     </div>

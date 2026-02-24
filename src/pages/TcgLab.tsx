@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { TcgHeader } from '@/components/tcg-lab/TcgHeader';
-import { ContextBar } from '@/components/tcg-lab/ContextBar';
 import { TcgEmptyState } from '@/components/tcg-lab/TcgEmptyState';
 import { TerminalView } from '@/components/tcg-lab/TerminalView';
 import { useSets } from '@/hooks/useTcgData';
@@ -48,18 +47,10 @@ export default function TcgLab() {
         onModeChange={setMode}
         quickQuery={quickQuery}
         onQuickQueryChange={setQuickQuery}
+        totalCount={totalCount}
+        isSearchLoading={isSearchLoading}
       />
 
-      {selectedTarget && selectedGame && (
-        <ContextBar
-          targetName={selectedTarget.name}
-          setName={selectedSet?.set_name ?? null}
-          totalCount={totalCount}
-          isLoading={isSearchLoading}
-          game={selectedGame}
-        />
-      )}
-      
       <main className="container py-6">
         {mode === 'quick' && quickQuery.trim() ? (
           <TerminalView
