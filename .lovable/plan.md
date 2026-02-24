@@ -1,40 +1,90 @@
 
 
-# Integrate ContextBar into TcgHeader
+# End-to-End Testing & Bug Fix Plan
 
-## What Changes
+## Issues Found
 
-Move the summary bar (currently a separate `ContextBar` component rendered in `TcgLab.tsx`) directly into the `TcgHeader` component, matching how Sports Lab's `QuerySummaryBar` is integrated into its header. This eliminates the separate component and creates a single cohesive header block.
+### 1. Console Warning: `forwardRef` on `EbayResultsPanel` and `SkeletonCard` (Sports Lab)
+
+Two React warnings appear:
+- "Function components cannot be given refs. Check the render method of `ResultsGrid`" -- `EbayResultsPanel` receives a ref but is not wrapped in `React.forwardRef`
+- "Function components cannot be given refs. Check the render method of `EbayResultsPanel`" -- `SkeletonCard` receives a ref but is not wrapped in `React.forwardRef`
+
+These are non-breaking warnings but indicate something is passing refs to these components unexpectedly. The fix is to wrap both `EbayResultsPanel` and `SkeletonCard` in `React.forwardRef`.
+
+### 2. CORS Header Mismatch on `ebay-search` Edge Function (Card Finder)
+
+The `ebay-search` function (used by the Card Finder / Index page) has an incomplete `Access-Control-Allow-Headers`:
+
+```
+'authorization, x-client-info, apikey, content-type'
+```
+
+It is missing the newer Supabase client headers that the current SDK sends:
+
+```
+x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version
+```
+
+The `sports-ebay-search` function already has the correct headers. This mismatch can cause CORS preflight failures for the Card Finder page on certain browsers/versions.
+
+### 3. Sports Lab "No listings found" for Jayden Daniels
+
+The session replay shows the user selecting Football > Jayden Daniels and seeing "No listings found". This is likely a transient eBay API issue or the aggressive filtering removing all results. No code bug -- the edge function logic is correct. However, we should verify the search is firing correctly.
+
+## Fixes
+
+### File: `src/components/sports-lab/EbayResultsPanel.tsx`
+- Wrap the component in `React.forwardRef` to accept the ref properly and silence the warning
+
+### File: `src/components/sports-lab/SkeletonCard.tsx`
+- Wrap the component in `React.forwardRef` to accept the ref properly and silence the warning
+
+### File: `supabase/functions/ebay-search/index.ts`
+- Update `corsHeaders['Access-Control-Allow-Headers']` to include the full set of Supabase client headers, matching the pattern used in `sports-ebay-search`
 
 ## Technical Details
 
-### File: `src/components/tcg-lab/TcgHeader.tsx`
+### `EbayResultsPanel.tsx` change
+```tsx
+// Before
+export function EbayResultsPanel({ ... }: EbayResultsPanelProps) {
 
-Add new props for summary bar data:
-- `totalCount: number`
-- `isSearchLoading: boolean`
+// After
+export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPanelProps>(
+  function EbayResultsPanel({ ... }, ref) {
+    // existing body, add ref to root div
+  }
+);
+```
 
-Add an inline summary bar below the main controls row (inside the rounded-xl container), matching the `QuerySummaryBar` pattern:
-- A thin `h-8` row with `border-t border-border/20` separator
-- Left side: "Showing: Target . Set . Raw Singles" (dot-separated, same as current ContextBar)
-- Right side: result count badge or "Searching..." when loading
-- Only visible when there's an active query (guided mode with target selected, or quick mode with query entered)
-- For quick mode, show the query text instead of target/set
+### `SkeletonCard.tsx` change
+```tsx
+// Before
+export function SkeletonCard() {
 
-### File: `src/pages/TcgLab.tsx`
+// After
+export const SkeletonCard = React.forwardRef<HTMLDivElement>(
+  function SkeletonCard(_props, ref) {
+    return <div ref={ref} ...>
+  }
+);
+```
 
-- Remove the standalone `<ContextBar>` rendering (lines 53-61)
-- Remove the `ContextBar` import
-- Pass `totalCount` and `isSearchLoading` as new props to `<TcgHeader>`
+### `ebay-search/index.ts` CORS fix
+```ts
+// Before
+'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 
-### File: `src/components/tcg-lab/ContextBar.tsx`
+// After
+'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+```
 
-- No changes needed; it can remain for potential reuse, but will no longer be used by TcgLab
+## Summary
 
-### Summary
-
-| Aspect | Before | After |
+| Issue | Impact | Fix |
 |---|---|---|
-| Summary bar location | Separate component below header | Integrated inside the header card |
-| Visual result | Gap between header card and summary | Single unified header block |
-| Props flow | TcgLab passes to ContextBar separately | TcgLab passes totalCount/isSearchLoading to TcgHeader |
+| forwardRef warnings on EbayResultsPanel/SkeletonCard | Console noise, potential future breakage | Wrap both in React.forwardRef |
+| ebay-search CORS headers incomplete | Card Finder may fail on some browsers | Add missing headers to match other functions |
+| Sports "No listings found" | Transient eBay API / filtering result | No code change needed -- API and filters are correct |
+
