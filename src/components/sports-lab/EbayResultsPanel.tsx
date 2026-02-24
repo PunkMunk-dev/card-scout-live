@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Loader2, AlertCircle, ArrowUpDown, Target, RotateCcw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ const PRICE_RANGES: { value: PriceRange; label: string; min: number; max: number
   { value: '500+', label: '$500+', min: 500, max: null },
 ];
 
-export function EbayResultsPanel({ searchParams, traitLabels, sportKey, onResultCountChange, onLoadingChange, onReset }: EbayResultsPanelProps) {
+export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPanelProps>(function EbayResultsPanel({ searchParams, traitLabels, sportKey, onResultCountChange, onLoadingChange, onReset }: EbayResultsPanelProps, ref) {
   const { listings, isLoading, isLoadingMore, isLoadingAll, error, hasMore, search, loadMore, loadAll, cancelLoadAll } = useSportsEbaySearch();
   const lastSearchRef = useRef<string>('');
   const [sortOption, setSortOption] = useState<SortOption>('quality-high');
@@ -112,7 +112,7 @@ export function EbayResultsPanel({ searchParams, traitLabels, sportKey, onResult
   );
 
   return (
-    <div className="space-y-4">
+    <div ref={ref} className="space-y-4">
       {(isLoadingAll || isLoadingMore) && <div className="h-0.5 w-full rounded-full overflow-hidden bg-muted/30"><div className="h-full bg-primary animate-pulse" style={{ width: '60%' }} /></div>}
       <div className="flex items-center justify-between bg-secondary/30 rounded-md px-3 py-2.5 flex-nowrap overflow-x-auto border border-border">
         <div className="flex items-center gap-2 whitespace-nowrap">
@@ -157,4 +157,4 @@ export function EbayResultsPanel({ searchParams, traitLabels, sportKey, onResult
       </div>}
     </div>
   );
-}
+});
