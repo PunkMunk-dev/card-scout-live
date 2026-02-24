@@ -1,48 +1,51 @@
 
 
-# Show Watchlisted Cards in Card Finder Search Area
+# Fix Sports Lab Infinite Search Loop
 
-## What Changes
+## Problem
 
-1. **Card Finder (Index page)**: Add a starred-cards dropdown next to the search bar. When the user has watchlisted cards (from any lab), a star icon with a count badge appears beside the search input. Clicking it opens a dropdown showing thumbnail, title, and price of each watchlisted card with quick actions (remove, open on eBay, and "search this" to auto-populate the search bar with that card's title).
+The previous fix (resetting `lastSearchRef` in a cleanup function) introduced an infinite loop:
 
-2. **Remove watchlist count badges from Sports and TCG tabs** in the tab navigation bar -- the counts will now live in the Card Finder search area instead.
+1. Effect runs, sets `lastSearchRef = key`, calls `search()` which sets `isLoading = true`
+2. State change triggers re-render
+3. Cleanup runs, resets `lastSearchRef = ''`
+4. Effect runs again, sees key !== `''`, calls `search()` again
+5. Repeat forever
 
-3. **Remove the old WatchlistPanel button** from the Card Finder toolbar (the Heart button + Sheet). The new dropdown replaces it.
+The console shows the search firing every 1-2 seconds continuously, returning 63-64 results each time but never rendering them because `isLoading` stays true.
 
----
+## Root Cause (Original StrictMode Bug)
 
-## Technical Details
+The original problem was that React StrictMode unmounts and re-mounts the component, clearing the debounce timer during cleanup. On re-mount, `lastSearchRef` still held the key, so the search was skipped.
 
-### 1. New component: `src/components/WatchlistDropdown.tsx`
+## Fix
 
-A Popover-based dropdown (using existing Radix Popover) that:
-- Trigger: a Star icon button with a count badge (only renders when `watchlist.length > 0`)
-- Content: a scrollable list of watchlist items showing image, title, price, remove button, external link, and a "Search" button that calls `onSearchItem(item.title)`
-- Clear All button at the bottom
-- Reads from `useSharedWatchlist()` for the unified watchlist
+Two changes needed:
 
-### 2. Update `src/pages/Index.tsx`
+### 1. Remove the broken cleanup from `EbayResultsPanel.tsx` (line 60-62)
 
-- Replace `<WatchlistPanel>` import with `<WatchlistDropdown>`
-- Move the dropdown next to the SearchBar inside the search section (not the toolbar)
-- Pass an `onSearchItem` callback that sets the query and triggers a search
-- Remove WatchlistPanel from the toolbar row
+Delete the `return () => { lastSearchRef.current = ''; };` cleanup that was added in the previous fix.
 
-### 3. Update `src/components/TabNavigation.tsx`
+### 2. Fix the actual StrictMode issue in `useSportsEbaySearch.ts`
 
-- Remove `WatchlistBadge` rendering for `sports` and `tcg` tabs (keep the badge for `cards` tab or remove all -- since the dropdown is now in the search area, remove all watchlist badges from tabs entirely)
-- Remove `useTcgWatchlist` and `useSportsWatchlist` imports (no longer needed here)
-- Simplify `useWatchlistCounts` -- remove it entirely since badges are gone
+Instead of clearing the ref on unmount, make the `search` function handle being called again with the same params gracefully. The issue is that after StrictMode cleanup clears the debounce timer, the re-mounted effect skips calling `search()` because `lastSearchRef` still matches.
 
-### 4. Update `src/components/SearchBar.tsx`
+The proper fix: in the hook's cleanup effect (line 55-60), when `debounceTimerRef` is cleared, also reset `isLoading` to false. This way, if the debounce timer was cleared before it could fire, the UI won't be stuck on loading. Additionally, move the `setIsLoading(true)` call inside the debounce timeout callback, right before the actual fetch, instead of setting it eagerly in the `search()` function. This means:
 
-- Add an optional `initialQuery` prop so the parent can programmatically set the input value when a watchlist item is clicked
-- Or alternatively, the parent can control the query externally -- simpler approach: make SearchBar accept a `value` prop alongside `onChange` to support controlled mode when searching from watchlist
+- If StrictMode clears the timer, `isLoading` was never set to `true` in the first place
+- The component re-mounts, the effect sees the same key in `lastSearchRef`, skips the call -- but since `isLoading` is `false`, it renders the empty/idle state correctly
+- When the effect runs fresh (new key), `search()` is called, the debounce starts, and `isLoading` is set to `true` only when the fetch actually begins
 
-### Files modified:
-- `src/components/WatchlistDropdown.tsx` (new)
-- `src/pages/Index.tsx` (swap WatchlistPanel for WatchlistDropdown, move next to search)
-- `src/components/TabNavigation.tsx` (remove watchlist badges)
-- `src/components/SearchBar.tsx` (support external query injection)
+**File: `src/components/sports-lab/EbayResultsPanel.tsx`** -- Remove lines 60-62 (the cleanup function)
+
+**File: `src/hooks/useSportsEbaySearch.ts`** -- Move `setIsLoading(true)` from line 69 (eager, in `search()`) to inside the debounce callback (line 73, right before the fetch). Keep `setError(null)` and the pagination reset where they are since those are fine to set eagerly.
+
+### Summary of changes:
+
+| File | Change |
+|------|--------|
+| `src/components/sports-lab/EbayResultsPanel.tsx` | Remove cleanup function (lines 60-62) from search useEffect |
+| `src/hooks/useSportsEbaySearch.ts` | Move `setIsLoading(true)` inside the debounce callback, after the timer fires, not when `search()` is first called |
+
+This fixes both the infinite loop and the original StrictMode issue without requiring any ref cleanup tricks.
 
