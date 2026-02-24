@@ -50,7 +50,7 @@ export function QueryHeader({
   const filterControls = (
     <div className="flex items-center gap-1.5 flex-wrap">
       {sports.length > 1 && <QueryHeaderDropdown label="Sport" value={selectedSport?.label || ''} placeholder="Select" options={sportOptions} selectedId={sportKey} onSelect={onSportChange} />}
-      <QueryHeaderDropdown label="Player" value={selectedPlayer?.name || ''} placeholder="Select player" options={playerOptions} selectedId={selectedPlayerId} onSelect={onSelectPlayer} searchable />
+      {sportKey && <QueryHeaderDropdown label="Player" value={selectedPlayer?.name || ''} placeholder="Select player" options={playerOptions} selectedId={selectedPlayerId} onSelect={onSelectPlayer} searchable />}
       {selectedPlayerId && brands.length > 0 && <QueryHeaderDropdown label="Brand" value={showAllBrands ? 'All Brands' : selectedBrand?.label || ''} placeholder="Select brand" options={brandOptions} selectedId={selectedBrandId} onSelect={onSelectBrand} showAllMode showAllActive={showAllBrands} onShowAll={onSelectShowAll} />}
       {(selectedBrandId || showAllBrands) && traits.length > 0 && <TraitsDropdown traits={traitOptions} selectedIds={selectedTraitIds} onToggle={onToggleTrait} onClear={onClearTraits} />}
       {selectedPlayerId && <Button variant="ghost" size="sm" onClick={onReset} className="h-9 px-2.5 text-muted-foreground hover:text-foreground"><RotateCcw className="h-3.5 w-3.5" /></Button>}
@@ -81,7 +81,7 @@ export function QueryHeader({
             </div>
           </div>
         </div>
-        <QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} />
+        <QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" />
       </div>
     );
   }
@@ -106,8 +106,8 @@ export function QueryHeader({
           </div>
         </div>
       </div>
-      {searchMode === 'guided' && <div className="max-w-6xl mx-auto"><QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} /></div>}
-      {searchMode === 'quick' && quickSearchQuery.trim().length >= 3 && <div className="max-w-6xl mx-auto"><QuerySummaryBar playerName={quickSearchQuery.trim()} resultCount={resultCount} isLoading={isLoading} /></div>}
+      {searchMode === 'guided' && <div className="max-w-6xl mx-auto"><QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" /></div>}
+      {searchMode === 'quick' && quickSearchQuery.trim().length >= 3 && <div className="max-w-6xl mx-auto"><QuerySummaryBar playerName={quickSearchQuery.trim()} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" /></div>}
     </div>
   );
 }
