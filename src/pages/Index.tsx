@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -18,15 +19,25 @@ function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE
 }
 
 export default function Index() {
-  const [query, setQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(initialQuery);
   const [externalQuery, setExternalQuery] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<EbayItem[]>([]);
   const [total, setTotal] = useState(0);
   const [nextPage, setNextPage] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(!!initialQuery);
   const [sort, setSort] = useState<SortOption>("best");
+
+  // Auto-search on mount if query param exists
+  useEffect(() => {
+    if (initialQuery) {
+      performSearch(initialQuery, 1, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { watchlist, isInWatchlist, toggleWatchlist } = useSharedWatchlist();
 
@@ -77,6 +88,7 @@ export default function Index() {
 
   const handleSearch = (newQuery: string) => {
     setQuery(newQuery);
+    setSearchParams(newQuery ? { q: newQuery } : {}, { replace: true });
     setItems([]);
     performSearch(newQuery, 1, false);
   };
@@ -84,6 +96,7 @@ export default function Index() {
   const handleSearchFromWatchlist = (title: string) => {
     setExternalQuery(title);
     setQuery(title);
+    setSearchParams(title ? { q: title } : {}, { replace: true });
     setItems([]);
     performSearch(title, 1, false);
   };
@@ -91,6 +104,7 @@ export default function Index() {
   const handleClear = () => {
     setQuery("");
     setExternalQuery(undefined);
+    setSearchParams({}, { replace: true });
     setItems([]);
     setTotal(0);
     setNextPage(null);

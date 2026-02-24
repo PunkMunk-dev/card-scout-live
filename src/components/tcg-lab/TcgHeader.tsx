@@ -8,7 +8,7 @@ import { QuickSearchInput } from '@/components/sports-lab/QuickSearchInput';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useTcgWatchlist } from '@/hooks/useTcgWatchlist';
+import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 import { useTargets } from '@/hooks/useTcgData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Game, TcgTarget, TcgSet } from '@/types/tcg';
@@ -53,9 +53,8 @@ export function TcgHeader({
   totalCount,
   isSearchLoading,
 }: TcgHeaderProps) {
-  const { data: watchlist } = useTcgWatchlist();
+  const { count: watchlistCount } = useSharedWatchlist();
   const { data: targets = [] } = useTargets(selectedGame);
-  const watchlistCount = watchlist?.length || 0;
   const isMobile = useIsMobile();
 
   const handleTargetChange = (value: string) => {
