@@ -1,36 +1,71 @@
 
+# Fix: Sports Lab Quick Search Infinite Loop Bug
 
-# Add Visible "Load More" Button Below Card Finder Grid
+## Root Cause
 
-## Problem
+The Sports Lab Quick Search has an infinite loop that prevents results from ever displaying:
 
-The Card Finder already has pagination logic (`handleLoadMore`, `nextPage`, `isLoadingMore`) and a small "Load more" link in the toolbar header, but it's tiny and easy to miss. Users don't realize they can load more results.
+1. In `SportsLab.tsx`, the `searchParams` prop is created **inline** without memoization:
+   ```
+   <EbayResultsPanel searchParams={{ playerName: quickSearchQuery.trim(), freeFormSearch: true }} ...
+   ```
+   This creates a new object reference on every render.
 
-## Solution
+2. In `EbayResultsPanel.tsx`, the search effect (line 51-60) has a cleanup function that resets `lastSearchRef.current = ''` whenever the effect re-runs.
 
-Add a prominent "Load More" button centered below the `ListingGrid`, matching the pattern already used in `TerminalGrid` (TCG Lab).
+3. When search results come back, state updates (listings, loading flags, result counts) cause the parent `SportsLab` to re-render, which creates a new `searchParams` object, which triggers the effect cleanup (resetting the ref), which makes the key-check pass, which fires `search()` again -- clearing all listings and starting over.
 
-## Changes
+**The cycle**: search fires -> results arrive -> state updates -> parent re-renders -> new searchParams ref -> effect cleanup resets ref -> effect fires search again -> loop forever.
 
-### File: `src/pages/Index.tsx`
+## Fix (2 changes)
 
-Add a "Load More" button section after the `ListingGrid` component, inside the results branch:
+### 1. Memoize `searchParams` in `SportsLab.tsx`
 
-- Import `Loader2` from lucide-react and `Button` from the UI library
-- After the `<ListingGrid>` render, add a conditional block: if `nextPage` exists, show a centered `<Button>` with "Load more" text (or a spinner + "Loading..." when `isLoadingMore` is true)
-- The button calls the existing `handleLoadMore` function
+Wrap the quick-search `searchParams` in `useMemo` so the object reference stays stable when `quickSearchQuery` hasn't changed:
 
-The result block (lines 209-214) changes from just rendering `<ListingGrid>` to rendering the grid followed by the load-more button:
-
-```
-<ListingGrid items={items} ... />
-{nextPage && (
-  <div className="flex justify-center pt-6">
-    <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
-      {isLoadingMore ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Loading...</>) : 'Load more'}
-    </Button>
-  </div>
-)}
+```typescript
+const quickSearchParams = useMemo(() => ({
+  playerName: quickSearchQuery.trim(),
+  freeFormSearch: true as const,
+}), [quickSearchQuery]);
 ```
 
-No other files need changes -- the pagination state management and API calls are already fully wired up.
+Then pass `quickSearchParams` to `EbayResultsPanel` instead of the inline object.
+
+### 2. Remove the cleanup that resets `lastSearchRef` in `EbayResultsPanel.tsx`
+
+The cleanup on line 59 (`return () => { lastSearchRef.current = ''; }`) defeats the purpose of the dedup check. Remove it so that `lastSearchRef` only resets when a genuinely new search key comes in:
+
+```typescript
+// Before (line 51-60)
+useEffect(() => {
+  if (!searchParams.playerName) return;
+  const key = JSON.stringify({ ... });
+  if (key !== lastSearchRef.current) {
+    lastSearchRef.current = key;
+    loadAllTriggeredRef.current = false;
+    search(searchParams);
+  }
+  return () => { lastSearchRef.current = ''; };  // BUG: resets on every re-run
+}, [searchParams, search]);
+
+// After
+useEffect(() => {
+  if (!searchParams.playerName) return;
+  const key = JSON.stringify({ ... });
+  if (key !== lastSearchRef.current) {
+    lastSearchRef.current = key;
+    loadAllTriggeredRef.current = false;
+    search(searchParams);
+  }
+}, [searchParams, search]);
+```
+
+## Technical Details
+
+| File | Change |
+|------|--------|
+| `src/pages/SportsLab.tsx` | Memoize quick-search params with `useMemo` |
+| `src/components/sports-lab/EbayResultsPanel.tsx` | Remove cleanup function from search effect (line 59) |
+
+Both changes together break the infinite loop: the memoized params prevent unnecessary effect triggers, and removing the cleanup prevents the dedup check from being bypassed on legitimate re-runs.
