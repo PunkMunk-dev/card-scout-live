@@ -98,7 +98,7 @@ export default function SportsLab() {
       <Sheet open={watchlistOpen} onOpenChange={setWatchlistOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md p-0">
           <SheetHeader className="px-6 pt-6 pb-4 border-b border-border"><SheetTitle>Watchlist</SheetTitle></SheetHeader>
-          <WatchlistPanel sportKey={state.sport_key} />
+          <WatchlistPanel />
         </SheetContent>
       </Sheet>
       <Button variant="outline" size="icon"

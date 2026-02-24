@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TabNavigation } from "@/components/TabNavigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageSkeleton } from "@/components/PageSkeleton";
-import { SportsWatchlistProvider } from "@/contexts/SportsWatchlistContext";
 import { WatchlistProvider } from "@/contexts/WatchlistContext";
 import Index from "./pages/Index";
 
@@ -21,7 +20,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <WatchlistProvider>
-      <SportsWatchlistProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -35,7 +33,6 @@ const App = () => (
             </Routes>
           </Suspense>
         </BrowserRouter>
-      </SportsWatchlistProvider>
       </WatchlistProvider>
     </TooltipProvider>
   </QueryClientProvider>
