@@ -103,7 +103,7 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
       {/* Watchlist in top bar area */}
       <div className="border-b border-border/50 bg-card/30">
         <div className="container py-2 flex justify-end">

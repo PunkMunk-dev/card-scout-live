@@ -1,14 +1,18 @@
+import { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TabNavigation } from "@/components/TabNavigation";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { SportsWatchlistProvider } from "@/contexts/SportsWatchlistContext";
 import Index from "./pages/Index";
-import TcgLab from "./pages/TcgLab";
-import SportsLab from "./pages/SportsLab";
-import NotFound from "./pages/NotFound";
+
+const TcgLab = lazy(() => import("./pages/TcgLab"));
+const SportsLab = lazy(() => import("./pages/SportsLab"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -20,13 +24,14 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <TabNavigation />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/tcg" element={<TcgLab />} />
-            <Route path="/sports" element={<SportsLab />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageSkeleton />}>
+            <Routes>
+              <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
+              <Route path="/tcg" element={<ErrorBoundary><TcgLab /></ErrorBoundary>} />
+              <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </SportsWatchlistProvider>
     </TooltipProvider>
