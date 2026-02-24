@@ -50,9 +50,9 @@ interface UseSportsEbaySearchResult {
   retry: () => void;
 }
 
-const DEBOUNCE_MS = 400;
+const DEBOUNCE_MS = 150;
 const MAX_LOAD_ALL_PAGES = 10;
-const LOAD_ALL_DELAY_MS = 200;
+const LOAD_ALL_DELAY_MS = 100;
 const MIN_FILTERED_TARGET = 200;
 
 export function useSportsEbaySearch(): UseSportsEbaySearchResult {
@@ -97,11 +97,12 @@ export function useSportsEbaySearch(): UseSportsEbaySearchResult {
     totalPagesLoadedRef.current = 0;
     lastNextTokenRef.current = '';
     setError(null);
+    setIsLoading(true);
+    setListings([]);
 
     debounceTimerRef.current = setTimeout(async () => {
       const ac = new AbortController();
       abortControllerRef.current = ac;
-      setIsLoading(true);
       try {
         console.log('[SportsSearch] Fetching:', params.playerName);
         const data = await invokeEdgeFunction<EbaySearchResponse>('sports-ebay-search', params, ac.signal);
