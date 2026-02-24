@@ -164,13 +164,22 @@ function isJunkTitle(title: string): boolean {
   });
 }
 
+// Short terms that are critical for card identification
+const TCG_SHORT_TERMS = new Set(['v', 'gx', 'ex', 'sp', 'sr', 'ar', 'ur', 'fa', 'sa', 'sv', 'op']);
+
 function extractKeyTerms(query: string): string[] {
   const stopWords = ['the', 'a', 'an', 'and', 'or', 'of', 'in', 'for', 'to', 'with'];
   return query
     .toLowerCase()
     .replace(/[#\-]/g, ' ')
     .split(/\s+/)
-    .filter(term => term.length > 1 && !stopWords.includes(term));
+    .filter(term => {
+      if (term.length === 0) return false;
+      if (stopWords.includes(term)) return false;
+      // Keep short terms if they're TCG-critical
+      if (term.length <= 1) return TCG_SHORT_TERMS.has(term);
+      return true;
+    });
 }
 
 function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
@@ -188,7 +197,7 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
   // Require at least 70% of name-like terms to match (more flexible)
   const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
   const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
-  const nameTermsMatch = nameMatchRatio >= 0.7;
+  const nameTermsMatch = nameMatchRatio >= 0.85;
   
   // At least 50% of other terms (numbers, short words) should match
   const otherMatchCount = otherTerms.filter(term => lowerTitle.includes(term)).length;
@@ -242,8 +251,13 @@ async function searchEbay(
   const browseBase = Deno.env.get('EBAY_BROWSE_BASE') || 'https://api.ebay.com';
   const marketplaceId = Deno.env.get('EBAY_MARKETPLACE_ID') || 'EBAY_US';
 
+  // Append junk exclusions to the query so eBay filters them server-side
+  const exclusions = '-lot -bundle -bulk -sealed -booster -box -pack -case -repack -mystery -wax -cello -blaster';
+  const enrichedQuery = `${query} ${exclusions}`;
+
   const params = new URLSearchParams({
-    q: query,
+    q: enrichedQuery,
+    category_ids: '183454',
     limit: limit.toString(),
     offset: offset.toString(),
     sort: sort,
