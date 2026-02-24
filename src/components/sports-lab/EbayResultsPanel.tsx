@@ -25,9 +25,10 @@ interface EbayResultsPanelProps {
   onResultCountChange?: (count: number) => void; onLoadingChange?: (loading: boolean) => void; onReset?: () => void;
 }
 
-type PriceRange = 'all' | '10-50' | '50-100' | '100-250' | '250-500' | '500+';
+type PriceRange = 'all' | 'under-10' | '10-50' | '50-100' | '100-250' | '250-500' | '500+';
 const PRICE_RANGES: { value: PriceRange; label: string; min: number; max: number | null }[] = [
-  { value: 'all', label: 'All Prices', min: 10, max: null },
+  { value: 'all', label: 'All Prices', min: 0, max: null },
+  { value: 'under-10', label: 'Under $10', min: 0, max: 10 },
   { value: '10-50', label: '$10-$50', min: 10, max: 50 },
   { value: '50-100', label: '$50-$100', min: 50, max: 100 },
   { value: '100-250', label: '$100-$250', min: 100, max: 250 },
@@ -39,13 +40,13 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
   const { listings, isLoading, isLoadingMore, isLoadingAll, error, hasMore, search, loadMore, loadAll, cancelLoadAll, retry } = useSportsEbaySearch();
   const lastSearchRef = useRef<string>('');
   const [sortOption, setSortOption] = useState<SortOption>('quality-high');
-  const [showAuctionsOnly, setShowAuctionsOnly] = useState(false);
+  const [filterMode, setFilterMode] = useState<'all' | 'auction' | 'bin'>('all');
   const [priceRange, setPriceRange] = useState<PriceRange>('all');
   const sentinelRef = useRef<HTMLDivElement>(null);
   const filteredCountRef = useRef(0);
   const loadAllTriggeredRef = useRef(false);
 
-  useEffect(() => { setSortOption(showAuctionsOnly ? 'ending-soon' : 'quality-high'); }, [showAuctionsOnly]);
+  useEffect(() => { setSortOption(filterMode === 'auction' ? 'ending-soon' : 'quality-high'); }, [filterMode]);
 
   useEffect(() => {
     if (!searchParams.playerName) return;
@@ -72,17 +73,17 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
   }, [hasMore, isLoadingMore, isLoading, isLoadingAll, loadMore, error, listings.length]);
 
   const filteredListings = useMemo(() => {
-    let filtered = listings.filter(l => l.price !== null && l.price >= 10);
-    if (showAuctionsOnly) filtered = filtered.filter(l => l.buyingOptions?.includes('AUCTION'));
-    else filtered = filtered.filter(l => !l.buyingOptions?.includes('AUCTION'));
+    let filtered = listings.filter(l => l.price !== null);
+    if (filterMode === 'auction') filtered = filtered.filter(l => l.buyingOptions?.includes('AUCTION'));
+    else if (filterMode === 'bin') filtered = filtered.filter(l => !l.buyingOptions?.includes('AUCTION'));
     const range = PRICE_RANGES.find(r => r.value === priceRange);
-    if (range) filtered = filtered.filter(l => { const p = l.price ?? 0; return p >= range.min && (range.max === null || p <= range.max); });
+    if (range && priceRange !== 'all') filtered = filtered.filter(l => { const p = l.price ?? 0; return p >= range.min && (range.max === null || p <= range.max); });
     if (traitLabels && traitLabels.length > 1) {
       filtered = filtered.filter(l => { const tl = l.title.toLowerCase(); return traitLabels.every(t => tl.includes(t.toLowerCase())); });
     }
     filteredCountRef.current = filtered.length;
     return filtered;
-  }, [listings, showAuctionsOnly, priceRange, traitLabels]);
+  }, [listings, filterMode, priceRange, traitLabels]);
 
   // Auto-trigger loadAll once after initial results come in
   useEffect(() => {
@@ -145,10 +146,15 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
           </span>
         </div>
         <div className="flex items-center gap-2 flex-nowrap">
-          <button onClick={() => setShowAuctionsOnly(!showAuctionsOnly)}
+          <button onClick={() => setFilterMode(filterMode === 'auction' ? 'all' : 'auction')}
             className={cn("px-2.5 py-1 text-xs font-semibold rounded-full border transition-all whitespace-nowrap",
-              showAuctionsOnly ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary/50")}>
+              filterMode === 'auction' ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary/50")}>
             Auctions
+          </button>
+          <button onClick={() => setFilterMode(filterMode === 'bin' ? 'all' : 'bin')}
+            className={cn("px-2.5 py-1 text-xs font-semibold rounded-full border transition-all whitespace-nowrap",
+              filterMode === 'bin' ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary/50")}>
+            Buy It Now
           </button>
           <Select value={priceRange} onValueChange={(v) => setPriceRange(v as PriceRange)}>
             <SelectTrigger className="w-[100px] h-7 text-xs"><SelectValue placeholder="Price" /></SelectTrigger>
@@ -161,7 +167,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
             <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
               <SelectTrigger className="w-[130px] h-7 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {showAuctionsOnly && <SelectItem value="ending-soon">Ending Soonest</SelectItem>}
+                {filterMode === 'auction' && <SelectItem value="ending-soon">Ending Soonest</SelectItem>}
                 <SelectItem value="newest">Newest</SelectItem>
                 <SelectItem value="quality-high">Best Match</SelectItem>
                 <SelectItem value="price-low">Price: Low → High</SelectItem>
@@ -172,7 +178,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
         </div>
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {sortedListings.map((listing, i) => <EbayListingCard key={`${listing.itemId}-${i}`} listing={listing} sportKey={sportKey} isAuctionMode={showAuctionsOnly} />)}
+        {sortedListings.map((listing, i) => <EbayListingCard key={`${listing.itemId}-${i}`} listing={listing} sportKey={sportKey} isAuctionMode={filterMode === 'auction'} />)}
       </div>
       {hasMore && !error && <div ref={sentinelRef} className="flex items-center justify-center py-8">
         {isLoadingMore ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin text-primary" /><span className="text-sm">Loading more cards...</span></div> : <div className="h-8" />}
