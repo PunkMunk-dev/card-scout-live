@@ -169,16 +169,32 @@ function isJunkTitle(title: string): boolean {
 // Short terms that are critical for card identification
 const TCG_SHORT_TERMS = new Set(['v', 'gx', 'ex', 'sp', 'sr', 'ar', 'ur', 'fa', 'sa', 'sv', 'op']);
 
+const COMPOUND_TERMS: Record<string, string> = {
+  'one piece': 'onepiece',
+  'dragon ball': 'dragonball',
+  'magic the gathering': 'magicthegathering',
+  'yu gi oh': 'yugioh',
+  'yu-gi-oh': 'yugioh',
+};
+
+function collapseCompoundTerms(text: string): string {
+  let result = text;
+  for (const [phrase, token] of Object.entries(COMPOUND_TERMS)) {
+    result = result.replace(new RegExp(phrase, 'gi'), token);
+  }
+  return result;
+}
+
 function extractKeyTerms(query: string): string[] {
+  let normalized = query.toLowerCase().replace(/[#\-]/g, ' ');
+  normalized = collapseCompoundTerms(normalized);
+
   const stopWords = ['the', 'a', 'an', 'and', 'or', 'of', 'in', 'for', 'to', 'with'];
-  return query
-    .toLowerCase()
-    .replace(/[#\-]/g, ' ')
+  return normalized
     .split(/\s+/)
     .filter(term => {
       if (term.length === 0) return false;
       if (stopWords.includes(term)) return false;
-      // Keep short terms if they're TCG-critical
       if (term.length <= 1) return TCG_SHORT_TERMS.has(term);
       return true;
     });
@@ -186,7 +202,7 @@ function extractKeyTerms(query: string): string[] {
 
 function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
   if (keyTerms.length === 0) return true;
-  const lowerTitle = title.toLowerCase();
+  const lowerTitle = collapseCompoundTerms(title.toLowerCase());
   
   // Separate terms into name terms (likely player name) and other terms
   const nameLikeTerms = keyTerms.filter(term => 
