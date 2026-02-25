@@ -22,26 +22,32 @@ function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE
 
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
-  const [query, setQuery] = useState(initialQuery);
+  const urlQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(urlQuery);
   const [externalQuery, setExternalQuery] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<EbayItem[]>([]);
   const [total, setTotal] = useState(0);
   const [nextPage, setNextPage] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasSearched, setHasSearched] = useState(!!initialQuery);
+  const [hasSearched, setHasSearched] = useState(!!urlQuery);
   const [sort, setSort] = useState<SortOption>("best");
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const lastSearchedRef = useRef<string>('');
 
-  // Auto-search on mount if query param exists
+  // Search when URL query changes (handles both mount and header-nav)
   useEffect(() => {
-    if (initialQuery) {
-      performSearch(initialQuery, 1, false);
+    if (urlQuery && urlQuery !== lastSearchedRef.current) {
+      lastSearchedRef.current = urlQuery;
+      setQuery(urlQuery);
+      setExternalQuery(urlQuery);
+      setItems([]);
+      setError(null);
+      performSearch(urlQuery, 1, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [urlQuery]);
 
   const { watchlist, isInWatchlist, toggleWatchlist } = useSharedWatchlist();
 
