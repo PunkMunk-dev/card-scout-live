@@ -1,17 +1,18 @@
 
 
-# Add More Filler Words to cleanListingTitle
+# Preserve Identifying Details in cleanListingTitle
 
-## Change
+## Problem
+Two regex rules are removing meaningful card identifiers:
+- `version` / `ver` (line 44) -- these describe variants like "Green Version", "Holo Ver"
+- `#123` card numbers (line 47) -- these identify specific cards in a set like "#45"
 
-**`src/lib/cleanTitle.ts`** -- Extend the existing seller promo phrases regex to also strip common eBay filler words: `LOT`, `REPACK`, `MYSTERY`, `BUNDLE`, `BREAK`, `PACK`, `BOX`, `HOBBY`.
+## Changes (single file: `src/lib/cleanTitle.ts`)
 
-Add a new line after the existing seller promo removal:
+1. **Line 44**: Remove `version` and `ver` from the generic card terms regex, keeping only truly generic words:
+   - Before: `\b(RC|rookie\s+card|card|cards|version|ver)\b`
+   - After: `\b(RC|rookie\s+card|card|cards)\b`
 
-```typescript
-// Remove eBay listing filler words
-cleaned = cleaned.replace(/\b(lot|repack|mystery|bundle|break|pack|box|hobby)\b/gi, '');
-```
+2. **Line 47**: Delete the `#\d+` removal rule entirely so card numbers like `#45`, `#123` are preserved in the search query.
 
-Single line addition. No other files change.
-
+No other files change. Variant/parallel terms like "Prizm", "Chrome", "Parallel", "Holo", "Refractor" are already preserved.
