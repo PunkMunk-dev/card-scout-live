@@ -107,7 +107,7 @@ export default {
 				foreground: 'hsl(var(--success-foreground))'
 			},
 			om: {
-				bg: { 0: '#0B0F16', 1: '#0E1420', 2: '#121A28', 3: '#162033' },
+				bg: { 0: '#0F1521', 1: '#131B2A', 2: '#182233', 3: '#1E2A3E' },
 				text: { 0: '#F5F7FF', 1: '#B8C0D4', 2: '#7F8AA3', 3: '#59647C' },
 				accent: '#00B9FF',
 			}

@@ -85,7 +85,7 @@ export function TabNavigation() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0B0F16]/70 backdrop-blur-xl border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.06)]">
+    <header className="sticky top-0 z-50 bg-[#0E1420] border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.06)]">
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex flex-col leading-none select-none shrink-0">
