@@ -1,21 +1,19 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Input } from '@/components/ui/input';
 import { WatchlistDropdown } from '@/components/WatchlistDropdown';
 
 const tabs = [
-  { to: '/tcg', label: 'TCG Lab', shortLabel: 'TCG' },
-  { to: '/sports', label: 'Sports Lab', shortLabel: 'Sports' },
+  { to: '/tcg', label: 'TCG Market', shortLabel: 'TCG' },
+  { to: '/sports', label: 'Sports Market', shortLabel: 'Sports' },
 ];
 
 export function TabNavigation() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [headerQuery, setHeaderQuery] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
 
   const handleHeaderSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,24 +29,23 @@ export function TabNavigation() {
       to={to}
       className={({ isActive }) =>
         cn(
-          'relative flex items-center gap-1.5 transition-colors font-medium',
+          'transition-all font-medium',
           isMobile
-            ? 'flex-col gap-0.5 py-2 px-3 text-[11px]'
-            : 'px-3.5 py-1.5 rounded-md text-sm',
-          isActive
-            ? isMobile
+            ? 'relative flex flex-col items-center gap-0.5 py-2 px-3 text-[11px]'
+            : 'px-3 py-2 rounded-xl text-sm',
+          isMobile
+            ? isActive
               ? 'text-primary'
-              : 'text-foreground'
-            : 'text-muted-foreground hover:text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+            : isActive
+              ? 'text-slate-900 bg-slate-100 border border-slate-200'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
         )
       }
     >
       {({ isActive }) => (
         <>
           <span>{isMobile ? shortLabel : label}</span>
-          {!isMobile && isActive && (
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-primary" />
-          )}
           {isMobile && isActive && (
             <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-primary" />
           )}
@@ -88,26 +85,25 @@ export function TabNavigation() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card backdrop-blur-md">
-      <div className="container flex h-12 items-center justify-between">
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+      <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
-          <span className="text-base font-bold font-display tracking-tight shrink-0">
-            OmniMarket Cards
-          </span>
-          <nav className="flex items-center gap-0.5">{navItems}</nav>
+          <Link to="/" className="flex flex-col leading-none select-none shrink-0">
+            <span className="text-[14px] md:text-[15px] font-semibold tracking-tight text-slate-900">OmniMarket</span>
+            <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase text-slate-500">Cards</span>
+          </Link>
+          <nav className="flex items-center gap-1">{navItems}</nav>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <form onSubmit={handleHeaderSearch} className={cn("transition-all duration-300 ease-out", isFocused ? "w-80" : "w-64")}>
-            <div className={cn("relative rounded-md transition-all duration-300", isFocused && "ring-2 ring-primary/20 border-primary/50")}>
-              <Search className={cn("absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none transition-colors duration-300", isFocused ? "text-primary" : "text-muted-foreground")} />
-              <Input
+        <div className="ml-auto flex items-center gap-3">
+          <form onSubmit={handleHeaderSearch} className="w-[260px] md:w-[340px] lg:w-[420px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <input
                 type="text"
                 value={headerQuery}
                 onChange={(e) => setHeaderQuery(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder="Search cards..."
-                className="h-8 pl-8 text-sm"
+                placeholder="Search any card, set, or player..."
+                className="flex h-10 md:h-11 w-full rounded-xl bg-white border border-slate-200 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
               />
             </div>
           </form>
