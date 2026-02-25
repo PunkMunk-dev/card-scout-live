@@ -54,7 +54,6 @@ export default function Index() {
     if (urlQuery && urlQuery !== lastSearchedRef.current) {
       lastSearchedRef.current = urlQuery;
       setQuery(urlQuery);
-      setItems([]);
       setError(null);
       setFromWatchlist(urlSrc === 'wl');
       performSearch(urlQuery, 1, false);
@@ -140,7 +139,6 @@ export default function Index() {
   const handleSortChange = (newSort: SortOption) => {
     setSort(newSort);
     if (query && hasSearched) {
-      setItems([]);
       setError(null);
       performSearch(query, 1, false, newSort);
     }
@@ -200,7 +198,7 @@ export default function Index() {
 
       {/* Main Content */}
       <main className="container py-6">
-        {isLoading ? (
+        {isLoading && items.length === 0 ? (
           <LoadingGrid />
         ) : error && items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -212,7 +210,13 @@ export default function Index() {
             </div>
           </div>
         ) : hasSearched && items.length > 0 ? (
-          <>
+          <div className="relative">
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/40 backdrop-blur-[1px] rounded-lg">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-200" : "transition-opacity duration-200"}>
             <ListingGrid 
               items={items}
               isInWatchlist={isInWatchlist}
@@ -229,7 +233,8 @@ export default function Index() {
                 </Button>
               </div>
             )}
-          </>
+            </div>
+          </div>
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
