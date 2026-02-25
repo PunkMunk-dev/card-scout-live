@@ -62,7 +62,7 @@ export function TabNavigation() {
     <header className="sticky top-0 z-50 border-b border-border bg-card backdrop-blur-md">
       <div className="container flex h-12 items-center justify-between">
         <span className="text-base font-bold font-display tracking-tight shrink-0">
-          OmniMarket™
+          OmniMarket Cards™
         </span>
         <nav className="flex items-center gap-0.5">{navItems}</nav>
       </div>
