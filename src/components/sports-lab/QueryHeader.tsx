@@ -51,39 +51,46 @@ export function QueryHeader({
       {sportKey && <QueryHeaderDropdown label="Player" value={selectedPlayer?.name || ''} placeholder="Select player" options={playerOptions} selectedId={selectedPlayerId} onSelect={onSelectPlayer} searchable />}
       {selectedPlayerId && brands.length > 0 && <QueryHeaderDropdown label="Brand" value={showAllBrands ? 'All Brands' : selectedBrand?.label || ''} placeholder="Select brand" options={brandOptions} selectedId={selectedBrandId} onSelect={onSelectBrand} showAllMode showAllActive={showAllBrands} onShowAll={onSelectShowAll} />}
       {(selectedBrandId || showAllBrands) && traits.length > 0 && <TraitsDropdown traits={traitOptions} selectedIds={selectedTraitIds} onToggle={onToggleTrait} onClear={onClearTraits} />}
-      {selectedPlayerId && <Button variant="ghost" size="sm" onClick={onReset} className="h-9 px-2.5 text-muted-foreground hover:text-foreground"><RotateCcw className="h-3.5 w-3.5" /></Button>}
+      {selectedPlayerId && <Button variant="ghost" size="sm" onClick={onReset} className="om-btn h-9 px-2.5" style={{ color: 'var(--om-text-2)' }}><RotateCcw className="h-3.5 w-3.5" /></Button>}
     </div>
   );
 
   if (isMobile) {
     return (
       <div className="sticky top-0 z-40">
-        <div className="bg-card/80 backdrop-blur-md border-b border-border">
+        <div className="om-command-bar mx-2 mt-2">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-sm font-semibold" style={{ color: 'var(--om-text-0)', fontFamily: "'Space Grotesk', sans-serif" }}>Sports Market</h1>
+              <div className="flex items-center gap-2 mt-1.5">
                 {onSearchModeChange && <SearchModeToggle mode={searchMode} onModeChange={onSearchModeChange} className="scale-90 origin-left" />}
               </div>
               {searchMode === 'quick' && <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} placeholder="Search any card..." className="mt-2" />}
             </div>
             <div className="flex items-center gap-2">
-              <Sheet><SheetTrigger asChild><Button variant="outline" size="sm" className="gap-1.5"><Filter className="h-3.5 w-3.5" />Filters</Button></SheetTrigger>
-                <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl"><SheetHeader><SheetTitle>Search Filters</SheetTitle></SheetHeader>
+              <Sheet><SheetTrigger asChild><Button variant="ghost" size="sm" className="om-btn gap-1.5" style={{ color: 'var(--om-text-2)' }}><Filter className="h-3.5 w-3.5" />Filters</Button></SheetTrigger>
+                <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl om-surface-1 border-t border-white/10"><SheetHeader><SheetTitle style={{ color: 'var(--om-text-0)' }}>Search Filters</SheetTitle></SheetHeader>
                   <div className="py-4 space-y-4">{filterControls}</div></SheetContent></Sheet>
             </div>
           </div>
         </div>
-        <QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" />
+        <div className="mx-2">
+          <QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="sticky top-0 z-40">
-      <div className="bg-card/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-between py-4 gap-x-4 gap-y-2">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pt-3">
+        <div className="om-command-bar px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div className="flex items-center gap-4 flex-shrink-0">
+              <div>
+                <h1 className="text-base font-bold tracking-tight" style={{ color: 'var(--om-text-0)', fontFamily: "'Space Grotesk', sans-serif" }}>Sports Market</h1>
+                <p className="text-[11px]" style={{ color: 'var(--om-text-3)' }}>Search by player, brand, and traits</p>
+              </div>
               {onSearchModeChange && <SearchModeToggle mode={searchMode} onModeChange={onSearchModeChange} />}
             </div>
             <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end flex-wrap">
@@ -92,8 +99,10 @@ export function QueryHeader({
           </div>
         </div>
       </div>
-      {searchMode === 'guided' && <div className="max-w-6xl mx-auto"><QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" /></div>}
-      {searchMode === 'quick' && quickSearchQuery.trim().length >= 3 && <div className="max-w-6xl mx-auto"><QuerySummaryBar playerName={quickSearchQuery.trim()} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" /></div>}
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8">
+        {searchMode === 'guided' && <QuerySummaryBar playerName={selectedPlayer?.name} sportLabel={selectedSport?.label} brandLabel={selectedBrand?.label} showAllBrands={showAllBrands} traitLabels={selectedTraitLabels} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" />}
+        {searchMode === 'quick' && quickSearchQuery.trim().length >= 3 && <QuerySummaryBar playerName={quickSearchQuery.trim()} resultCount={resultCount} isLoading={isLoading} idleMessage="Select a sport to begin searching" />}
+      </div>
     </div>
   );
 }

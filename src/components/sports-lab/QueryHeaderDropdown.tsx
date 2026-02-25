@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Search, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 
 interface DropdownOption { id: string; label: string; note?: string; }
 
@@ -27,42 +26,51 @@ export function QueryHeaderDropdown({ label, value, placeholder, options, select
   return (
     <div ref={containerRef} className="relative">
       <button onClick={() => setIsOpen(!isOpen)}
-        className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
-          "bg-secondary/50 hover:bg-secondary border-border/50",
-          isOpen && "border-primary/40 ring-1 ring-primary/20",
-          (selectedId || showAllActive) ? "text-foreground" : "text-muted-foreground")}>
-        {label && <span className="text-xs text-muted-foreground mr-1">{label}</span>}
+        className={cn("om-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-white/10",
+          isOpen && "ring-1",
+          (selectedId || showAllActive) ? "" : "")}
+        style={{
+          background: 'var(--om-bg-2)',
+          color: (selectedId || showAllActive) ? 'var(--om-text-0)' : 'var(--om-text-2)',
+          ...(isOpen ? { boxShadow: '0 0 0 4px rgba(0,185,255,0.18)', borderColor: 'rgba(0,185,255,0.4)' } : {}),
+        }}>
+        {label && <span className="text-xs mr-1" style={{ color: 'var(--om-text-3)' }}>{label}</span>}
         <span className="truncate max-w-[100px]">{value || placeholder}</span>
-        <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-180")} style={{ color: 'var(--om-text-3)' }} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 min-w-[260px] max-w-[320px] bg-popover border border-border rounded-md shadow-lg overflow-hidden">
+        <div className="absolute top-full left-0 mt-1.5 z-50 min-w-[260px] max-w-[320px] om-dropdown overflow-hidden">
           {searchable && (
-            <div className="p-2.5 border-b border-border">
+            <div className="p-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input placeholder={`Search ${label.toLowerCase() || 'options'}...`} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-9 text-sm" autoFocus />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: 'var(--om-text-3)' }} />
+                <input placeholder={`Search ${label.toLowerCase() || 'options'}...`} value={search} onChange={(e) => setSearch(e.target.value)}
+                  className="om-input w-full pl-8 h-9 text-sm rounded-md" autoFocus />
               </div>
             </div>
           )}
           <div className="max-h-[300px] overflow-y-auto p-1.5">
             {showAllMode && (
               <button onClick={() => { onShowAll?.(); setIsOpen(false); }}
-                className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-left hover:bg-accent/50", showAllActive && "bg-primary/10 text-primary")}>
+                className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-left transition-colors",
+                  showAllActive ? "" : "hover:bg-white/5")}
+                style={showAllActive ? { background: 'rgba(0,185,255,0.1)', color: 'var(--om-accent)' } : { color: 'var(--om-text-1)' }}>
                 <Layers className="h-4 w-4" /><span className="font-medium">All Brands</span>
                 {showAllActive && <Check className="h-4 w-4 ml-auto" />}
               </button>
             )}
-            {filtered.length === 0 ? <div className="px-3 py-6 text-center text-sm text-muted-foreground">No results</div> :
+            {filtered.length === 0 ? <div className="px-3 py-6 text-center text-sm" style={{ color: 'var(--om-text-3)' }}>No results</div> :
               filtered.map(o => {
                 const sel = !showAllActive && o.id === selectedId;
                 return (
                   <button key={o.id} onClick={() => { onSelect(o.id); setIsOpen(false); setSearch(''); }}
-                    className={cn("w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm text-left hover:bg-accent/50", sel && "bg-primary/10 text-primary")}>
+                    className={cn("w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm text-left transition-colors",
+                      sel ? "" : "hover:bg-white/5")}
+                    style={sel ? { background: 'rgba(0,185,255,0.1)', color: 'var(--om-accent)' } : { color: 'var(--om-text-1)' }}>
                     <div className="flex-1 min-w-0">
-                      <span className={cn("font-medium", sel && "text-primary")}>{o.label}</span>
-                      {o.note && <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{o.note}</p>}
+                      <span className="font-medium">{o.label}</span>
+                      {o.note && <p className="text-xs truncate mt-0.5" style={{ color: 'var(--om-text-3)' }}>{o.note}</p>}
                     </div>
                     {sel && <Check className="h-4 w-4 flex-shrink-0 ml-2" />}
                   </button>
@@ -94,24 +102,27 @@ export function TraitsDropdown({ traits, selectedIds, onToggle, onClear }: Trait
   return (
     <div ref={containerRef} className="relative">
       <button onClick={() => setIsOpen(!isOpen)}
-        className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
-          "bg-secondary/50 hover:bg-secondary border-border/50", isOpen && "border-primary/40 ring-1 ring-primary/20",
-          count > 0 ? "text-foreground" : "text-muted-foreground")}>
-        <span className="text-xs text-muted-foreground mr-1">Traits</span>
+        className={cn("om-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-white/10")}
+        style={{
+          background: 'var(--om-bg-2)',
+          color: count > 0 ? 'var(--om-text-0)' : 'var(--om-text-2)',
+          ...(isOpen ? { boxShadow: '0 0 0 4px rgba(0,185,255,0.18)', borderColor: 'rgba(0,185,255,0.4)' } : {}),
+        }}>
+        <span className="text-xs mr-1" style={{ color: 'var(--om-text-3)' }}>Traits</span>
         <span className="truncate max-w-[80px]">{display || 'Any'}</span>
-        <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-180")} style={{ color: 'var(--om-text-3)' }} />
       </button>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 min-w-[240px] bg-popover border border-border rounded-md shadow-lg overflow-hidden">
+        <div className="absolute top-full left-0 mt-1.5 z-50 min-w-[240px] om-dropdown overflow-hidden">
           <div className="p-3">
-            <p className="text-[11px] text-muted-foreground/70 mb-2.5">Select multiple traits</p>
+            <p className="text-[11px] mb-2.5" style={{ color: 'var(--om-text-3)' }}>Select multiple traits</p>
             <div className="grid grid-cols-2 gap-2">
               {traits.map(t => {
                 const sel = selectedIds.includes(t.id);
                 return (
                   <button key={t.id} onClick={() => onToggle(t.id)}
-                    className={cn("flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold border transition-all",
-                      sel ? "bg-primary text-primary-foreground border-primary" : "bg-background/50 border-border hover:border-primary/50")}>
+                    className={cn("om-btn flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold border transition-all",
+                      sel ? "om-pill-active" : "om-pill")}>
                     {sel && <Check className="h-3 w-3 flex-shrink-0" />}
                     <span className="truncate">{t.label}</span>
                   </button>
@@ -120,9 +131,9 @@ export function TraitsDropdown({ traits, selectedIds, onToggle, onClear }: Trait
             </div>
           </div>
           {count > 0 && (
-            <div className="border-t border-border px-3 py-2.5 bg-background/30 flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground/70 truncate max-w-[160px]">{labels.join(' · ')}</span>
-              <button onClick={() => onClear ? onClear() : selectedIds.forEach(id => onToggle(id))} className="text-[11px] text-muted-foreground hover:text-foreground">Clear</button>
+            <div className="px-3 py-2.5 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+              <span className="text-[11px] truncate max-w-[160px]" style={{ color: 'var(--om-text-3)' }}>{labels.join(' · ')}</span>
+              <button onClick={() => onClear ? onClear() : selectedIds.forEach(id => onToggle(id))} className="text-[11px]" style={{ color: 'var(--om-text-2)' }}>Clear</button>
             </div>
           )}
         </div>
