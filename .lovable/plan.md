@@ -1,57 +1,57 @@
 
 
-# Fix Card Finder Not Pulling Enough Listings
+# Clean Up Landing Page -- Remove/Fix Non-Working Items
 
-## Root Cause
+## Issues Found
 
-The `ebay-search` edge function has two compounding problems:
+1. **"View all live listings" text** (line 438) -- looks like a link but does nothing (`cursor-default`, no `onClick`). Dead UI element.
+2. **Live Market Pulse + Featured Listings glass card** -- fires 3 eBay API calls on every cold landing page load just for vanity stats. Often fails silently ("Live preview unavailable"). The featured results are generic ("rookie card") and not curated. This entire right-column glass panel adds load time and fragility for little user value.
+3. **"Start Searching" button** -- calls `handleFocusSearch` which tries to focus an `<input>` element, but the search input lives in the sticky header and may not be visible/focusable on the hero viewport. Unreliable behavior.
+4. **Unused imports** -- `Skeleton`, `Search` are imported but never used.
+5. **`handleClear` function** -- defined but never called anywhere in the render.
+6. **Console warning** -- "Function components cannot be given refs" for `Index` (harmless but noisy).
 
-1. **Over-fetch cap too low**: It tries to compensate for filtering by requesting `limit * 3`, but caps at 50. After aggressive client-side filtering (title match, junk, graded/raw, buying options), this often yields only 10-15 usable results per page instead of the requested 24.
+## Plan
 
-2. **Pagination skips items**: The offset calculation uses `requestLimit` (50), not `clampedLimit` (24). So page 2 starts at offset 50, meaning items 15-49 that survived filtering on page 1 but were sliced away are permanently lost.
+### 1. Remove the entire Live Surface glass card (right column)
 
-## Changes
+Delete the hub state, hub cache helpers, hub loader, and the right-column glass panel (Live Market Pulse + Featured Listings). This removes ~150 lines of code, 3 unnecessary API calls on page load, and all the dead/fragile UI.
 
-### File: `supabase/functions/ebay-search/index.ts`
+**What stays**: Hero left column (headline, subtitle, CTAs) and Market Tiles below.
 
-**Line 390**: Increase the limit cap from 50 to 100 so more items survive filtering:
-```
-// Before
-const requestLimit = Math.min(clampedLimit * 3, 50);
+**Layout change**: The hero switches from a 2-column grid to a single centered column, which is cleaner and more focused.
 
-// After
-const requestLimit = Math.min(clampedLimit * 4, 100);
-```
+### 2. Replace "Start Searching" with a direct link
 
-**Line 397**: Fix pagination offset to use `requestLimit` consistently (this part is actually correct since eBay needs offset = page * requestLimit). The real fix is increasing requestLimit above so more results survive filtering per page.
+Change the "Start Searching" button to navigate to the header search input reliably, or simply scroll up. Alternatively, keep it but use a more reliable selector.
 
-**Line 390 (clampedLimit)**: Also raise the hard clamp from 50 to 100 to allow larger page sizes:
-```
-// Before
-const clampedLimit = Math.min(Math.max(limit, 1), 50);
+### 3. Remove dead code
 
-// After  
-const clampedLimit = Math.min(Math.max(limit, 1), 50);  // keep at 50 for output
-```
+- Delete `handleClear` (unused)
+- Delete unused imports (`Skeleton`, `Search`)
+- Delete hub cache helpers (`readHubCache`, `writeHubCache`, `minutesAgo`, `HubPulse` type, `HUB_CACHE_KEY`, `HUB_CACHE_TTL_MS`)
+- Delete hub state variables and `loadHubData` callback
+- Delete `formatPrice` (only used by removed featured cards)
 
-### File: `src/pages/Index.tsx`
+### 4. Remove "View all live listings" dead text
 
-**Line 127**: Increase the per-page request from 24 to 48 so the edge function has more budget to work with after filtering:
-```
-// Before
-limit: 24,
+Already handled by removing the glass card entirely.
 
-// After
-limit: 48,
-```
+---
 
-## Summary of Changes
+### Technical Summary
 
-| File | Change | Why |
-|------|--------|-----|
-| `supabase/functions/ebay-search/index.ts` line 390 | `clampedLimit * 3, 50` to `clampedLimit * 3, 150` | Let eBay return more raw items before filtering |
-| `supabase/functions/ebay-search/index.ts` line 393 | Raise requestLimit cap | More items survive the filter pipeline |
-| `src/pages/Index.tsx` line 127 | `limit: 24` to `limit: 48` | Request more items per page from edge function |
+**File: `src/pages/Index.tsx`**
 
-No UI, routing, or design changes. Only the fetch volume and filter pipeline are adjusted.
+| Section | Action |
+|---------|--------|
+| Lines 4-7 | Remove unused imports (`Skeleton`, `Search`, `ExternalLink`) |
+| Lines 37-62 | Delete hub cache helpers, `HubPulse` type, `minutesAgo` |
+| Lines 79-83 | Delete hub state variables |
+| Lines 166-175 | Delete `handleClear` |
+| Lines 199-245 | Delete `loadHubData`, hub trigger effect, `hubLoadedRef` |
+| Lines 247-250 | Delete `formatPrice` |
+| Lines 362-445 | Replace 2-column hero grid with single centered column; remove glass card entirely |
+
+The hero section becomes a clean centered layout with the headline, subtitle, and two CTA buttons, followed by the Market Tiles below.
 
