@@ -204,6 +204,7 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   }
 
   const hasMore = (offset + items.length) < total;
+  return { items, total, offset, hasMore };
 }
 
 async function searchSoldListings(query: string, limit = 10) {
