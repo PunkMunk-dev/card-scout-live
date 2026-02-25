@@ -3,6 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSharedWatchlist } from '@/contexts/WatchlistContext';
+import { extractSearchQuery } from '@/lib/cleanTitle';
 import type { WatchlistItem } from '@/types/ebay';
 
 interface WatchlistDropdownProps {
@@ -53,7 +54,7 @@ export function WatchlistDropdown({ onSearchItem }: WatchlistDropdownProps) {
                     size="icon"
                     className="h-6 w-6"
                     title="Search this card"
-                    onClick={() => onSearchItem(item.title)}
+                    onClick={() => onSearchItem(extractSearchQuery(item.title))}
                   >
                     <Search className="h-3 w-3" />
                   </Button>

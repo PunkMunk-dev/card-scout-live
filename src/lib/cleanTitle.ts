@@ -41,3 +41,9 @@ export function cleanListingTitle(title: string): string {
 
   return cleaned;
 }
+
+export function extractSearchQuery(title: string, maxWords = 8): string {
+  const cleaned = cleanListingTitle(title);
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+  return words.slice(0, maxWords).join(' ');
+}
