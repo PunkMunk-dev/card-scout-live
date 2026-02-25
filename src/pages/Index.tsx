@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, ChevronRight } from "lucide-react";
+import { Loader2, ArrowRight, ChevronRight, Star, X } from "lucide-react";
 import psaMosaic from "@/assets/psa-mosaic.jpg";
 import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -35,6 +35,7 @@ function pushRecentSearch(term: string) {
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
+  const urlSrc = searchParams.get('src') || '';
   const [query, setQuery] = useState(urlQuery);
   const [items, setItems] = useState<EbayItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -44,6 +45,7 @@ export default function Index() {
   const [hasSearched, setHasSearched] = useState(!!urlQuery);
   const [sort, setSort] = useState<SortOption>("best");
   const [error, setError] = useState<string | null>(null);
+  const [fromWatchlist, setFromWatchlist] = useState(urlSrc === 'wl');
   const abortRef = useRef<AbortController | null>(null);
   const lastSearchedRef = useRef<string>('');
 
@@ -54,10 +56,11 @@ export default function Index() {
       setQuery(urlQuery);
       setItems([]);
       setError(null);
+      setFromWatchlist(urlSrc === 'wl');
       performSearch(urlQuery, 1, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlQuery]);
+  }, [urlQuery, urlSrc]);
 
   const { watchlist, isInWatchlist, toggleWatchlist } = useSharedWatchlist();
 
@@ -178,6 +181,20 @@ export default function Index() {
               onLoadMore={handleLoadMore}
             />
           </div>
+          {fromWatchlist && (
+            <div className="container flex items-center gap-2 pb-2">
+              <div className="inline-flex items-center gap-1.5 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full text-xs">
+                <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                <span>Showing results for "<strong>{query}</strong>" (from starred card)</span>
+                <button
+                  onClick={() => setFromWatchlist(false)}
+                  className="ml-1 rounded-full p-0.5 hover:bg-secondary transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -107,8 +107,8 @@ export function TabNavigation() {
               />
             </div>
           </form>
-          <WatchlistDropdown onSearchItem={(title) => {
-            navigate(`/?q=${encodeURIComponent(title)}`);
+          <WatchlistDropdown onSearchItem={(query) => {
+            navigate(`/?q=${encodeURIComponent(query)}&src=wl`);
           }} />
         </div>
       </div>
