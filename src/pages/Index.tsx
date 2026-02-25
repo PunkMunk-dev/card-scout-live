@@ -325,11 +325,13 @@ export default function Index() {
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
-          <div className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50">
-            {/* glow accents */}
-            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl" />
-            <div className="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-            <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.08)_1px,transparent_0)] [background-size:24px_24px]" />
+          <div className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+            {/* Grid texture */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+            {/* Cyan glow top-left */}
+            <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+            {/* Blue glow bottom-right */}
+            <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
 
             <style>{`
               @keyframes marquee {
@@ -338,214 +340,166 @@ export default function Index() {
               }
             `}</style>
 
-            <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 py-12 md:py-16">
-              {/* ── A) Hero 2-column grid ── */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+            <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
+              {/* ── Hero 12-column grid ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[80vh] py-12 md:py-0">
                 {/* Left column */}
-                <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-                  <div className="flex flex-col leading-none">
-                    <span className="text-[28px] md:text-[34px] font-semibold tracking-tight text-slate-900">OMNIMARKET</span>
-                    <span className="mt-1 text-[12px] tracking-[0.35em] uppercase text-slate-500">Cards</span>
+                <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left">
+                  <div className="flex flex-col leading-none select-none">
+                    <span className="text-3xl font-semibold tracking-tight text-white">OMNIMARKET</span>
+                    <span className="mt-1 text-xs tracking-[0.35em] uppercase text-white/60">Cards</span>
                   </div>
 
-                  <h1 className="mt-5 text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+                  <h1 className="mt-6 text-4xl md:text-5xl font-semibold tracking-tight text-white">
                     Discover the market before it moves.
                   </h1>
-                  <p className="mt-3 max-w-xl text-sm md:text-base text-slate-600">
+                  <p className="mt-4 max-w-[480px] text-sm md:text-base text-slate-400">
                     Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
                   </p>
 
                   <div className="mt-5 flex flex-wrap items-center justify-center lg:justify-start gap-2">
-                    <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Live Listings</div>
-                    <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Undervalued Finds</div>
-                    <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Clean Results</div>
+                    {['Live Listings', 'Undervalued Finds', 'Clean Results'].map((chip) => (
+                      <span key={chip} className="rounded-full bg-white/5 border border-white/10 text-xs px-3 py-1 text-slate-300">{chip}</span>
+                    ))}
                   </div>
 
                   <div className="mt-6 flex items-center gap-3">
                     <button
                       onClick={handleFocusSearch}
-                      className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 h-10 text-sm font-medium text-white hover:bg-slate-800 transition"
+                      className="inline-flex items-center justify-center bg-white text-slate-900 rounded-xl h-11 px-5 text-sm font-medium hover:bg-slate-200 transition"
                     >
-                      <Search className="mr-2 h-3.5 w-3.5" /> Start with Search
+                      <Search className="mr-2 h-3.5 w-3.5" /> Start Searching
                     </button>
                     <button
                       onClick={handleExploreMarkets}
-                      className="inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 px-4 h-10 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                      className="inline-flex items-center justify-center bg-white/5 border border-white/10 text-white rounded-xl h-11 px-5 text-sm font-medium hover:bg-white/10 transition"
                     >
                       Explore Markets <ChevronRight className="ml-1 h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Right column — Live Surface */}
-                <div className="rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm shadow-sm p-5 space-y-5">
-                  {/* i) Marquee ticker */}
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-500 mb-2">Trending Now</p>
-                    <div className="overflow-hidden rounded-lg">
-                      <div className="flex gap-2 w-max" style={{ animation: 'marquee 18s linear infinite' }}>
-                        {[...trending, ...trending].map((t, i) => (
-                          <div key={i} className="whitespace-nowrap rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs text-slate-700">
-                            {t}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ii) Compact stat strip */}
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-500 mb-2">Live Market Pulse</p>
-                    {hubLoading ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        <Skeleton className="h-16 rounded-2xl" />
-                        <Skeleton className="h-16 rounded-2xl" />
-                        <Skeleton className="h-16 rounded-2xl" />
-                      </div>
-                    ) : hubError ? (
-                      <p className="text-xs italic text-muted-foreground">{hubError}</p>
-                    ) : hubPulse ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 text-center">
-                          <p className="text-base font-bold text-slate-900 tabular-nums">{hubPulse.tcgTotal.toLocaleString()}</p>
-                          <p className="text-[10px] text-slate-500">TCG Listings</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 text-center">
-                          <p className="text-base font-bold text-slate-900 tabular-nums">{hubPulse.sportsTotal.toLocaleString()}</p>
-                          <p className="text-[10px] text-slate-500">Sports Listings</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 text-center">
-                          <p className="text-base font-bold text-slate-900 tabular-nums">{minutesAgo(hubPulse.updatedAt)}</p>
-                          <p className="text-[10px] text-slate-500">Updated</p>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* iii) Featured preview (3 cards) */}
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-500 mb-2">Featured Listings</p>
-                    {hubLoading ? (
-                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                          <div key={i} className="rounded-xl border border-slate-200 bg-white/70 overflow-hidden">
-                            <Skeleton className="aspect-square w-full rounded-none" />
-                            <div className="p-2 space-y-1.5">
-                              <Skeleton className="h-3 w-3/4" />
-                              <Skeleton className="h-3.5 w-12" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : hubFeatured.length > 0 ? (
-                      <>
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                          {hubFeatured.slice(0, 3).map((item) => (
-                            <a
-                              key={item.itemId}
-                              href={item.itemUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="group/card rounded-xl border border-slate-200 bg-white/70 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-                            >
-                              <div className="aspect-square bg-slate-100 overflow-hidden">
-                                {item.imageUrl ? (
-                                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain group-hover/card:scale-[1.03] transition-transform duration-300" loading="lazy" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px]">No Image</div>
-                                )}
-                              </div>
-                              <div className="p-2 space-y-0.5">
-                                <p className="text-[10px] leading-tight line-clamp-2 text-slate-700">{item.title}</p>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold text-slate-900 tabular-nums">{formatPrice(item.price.value, item.price.currency)}</span>
-                                  <ExternalLink className="h-2.5 w-2.5 text-slate-400" />
-                                </div>
-                              </div>
-                            </a>
+                {/* Right column — Live Surface card */}
+                <div className="lg:col-span-6">
+                  <div className="rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-6 shadow-2xl">
+                    {/* A) Trending ticker */}
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Trending Now</p>
+                      <div className="overflow-hidden rounded-lg">
+                        <div className="flex gap-3 w-max" style={{ animation: 'marquee 18s linear infinite' }}>
+                          {[...trending, ...trending].map((t, i) => (
+                            <span key={i} className="whitespace-nowrap bg-white/10 border border-white/10 rounded-full px-3 py-1 text-xs text-slate-200">
+                              {t}
+                            </span>
                           ))}
                         </div>
-                        <p className="mt-2 text-[11px] text-slate-500 text-center cursor-default">View all live listings ↓</p>
-                      </>
-                    ) : (
-                      <p className="text-xs italic text-muted-foreground">No featured listings available.</p>
-                    )}
+                      </div>
+                    </div>
+
+                    {/* B) Live Stats */}
+                    <div className="mt-6">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Live Market Pulse</p>
+                      {hubLoading ? (
+                        <div className="grid grid-cols-3 gap-3">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="rounded-2xl bg-slate-800/50 border border-white/10 p-4 h-[72px] animate-pulse" />
+                          ))}
+                        </div>
+                      ) : hubError ? (
+                        <p className="text-xs italic text-slate-500">{hubError}</p>
+                      ) : hubPulse ? (
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center">
+                            <p className="text-xl font-semibold text-white tabular-nums">{hubPulse.tcgTotal.toLocaleString()}</p>
+                            <p className="text-xs text-slate-400 uppercase tracking-wide">TCG Listings</p>
+                          </div>
+                          <div className="rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center">
+                            <p className="text-xl font-semibold text-white tabular-nums">{hubPulse.sportsTotal.toLocaleString()}</p>
+                            <p className="text-xs text-slate-400 uppercase tracking-wide">Sports Listings</p>
+                          </div>
+                          <div className="rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center">
+                            <p className="text-xl font-semibold text-white tabular-nums">{minutesAgo(hubPulse.updatedAt)}</p>
+                            <p className="text-xs text-slate-400 uppercase tracking-wide">Updated</p>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {/* C) Featured (3 cards max) */}
+                    <div className="mt-6">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Featured Listings</p>
+                      {hubLoading ? (
+                        <div className="grid grid-cols-3 gap-3">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="rounded-xl bg-slate-900 border border-white/10 overflow-hidden">
+                              <div className="aspect-square bg-slate-800 animate-pulse" />
+                              <div className="p-2 space-y-1.5">
+                                <div className="h-3 w-3/4 bg-slate-800 rounded animate-pulse" />
+                                <div className="h-3.5 w-12 bg-slate-800 rounded animate-pulse" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : hubFeatured.length > 0 ? (
+                        <>
+                          <div className="grid grid-cols-3 gap-3">
+                            {hubFeatured.slice(0, 3).map((item) => (
+                              <a
+                                key={item.itemId}
+                                href={item.itemUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group/card rounded-xl bg-slate-900 border border-white/10 overflow-hidden hover:scale-[1.02] transition"
+                              >
+                                <div className="aspect-square bg-slate-800 overflow-hidden">
+                                  {item.imageUrl ? (
+                                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain group-hover/card:scale-[1.03] transition-transform duration-300" loading="lazy" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-600 text-[10px]">No Image</div>
+                                  )}
+                                </div>
+                                <div className="p-2 space-y-0.5">
+                                  <p className="text-[10px] leading-tight line-clamp-2 text-slate-400">{item.title}</p>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-white tabular-nums">{formatPrice(item.price.value, item.price.currency)}</span>
+                                    <ExternalLink className="h-2.5 w-2.5 text-slate-500" />
+                                  </div>
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                          <p className="mt-3 text-xs text-slate-400 hover:text-white text-center cursor-default transition">View all live listings →</p>
+                        </>
+                      ) : (
+                        <p className="text-xs italic text-slate-500">No featured listings available.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* ── B) Market Tiles ── */}
-              <div ref={marketTilesRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
+              {/* ── Market Tiles ── */}
+              <div ref={marketTilesRef} className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-6 pb-16">
                 <Link
                   to="/tcg"
-                  className="group rounded-2xl border border-slate-200 border-t-2 border-t-cyan-400/40 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
+                  className="group rounded-3xl bg-white/5 border border-white/10 p-8 hover:bg-white/10 transition flex flex-col"
                 >
-                  <h3 className="font-semibold text-slate-900 mb-1">TCG Market</h3>
-                  <p className="text-xs text-slate-500 mb-3">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
-                  <ul className="mb-4 space-y-1">
-                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-cyan-500" />Chase cards</li>
-                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-cyan-500" />Set search</li>
-                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-cyan-500" />Clean results</li>
-                  </ul>
-                  <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
+                  <h3 className="text-lg font-semibold text-white">TCG Market</h3>
+                  <p className="mt-1 text-sm text-slate-400">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                  <span className="mt-4 inline-flex items-center justify-center bg-white text-slate-900 rounded-xl h-10 px-4 text-sm font-medium w-fit">
                     Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
                 <Link
                   to="/sports"
-                  className="group rounded-2xl border border-slate-200 border-t-2 border-t-blue-400/40 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
+                  className="group rounded-3xl bg-white/5 border border-white/10 p-8 hover:bg-white/10 transition flex flex-col"
                 >
-                  <h3 className="font-semibold text-slate-900 mb-1">Sports Market</h3>
-                  <p className="text-xs text-slate-500 mb-3">Search sports cards by player, brand, and traits.</p>
-                  <ul className="mb-4 space-y-1">
-                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-blue-500" />Player search</li>
-                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-blue-500" />Brand filter</li>
-                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-blue-500" />Gem rate</li>
-                  </ul>
-                  <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
+                  <h3 className="text-lg font-semibold text-white">Sports Market</h3>
+                  <p className="mt-1 text-sm text-slate-400">Search sports cards by player, brand, and traits.</p>
+                  <span className="mt-4 inline-flex items-center justify-center bg-white text-slate-900 rounded-xl h-10 px-4 text-sm font-medium w-fit">
                     Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
-              </div>
-
-              {/* ── C) How It Works ── */}
-              <div className="mt-10">
-                <h2 className="text-sm font-semibold tracking-[0.2em] uppercase text-slate-500 mb-4">How It Works</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { icon: Search, step: '01', title: 'Search or pick a market', desc: 'Use the universal search bar or jump into TCG / Sports.' },
-                    { icon: Eye, step: '02', title: 'Filter to clean listings', desc: 'No lots, no duplicates—only real singles with images.' },
-                    { icon: Zap, step: '03', title: 'Watchlist & track', desc: 'Save cards, track prices, and spot opportunities fast.' },
-                  ].map((s) => (
-                    <div key={s.step} className="rounded-2xl border border-slate-200 bg-white/70 p-5">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
-                          <s.icon className="h-4 w-4 text-slate-600" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400">{s.step}</span>
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-900">{s.title}</h3>
-                      <p className="mt-1 text-xs text-slate-500">{s.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── D) Why OmniMarket ── */}
-              <div className="mt-8">
-                <h2 className="text-sm font-semibold tracking-[0.2em] uppercase text-slate-500 mb-4">Why OmniMarket</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { title: 'Clean Results', desc: 'No lots, no duplicates—only real cards.' },
-                    { title: 'Live Pricing', desc: 'Real-time eBay data, always current.' },
-                    { title: 'Fast Discovery', desc: 'Find undervalued cards quickly.' },
-                  ].map((v) => (
-                    <div key={v.title} className="rounded-2xl border border-slate-200 bg-white/70 p-5">
-                      <h3 className="text-sm font-semibold text-slate-900">{v.title}</h3>
-                      <p className="mt-1 text-xs text-slate-500">{v.desc}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
