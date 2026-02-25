@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Input } from '@/components/ui/input';
+import { WatchlistDropdown } from '@/components/WatchlistDropdown';
 
 const tabs = [
   { to: '/tcg', label: 'TCG Lab', shortLabel: 'TCG' },
@@ -95,20 +96,25 @@ export function TabNavigation() {
           </span>
           <nav className="flex items-center gap-0.5">{navItems}</nav>
         </div>
-        <form onSubmit={handleHeaderSearch} className={cn("ml-auto transition-all duration-300 ease-out", isFocused ? "w-80" : "w-64")}>
-          <div className={cn("relative rounded-md transition-all duration-300", isFocused && "ring-2 ring-primary/20 border-primary/50")}>
-            <Search className={cn("absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none transition-colors duration-300", isFocused ? "text-primary" : "text-muted-foreground")} />
-            <Input
-              type="text"
-              value={headerQuery}
-              onChange={(e) => setHeaderQuery(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              placeholder="Search cards..."
-              className="h-8 pl-8 text-sm"
-            />
-          </div>
-        </form>
+        <div className="ml-auto flex items-center gap-2">
+          <form onSubmit={handleHeaderSearch} className={cn("transition-all duration-300 ease-out", isFocused ? "w-80" : "w-64")}>
+            <div className={cn("relative rounded-md transition-all duration-300", isFocused && "ring-2 ring-primary/20 border-primary/50")}>
+              <Search className={cn("absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none transition-colors duration-300", isFocused ? "text-primary" : "text-muted-foreground")} />
+              <Input
+                type="text"
+                value={headerQuery}
+                onChange={(e) => setHeaderQuery(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder="Search cards..."
+                className="h-8 pl-8 text-sm"
+              />
+            </div>
+          </form>
+          <WatchlistDropdown onSearchItem={(title) => {
+            navigate(`/?q=${encodeURIComponent(title)}`);
+          }} />
+        </div>
       </div>
     </header>
   );
