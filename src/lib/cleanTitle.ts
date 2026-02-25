@@ -41,10 +41,8 @@ export function cleanListingTitle(title: string): string {
   cleaned = cleaned.replace(/\b(basketball|football|baseball|soccer|hockey)\b/gi, '');
 
   // Remove generic card terms
-  cleaned = cleaned.replace(/\b(RC|rookie\s+card|card|cards|version|ver)\b/gi, '');
+  cleaned = cleaned.replace(/\b(RC|rookie\s+card|card|cards)\b/gi, '');
 
-  // Remove hash card numbers like #123 but keep set IDs like OP07-051
-  cleaned = cleaned.replace(/#\d+\b/g, '');
 
   // Clean remaining punctuation from word boundaries
   cleaned = cleaned.replace(/[!?]+/g, '');
