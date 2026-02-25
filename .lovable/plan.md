@@ -1,31 +1,43 @@
 
 
-# Preserve "RC" in cleanListingTitle
+# Add Unit Tests for cleanListingTitle
 
-## Problem
-The current regex on line 44 strips "RC" (Rookie Card abbreviation) from titles. "RC" is a meaningful identifier in card collecting that helps narrow search results to rookie cards specifically.
+## Overview
+Create a test file for the `cleanListingTitle` and `extractSearchQuery` functions, covering the recently added behaviors: RC preservation, `#`-to-`/` conversion, and variant word preservation (Version, Ver).
 
-## Change
+## New File: `src/lib/cleanTitle.test.ts`
 
-**File: `src/lib/cleanTitle.ts`, line 44**
+Pure unit tests using Vitest (already configured). No UI rendering needed, so no additional dependencies required.
 
-Remove `RC` from the generic card terms regex so it's preserved in the cleaned output.
+### Test Cases
 
-- **Before**: `cleaned = cleaned.replace(/\b(RC|rookie\s+card|card|cards)\b/gi, '');`
-- **After**: `cleaned = cleaned.replace(/\b(rookie\s+card|card|cards)\b/gi, '');`
+**RC preservation**
+- Input: `"ANTHONY EDWARDS 2020 Prizm Basketball RC!"` -- assert output contains `RC`
+- Input: `"Luka Doncic Rookie Card RC #280"` -- assert `RC` present, `Rookie Card` stripped
 
-Also add the `#` to `/` conversion for card numbers (from the previously approved plan):
+**Card number # to / conversion**
+- Input: `"Prizm #256 Silver"` -- assert output contains `/256`, not `#256`
+- Input: `"Card #45 Refractor"` -- assert `/45` present
 
-**Add after line 46** (after the generic card terms removal):
-```typescript
-// Convert card number hash to slash format (#256 -> /256) for broader eBay matching
-cleaned = cleaned.replace(/#(\d+)/g, '/$1');
-```
+**Variant words preserved (Version, Ver)**
+- Input: `"Green Version Prizm"` -- assert `Version` preserved
+- Input: `"Holo Ver Charizard"` -- assert `Ver` preserved
 
-## Result
+**Product identifiers preserved**
+- Input with `PRIZM`, `CHROME`, `OPTIC` -- assert all remain in output
 
-Input: `ANTHONY EDWARDS 2020 Prizm #256 Green Version Basketball RC!`
-Output: `ANTHONY EDWARDS 2020 Prizm /256 Green Version RC`
+**Existing stripping still works**
+- Grading labels (`PSA 10`) stripped
+- Sport categories (`Basketball`) stripped
+- Filler words (`lot`, `repack`) stripped
+- Emojis stripped
 
-Single file, two small edits.
+**extractSearchQuery**
+- Verify it caps output at `maxWords` and uses cleaned title
+
+### Technical Details
+- File location: `src/lib/cleanTitle.test.ts`
+- Uses `import { describe, it, expect } from "vitest"`
+- Imports `cleanListingTitle` and `extractSearchQuery` from `./cleanTitle`
+- No mocks or DOM needed -- pure string transformation tests
 
