@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
 import { cn } from "@/lib/utils";
 import { useCountdown } from "@/hooks/useCountdown";
-import { OmniMarketWatermark } from "@/components/OmniMarketWatermark";
 
 interface ListingCardProps {
   item: EbayItem;
@@ -92,8 +91,6 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
             </Badge>
           ) : null}
         </div>
-
-        <OmniMarketWatermark />
 
         {/* Watchlist heart */}
         {onToggleWatchlist && (

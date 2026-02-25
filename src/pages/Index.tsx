@@ -3,7 +3,6 @@ import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2, FlaskConical, Trophy, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { OmniMarketLogo } from "@/components/OmniMarketLogo";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
@@ -202,7 +201,7 @@ export default function Index() {
           <EmptyState query={query} />
         ) : (
           <div className="flex flex-col items-center pt-12 pb-8">
-            <OmniMarketLogo variant="stacked" size={28} className="mb-2" />
+            <h2 className="text-xl font-bold mb-2">Welcome to OmniMarket Cards</h2>
             <p className="text-muted-foreground text-sm mb-8 text-center max-w-md">
               Use the search bar above to find any card on eBay, or jump into a lab for guided searching.
             </p>

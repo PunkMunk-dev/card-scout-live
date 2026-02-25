@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
-import { OmniMarketLogo } from '@/components/OmniMarketLogo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Input } from '@/components/ui/input';
 import { WatchlistDropdown } from '@/components/WatchlistDropdown';
@@ -92,7 +91,9 @@ export function TabNavigation() {
     <header className="sticky top-0 z-50 border-b border-border bg-card backdrop-blur-md">
       <div className="container flex h-12 items-center justify-between">
         <div className="flex items-center gap-6">
-          <OmniMarketLogo variant="inline" size={14} className="shrink-0" />
+          <span className="text-base font-bold font-display tracking-tight shrink-0">
+            OmniMarket Cards
+          </span>
           <nav className="flex items-center gap-0.5">{navItems}</nav>
         </div>
         <div className="ml-auto flex items-center gap-2">
