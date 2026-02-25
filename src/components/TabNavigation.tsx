@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Search } from 'lucide-react';
+import { Search, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WatchlistDropdown } from '@/components/WatchlistDropdown';
 
@@ -14,6 +15,7 @@ export function TabNavigation() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [headerQuery, setHeaderQuery] = useState('');
+  const { theme, setTheme } = useTheme();
 
   const handleHeaderSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +24,8 @@ export function TabNavigation() {
     navigate(`/?q=${encodeURIComponent(q)}`);
     setHeaderQuery('');
   };
+
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   const navItems = tabs.map(({ to, label, shortLabel }) => (
     <NavLink
@@ -38,8 +42,8 @@ export function TabNavigation() {
               ? 'text-primary'
               : 'text-muted-foreground hover:text-foreground'
             : isActive
-              ? 'text-[#F5F7FF] bg-[rgba(10,132,255,0.12)] border border-[rgba(10,132,255,0.25)]'
-              : 'text-[#7F8AA3] hover:text-[#B8C0D4] hover:bg-[rgba(255,255,255,0.06)]'
+              ? 'text-[var(--om-text-0)] bg-[rgba(10,132,255,0.12)] border border-[rgba(10,132,255,0.25)]'
+              : 'text-[var(--om-text-2)] hover:text-[var(--om-text-1)] hover:bg-[var(--om-border-0)]'
         )
       }
     >
@@ -79,34 +83,49 @@ export function TabNavigation() {
               </>
             )}
           </NavLink>
+          <button
+            onClick={toggleTheme}
+            className="flex flex-col items-center gap-0.5 py-2 px-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+          >
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+          </button>
         </div>
       </nav>
     );
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0E1420] border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.06)]">
+    <header className="sticky top-0 z-50 border-b shadow-sm" style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}>
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex flex-col leading-none select-none shrink-0">
-            <span className="text-[14px] md:text-[15px] font-semibold tracking-tight text-[#F5F7FF]">OmniMarket</span>
-            <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase text-[#7F8AA3]">Cards</span>
+            <span className="text-[14px] md:text-[15px] font-semibold tracking-tight" style={{ color: 'var(--om-text-0)' }}>OmniMarket</span>
+            <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase" style={{ color: 'var(--om-text-2)' }}>Cards</span>
           </Link>
           <nav className="flex items-center gap-1">{navItems}</nav>
         </div>
         <div className="ml-auto flex items-center gap-3">
           <form onSubmit={handleHeaderSearch} className="w-[260px] md:w-[340px] lg:w-[420px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#59647C] pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: 'var(--om-text-3)' }} />
               <input
                 type="text"
                 value={headerQuery}
                 onChange={(e) => setHeaderQuery(e.target.value)}
                 placeholder="Search any card, set, or player..."
-                className="flex h-10 md:h-11 w-full rounded-xl bg-[#121A28] border border-[rgba(255,255,255,0.10)] pl-10 pr-3 text-sm text-[#F5F7FF] placeholder:text-[#59647C] focus:outline-none focus:ring-2 focus:ring-[rgba(10,132,255,0.20)] focus:border-[rgba(255,255,255,0.16)] transition-all"
+                className="flex h-10 md:h-11 w-full rounded-xl pl-10 pr-3 text-sm transition-all om-input"
               />
             </div>
           </form>
+          <button
+            onClick={toggleTheme}
+            className="om-btn flex items-center justify-center h-10 w-10 rounded-xl transition-colors"
+            style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-1)' }}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           <WatchlistDropdown onSearchItem={(query) => {
             navigate(`/?q=${encodeURIComponent(query)}&src=wl`);
           }} />

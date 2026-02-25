@@ -106,15 +106,15 @@ export default function SportsLab() {
         )}
       </main>
       <Sheet open={watchlistOpen} onOpenChange={setWatchlistOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 om-surface-1 border-l border-white/10">
-          <SheetHeader className="px-6 pt-6 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 om-surface-1" style={{ borderLeft: '1px solid var(--om-border-0)' }}>
+          <SheetHeader className="px-6 pt-6 pb-4" style={{ borderBottom: '1px solid var(--om-divider)' }}>
             <SheetTitle style={{ color: 'var(--om-text-0)' }}>Watchlist</SheetTitle>
           </SheetHeader>
           <WatchlistPanel />
         </SheetContent>
       </Sheet>
       <Button variant="outline" size="icon"
-        className={cn("fixed bottom-6 right-6 z-50 rounded-full shadow-md transition-opacity duration-300 om-btn border-white/10", showScrollTop ? "opacity-100" : "opacity-0 pointer-events-none")}
+        className={cn("fixed bottom-6 right-6 z-50 rounded-full shadow-md transition-opacity duration-300 om-btn", showScrollTop ? "opacity-100" : "opacity-0 pointer-events-none")}
         style={{ background: 'var(--om-bg-2)', color: 'var(--om-text-1)' }}
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
         <ChevronUp className="h-5 w-5" />

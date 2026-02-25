@@ -238,11 +238,11 @@ export default function Index() {
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
-          <div className="relative overflow-hidden bg-om-bg-0 bg-gradient-to-b from-om-bg-0 via-om-bg-1 to-om-bg-0 text-om-text-0">
+          <div className="relative overflow-hidden" style={{ background: `linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 50%, var(--om-bg-0) 100%)`, color: 'var(--om-text-0)' }}>
             {/* Hero spotlight ambient pulse */}
             <div className="omni-hero-spotlight" />
             {/* Grid texture */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
             {/* PSA mosaic blurred texture */}
             <div
               className="pointer-events-none absolute inset-0 scale-110 blur-[28px] opacity-[0.07]"
@@ -255,34 +255,34 @@ export default function Index() {
               }}
             />
             {/* Cyan glow top-left */}
-            <div className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px]" />
+            <div className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full blur-[140px]" style={{ background: 'rgba(10,132,255,0.10)' }} />
             {/* Blue glow bottom-right */}
-            <div className="pointer-events-none absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px]" />
+            <div className="pointer-events-none absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full blur-[140px]" style={{ background: 'rgba(10,132,255,0.08)' }} />
 
             <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
               {/* ── Hero — centered single column ── */}
               <div className="flex flex-col items-center text-center min-h-[70vh] justify-center py-16 md:py-24">
-                <span className="text-[11px] font-medium uppercase tracking-[0.30em] text-om-text-1">OmniMarket Cards</span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.30em]" style={{ color: 'var(--om-text-1)' }}>OmniMarket Cards</span>
 
-                <h1 className="mt-6 text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] text-om-text-0 max-w-[600px]">
+                <h1 className="mt-6 text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] max-w-[600px]" style={{ color: 'var(--om-text-0)' }}>
                   Discover the market before it moves.
                 </h1>
-                <p className="mt-4 max-w-[480px] text-[14px] leading-[1.55] text-om-text-2">
+                <p className="mt-4 max-w-[480px] text-[14px] leading-[1.55]" style={{ color: 'var(--om-text-2)' }}>
                   Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
                 </p>
 
                 <div className="mt-6 flex items-center gap-3">
                   <button
                     onClick={handleStartSearching}
-                    className="inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-11 px-6 text-sm font-medium shadow-[0_10px_30px_rgba(255,255,255,0.08),0_0_60px_rgba(0,185,255,0.12)] hover:-translate-y-px hover:shadow-[0_14px_40px_rgba(255,255,255,0.12),0_0_80px_rgba(0,185,255,0.16)] active:scale-[0.98] transition-all duration-200"
-                    style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                    className="inline-flex items-center justify-center rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                    style={{ background: 'var(--om-accent)', color: '#fff', boxShadow: '0 10px 30px rgba(10,132,255,0.20)' }}
                   >
                     Start Searching
                   </button>
                   <button
                     onClick={handleExploreMarkets}
-                    className="inline-flex items-center justify-center bg-[rgba(255,255,255,0.05)] border border-white/[0.12] text-om-text-0 rounded-xl h-11 px-6 text-sm font-medium hover:bg-white/10 hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
-                    style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                    className="inline-flex items-center justify-center rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                    style={{ background: 'var(--om-border-0)', border: '1px solid var(--om-border-1)', color: 'var(--om-text-0)' }}
                   >
                     Explore Markets <ChevronRight className="ml-1 h-3.5 w-3.5" />
                   </button>
@@ -293,23 +293,23 @@ export default function Index() {
               <div ref={marketTilesRef} className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
                 <Link
                   to="/tcg"
-                  className="group rounded-3xl bg-white/5 border border-white/10 p-10 shadow-[0_20px_60px_rgba(0,0,0,0.45)] hover:bg-white/[0.08] hover:-translate-y-[3px] hover:border-white/[0.15] hover:shadow-[0_25px_70px_rgba(0,0,0,0.55)] transition-all duration-200 flex flex-col"
-                  style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                  className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                  style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                 >
-                  <h3 className="text-[16px] font-semibold text-om-text-0">TCG Market</h3>
-                  <p className="mt-1 text-[14px] text-om-text-2">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
-                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit shadow-[0_6px_20px_rgba(255,255,255,0.06),0_0_40px_rgba(0,185,255,0.08)] hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
+                  <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>TCG Market</h3>
+                  <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                  <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
                     Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
                 <Link
                   to="/sports"
-                  className="group rounded-3xl bg-white/5 border border-white/10 p-10 shadow-[0_20px_60px_rgba(0,0,0,0.45)] hover:bg-white/[0.08] hover:-translate-y-[3px] hover:border-white/[0.15] hover:shadow-[0_25px_70px_rgba(0,0,0,0.55)] transition-all duration-200 flex flex-col"
-                  style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+                  className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                  style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                 >
-                  <h3 className="text-[16px] font-semibold text-om-text-0">Sports Market</h3>
-                  <p className="mt-1 text-[14px] text-om-text-2">Search sports cards by player, brand, and traits.</p>
-                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit shadow-[0_6px_20px_rgba(255,255,255,0.06),0_0_40px_rgba(0,185,255,0.08)] hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
+                  <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>Sports Market</h3>
+                  <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search sports cards by player, brand, and traits.</p>
+                  <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
                     Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
