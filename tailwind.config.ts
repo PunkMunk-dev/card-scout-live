@@ -152,17 +152,13 @@ export default {
 					transform: 'translateY(0)'
 				}
 			},
-			marquee: {
-				'0%': { transform: 'translateX(0)' },
-				'100%': { transform: 'translateX(-50%)' },
-			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
 			shimmer: 'shimmer 2s infinite linear',
 			fadeIn: 'fadeIn 0.3s ease-out forwards',
-			marquee: 'marquee 22s linear infinite'
+			
   		},
   		boxShadow: {
   			card: '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.04)',

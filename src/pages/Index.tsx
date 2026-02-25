@@ -33,24 +33,6 @@ function pushRecentSearch(term: string) {
   } catch {}
 }
 
-function getTrendingLabels() {
-  const curated = [
-    "Wembanyama Chrome — Moving",
-    "Ja'Marr Chase RC — Hot",
-    "Pikachu SIR — Trending",
-    "One Piece OP-05 — Up",
-    "Prizm Rookie QBs — Active",
-    "PSA 10 spreads — Watch",
-  ];
-  try {
-    const recent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
-    const recentPills = recent.slice(0, 6).map((t) => `${t} — Recent`);
-    return [...recentPills, ...curated].slice(0, 10);
-  } catch {
-    return curated;
-  }
-}
-
 /* ── Hub cache helpers ── */
 type HubPulse = { tcgTotal: number; sportsTotal: number; updatedAt: number };
 const HUB_CACHE_KEY = "omni_hub_cache_v1";
@@ -267,7 +249,7 @@ export default function Index() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(num);
   };
 
-  const trending = getTrendingLabels();
+  
 
   const marketTilesRef = useRef<HTMLDivElement>(null);
   const handleFocusSearch = () => document.querySelector<HTMLInputElement>('input')?.focus();
