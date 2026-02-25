@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, ExternalLink, Search, Eye, Zap, ChevronRight } from "lucide-react";
+import { Loader2, ArrowRight, ExternalLink, Search, ChevronRight } from "lucide-react";
+import psaMosaic from "@/assets/psa-mosaic.jpg";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -325,70 +326,67 @@ export default function Index() {
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
-          <div className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+          <div className="relative overflow-hidden bg-om-bg-0 bg-gradient-to-b from-om-bg-0 via-om-bg-1 to-om-bg-0 text-om-text-0">
             {/* Grid texture */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+            {/* PSA mosaic blurred texture */}
+            <div
+              className="pointer-events-none absolute inset-0 scale-110 blur-[28px] opacity-[0.07]"
+              style={{
+                backgroundImage: `url(${psaMosaic})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+              }}
+            />
             {/* Cyan glow top-left */}
-            <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px]" />
             {/* Blue glow bottom-right */}
-            <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
-
-            <style>{`
-              @keyframes marquee {
-                0% { transform: translateX(0); }
-                100% { transform: translateX(-50%); }
-              }
-            `}</style>
+            <div className="pointer-events-none absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px]" />
 
             <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
               {/* ── Hero 12-column grid ── */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[80vh] py-12 md:py-0">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center min-h-[85vh] py-12 md:py-0">
                 {/* Left column */}
                 <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left">
-                  <div className="flex flex-col leading-none select-none">
-                    <span className="text-3xl font-semibold tracking-tight text-white">OMNIMARKET</span>
-                    <span className="mt-1 text-xs tracking-[0.35em] uppercase text-white/60">Cards</span>
-                  </div>
+                  <span className="text-[11px] font-medium uppercase tracking-[0.30em] text-om-text-1">OmniMarket Cards</span>
 
-                  <h1 className="mt-6 text-4xl md:text-5xl font-semibold tracking-tight text-white">
+                  <h1 className="mt-6 text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] text-om-text-0 max-w-[540px]">
                     Discover the market before it moves.
                   </h1>
-                  <p className="mt-4 max-w-[480px] text-sm md:text-base text-slate-400">
+                  <p className="mt-4 max-w-[480px] text-[14px] leading-[1.55] text-om-text-2">
                     Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
                   </p>
-
-                  <div className="mt-5 flex flex-wrap items-center justify-center lg:justify-start gap-2">
-                    {['Live Listings', 'Undervalued Finds', 'Clean Results'].map((chip) => (
-                      <span key={chip} className="rounded-full bg-white/5 border border-white/10 text-xs px-3 py-1 text-slate-300">{chip}</span>
-                    ))}
-                  </div>
 
                   <div className="mt-6 flex items-center gap-3">
                     <button
                       onClick={handleFocusSearch}
-                      className="inline-flex items-center justify-center bg-white text-slate-900 rounded-xl h-11 px-5 text-sm font-medium hover:bg-slate-200 transition"
+                      className="inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px hover:shadow-lg active:scale-[0.98] transition-all duration-200"
+                      style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                     >
-                      <Search className="mr-2 h-3.5 w-3.5" /> Start Searching
+                      Start Searching
                     </button>
                     <button
                       onClick={handleExploreMarkets}
-                      className="inline-flex items-center justify-center bg-white/5 border border-white/10 text-white rounded-xl h-11 px-5 text-sm font-medium hover:bg-white/10 transition"
+                      className="inline-flex items-center justify-center bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.10)] text-om-text-0 rounded-xl h-11 px-6 text-sm font-medium hover:bg-[rgba(255,255,255,0.10)] hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                      style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                     >
                       Explore Markets <ChevronRight className="ml-1 h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Right column — Live Surface card */}
+                {/* Right column — Live Surface glass card */}
                 <div className="lg:col-span-6">
-                  <div className="rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-6 shadow-2xl">
+                  <div className="glass-panel p-8 relative overflow-hidden">
                     {/* A) Trending ticker */}
                     <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Trending Now</p>
-                      <div className="overflow-hidden rounded-lg">
-                        <div className="flex gap-3 w-max" style={{ animation: 'marquee 18s linear infinite' }}>
+                      <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2 mb-3">Trending Now</p>
+                      <div className="overflow-hidden rounded-lg hover:[&>div]:![animation-play-state:paused]">
+                        <div className="flex gap-3 w-max animate-marquee">
                           {[...trending, ...trending].map((t, i) => (
-                            <span key={i} className="whitespace-nowrap bg-white/10 border border-white/10 rounded-full px-3 py-1 text-xs text-slate-200">
+                            <span key={i} className="whitespace-nowrap bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.10)] backdrop-blur-md rounded-full px-3 py-1 text-[11px] text-om-text-1">
                               {t}
                             </span>
                           ))}
@@ -398,28 +396,28 @@ export default function Index() {
 
                     {/* B) Live Stats */}
                     <div className="mt-6">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Live Market Pulse</p>
+                      <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2 mb-3">Live Market Pulse</p>
                       {hubLoading ? (
                         <div className="grid grid-cols-3 gap-3">
                           {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="rounded-2xl bg-slate-800/50 border border-white/10 p-4 h-[72px] animate-pulse" />
+                            <div key={i} className="rounded-2xl bg-om-bg-1/60 border border-[rgba(255,255,255,0.10)] p-4 h-[72px] animate-pulse" />
                           ))}
                         </div>
                       ) : hubError ? (
-                        <p className="text-xs italic text-slate-500">{hubError}</p>
+                        <p className="text-[11px] italic text-om-text-3">{hubError}</p>
                       ) : hubPulse ? (
                         <div className="grid grid-cols-3 gap-3">
-                          <div className="rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center">
-                            <p className="text-xl font-semibold text-white tabular-nums">{hubPulse.tcgTotal.toLocaleString()}</p>
-                            <p className="text-xs text-slate-400 uppercase tracking-wide">TCG Listings</p>
+                          <div className="rounded-2xl bg-om-bg-1/60 border border-[rgba(255,255,255,0.10)] p-4 text-center">
+                            <p className="text-[24px] font-semibold text-om-text-0 tabular-nums">{hubPulse.tcgTotal.toLocaleString()}</p>
+                            <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2">TCG Listings</p>
                           </div>
-                          <div className="rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center">
-                            <p className="text-xl font-semibold text-white tabular-nums">{hubPulse.sportsTotal.toLocaleString()}</p>
-                            <p className="text-xs text-slate-400 uppercase tracking-wide">Sports Listings</p>
+                          <div className="rounded-2xl bg-om-bg-1/60 border border-[rgba(255,255,255,0.10)] p-4 text-center">
+                            <p className="text-[24px] font-semibold text-om-text-0 tabular-nums">{hubPulse.sportsTotal.toLocaleString()}</p>
+                            <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2">Sports Listings</p>
                           </div>
-                          <div className="rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center">
-                            <p className="text-xl font-semibold text-white tabular-nums">{minutesAgo(hubPulse.updatedAt)}</p>
-                            <p className="text-xs text-slate-400 uppercase tracking-wide">Updated</p>
+                          <div className="rounded-2xl bg-om-bg-1/60 border border-[rgba(255,255,255,0.10)] p-4 text-center">
+                            <p className="text-[24px] font-semibold text-om-text-0 tabular-nums">{minutesAgo(hubPulse.updatedAt)}</p>
+                            <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2">Updated</p>
                           </div>
                         </div>
                       ) : null}
@@ -427,51 +425,52 @@ export default function Index() {
 
                     {/* C) Featured (3 cards max) */}
                     <div className="mt-6">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Featured Listings</p>
+                      <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2 mb-3">Featured Listings</p>
                       {hubLoading ? (
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-4">
                           {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="rounded-xl bg-slate-900 border border-white/10 overflow-hidden">
-                              <div className="aspect-square bg-slate-800 animate-pulse" />
+                            <div key={i} className="rounded-xl bg-om-bg-1/70 border border-[rgba(255,255,255,0.10)] overflow-hidden">
+                              <div className="aspect-square bg-om-bg-2 animate-pulse" />
                               <div className="p-2 space-y-1.5">
-                                <div className="h-3 w-3/4 bg-slate-800 rounded animate-pulse" />
-                                <div className="h-3.5 w-12 bg-slate-800 rounded animate-pulse" />
+                                <div className="h-3 w-3/4 bg-om-bg-2 rounded animate-pulse" />
+                                <div className="h-3.5 w-12 bg-om-bg-2 rounded animate-pulse" />
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : hubFeatured.length > 0 ? (
                         <>
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-3 gap-4">
                             {hubFeatured.slice(0, 3).map((item) => (
                               <a
                                 key={item.itemId}
                                 href={item.itemUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="group/card rounded-xl bg-slate-900 border border-white/10 overflow-hidden hover:scale-[1.02] transition"
+                                className="group/card rounded-xl bg-om-bg-1/70 border border-[rgba(255,255,255,0.10)] overflow-hidden hover:-translate-y-0.5 hover:border-[rgba(255,255,255,0.20)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-200"
+                                style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                               >
-                                <div className="aspect-square bg-slate-800 overflow-hidden">
+                                <div className="aspect-square bg-om-bg-2 overflow-hidden">
                                   {item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain group-hover/card:scale-[1.03] transition-transform duration-300" loading="lazy" />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-600 text-[10px]">No Image</div>
+                                    <div className="w-full h-full flex items-center justify-center text-om-text-3 text-[10px]">No Image</div>
                                   )}
                                 </div>
                                 <div className="p-2 space-y-0.5">
-                                  <p className="text-[10px] leading-tight line-clamp-2 text-slate-400">{item.title}</p>
+                                  <p className="text-[11px] leading-tight line-clamp-2 text-om-text-2">{item.title}</p>
                                   <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-white tabular-nums">{formatPrice(item.price.value, item.price.currency)}</span>
-                                    <ExternalLink className="h-2.5 w-2.5 text-slate-500" />
+                                    <span className="text-[14px] font-semibold text-om-text-0 tabular-nums">{formatPrice(item.price.value, item.price.currency)}</span>
+                                    <ExternalLink className="h-2.5 w-2.5 text-om-text-3" />
                                   </div>
                                 </div>
                               </a>
                             ))}
                           </div>
-                          <p className="mt-3 text-xs text-slate-400 hover:text-white text-center cursor-default transition">View all live listings →</p>
+                          <p className="mt-3 text-[11px] text-om-text-2 hover:text-om-text-0 text-center cursor-default transition">View all live listings →</p>
                         </>
                       ) : (
-                        <p className="text-xs italic text-slate-500">No featured listings available.</p>
+                        <p className="text-[11px] italic text-om-text-3">No featured listings available.</p>
                       )}
                     </div>
                   </div>
@@ -479,24 +478,26 @@ export default function Index() {
               </div>
 
               {/* ── Market Tiles ── */}
-              <div ref={marketTilesRef} className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-6 pb-16">
+              <div ref={marketTilesRef} className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
                 <Link
                   to="/tcg"
-                  className="group rounded-3xl bg-white/5 border border-white/10 p-8 hover:bg-white/10 transition flex flex-col"
+                  className="group rounded-3xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] p-10 hover:bg-[rgba(255,255,255,0.10)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+                  style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                 >
-                  <h3 className="text-lg font-semibold text-white">TCG Market</h3>
-                  <p className="mt-1 text-sm text-slate-400">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
-                  <span className="mt-4 inline-flex items-center justify-center bg-white text-slate-900 rounded-xl h-10 px-4 text-sm font-medium w-fit">
+                  <h3 className="text-[16px] font-semibold text-om-text-0">TCG Market</h3>
+                  <p className="mt-1 text-[14px] text-om-text-2">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
                     Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
                 <Link
                   to="/sports"
-                  className="group rounded-3xl bg-white/5 border border-white/10 p-8 hover:bg-white/10 transition flex flex-col"
+                  className="group rounded-3xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] p-10 hover:bg-[rgba(255,255,255,0.10)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+                  style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                 >
-                  <h3 className="text-lg font-semibold text-white">Sports Market</h3>
-                  <p className="mt-1 text-sm text-slate-400">Search sports cards by player, brand, and traits.</p>
-                  <span className="mt-4 inline-flex items-center justify-center bg-white text-slate-900 rounded-xl h-10 px-4 text-sm font-medium w-fit">
+                  <h3 className="text-[16px] font-semibold text-om-text-0">Sports Market</h3>
+                  <p className="mt-1 text-[14px] text-om-text-2">Search sports cards by player, brand, and traits.</p>
+                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
                     Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>

@@ -102,11 +102,16 @@ export default {
   			},
   			price: 'hsl(var(--price))',
   			shipping: 'hsl(var(--shipping))',
-  			success: {
-  				DEFAULT: 'hsl(var(--success))',
-  				foreground: 'hsl(var(--success-foreground))'
-  			}
-  		},
+			success: {
+				DEFAULT: 'hsl(var(--success))',
+				foreground: 'hsl(var(--success-foreground))'
+			},
+			om: {
+				bg: { 0: '#0B0F16', 1: '#0E1420', 2: '#121A28', 3: '#162033' },
+				text: { 0: '#F5F7FF', 1: '#B8C0D4', 2: '#7F8AA3', 3: '#59647C' },
+				accent: '#00B9FF',
+			}
+		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
@@ -137,22 +142,27 @@ export default {
   					backgroundPosition: '200% 0'
   				}
   			},
-  			fadeIn: {
-  				'0%': {
-  					opacity: '0',
-  					transform: 'translateY(10px)'
-  				},
-  				'100%': {
-  					opacity: '1',
-  					transform: 'translateY(0)'
-  				}
-  			}
+			fadeIn: {
+				'0%': {
+					opacity: '0',
+					transform: 'translateY(10px)'
+				},
+				'100%': {
+					opacity: '1',
+					transform: 'translateY(0)'
+				}
+			},
+			marquee: {
+				'0%': { transform: 'translateX(0)' },
+				'100%': { transform: 'translateX(-50%)' },
+			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			shimmer: 'shimmer 2s infinite linear',
-  			fadeIn: 'fadeIn 0.3s ease-out forwards'
+			shimmer: 'shimmer 2s infinite linear',
+			fadeIn: 'fadeIn 0.3s ease-out forwards',
+			marquee: 'marquee 22s linear infinite'
   		},
   		boxShadow: {
   			card: '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.04)',

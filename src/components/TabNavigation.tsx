@@ -38,8 +38,8 @@ export function TabNavigation() {
               ? 'text-primary'
               : 'text-muted-foreground hover:text-foreground'
             : isActive
-              ? 'text-slate-900 bg-slate-100 border border-slate-200'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+              ? 'text-[#F5F7FF] bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)]'
+              : 'text-[#7F8AA3] hover:text-[#B8C0D4] hover:bg-[rgba(255,255,255,0.06)]'
         )
       }
     >
@@ -85,25 +85,25 @@ export function TabNavigation() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <header className="sticky top-0 z-50 bg-[#0B0F16]/90 backdrop-blur-xl border-b border-[rgba(255,255,255,0.08)]">
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex flex-col leading-none select-none shrink-0">
-            <span className="text-[14px] md:text-[15px] font-semibold tracking-tight text-slate-900">OmniMarket</span>
-            <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase text-slate-500">Cards</span>
+            <span className="text-[14px] md:text-[15px] font-semibold tracking-tight text-[#F5F7FF]">OmniMarket</span>
+            <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase text-[#7F8AA3]">Cards</span>
           </Link>
           <nav className="flex items-center gap-1">{navItems}</nav>
         </div>
         <div className="ml-auto flex items-center gap-3">
           <form onSubmit={handleHeaderSearch} className="w-[260px] md:w-[340px] lg:w-[420px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#59647C] pointer-events-none" />
               <input
                 type="text"
                 value={headerQuery}
                 onChange={(e) => setHeaderQuery(e.target.value)}
                 placeholder="Search any card, set, or player..."
-                className="flex h-10 md:h-11 w-full rounded-xl bg-white border border-slate-200 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
+                className="flex h-10 md:h-11 w-full rounded-xl bg-[#121A28] border border-[rgba(255,255,255,0.10)] pl-10 pr-3 text-sm text-[#F5F7FF] placeholder:text-[#59647C] focus:outline-none focus:ring-2 focus:ring-[rgba(0,185,255,0.18)] focus:border-[rgba(255,255,255,0.20)] transition-all"
               />
             </div>
           </form>
