@@ -56,6 +56,28 @@ const SEALED_EXCLUSIONS = ['sealed', 'booster', 'box', 'case', 'pack', 'etb', 'e
 const GRADED_EXCLUSIONS = ['psa', 'bgs', 'sgc', 'cgc', 'graded', 'slab', 'beckett', 'ace', 'mnt'];
 const TCG_JUNK_EXCLUSIONS = ['you pick', 'choose', 'pick', 'random', 'mystery', 'replica', 'proxy', 'custom', 'fanmade', 'digital', 'code', 'online', 'playmat', 'deckbox', 'sleeves', 'toploader', 'binder', 'break', 'breaks', 'repack'];
 
+const DECORATIVE_TERMS = [
+  'manga art', 'alternate art', 'alt art', 'full art',
+  'illustration rare', 'special art rare', 'secret rare',
+  'textured rare', 'gold rare', 'art rare',
+  'premium rare', 'hyper rare', 'rainbow rare',
+  'character rare', 'super rare',
+];
+
+function simplifyQuery(query: string): { simplified: string; decorativeFound: string[] } {
+  let simplified = query;
+  const decorativeFound: string[] = [];
+  for (const term of DECORATIVE_TERMS) {
+    const regex = new RegExp(term, 'gi');
+    if (regex.test(simplified)) {
+      decorativeFound.push(term.toLowerCase());
+      simplified = simplified.replace(regex, '').trim();
+    }
+  }
+  simplified = simplified.replace(/\s{2,}/g, ' ').trim();
+  return { simplified, decorativeFound };
+}
+
 function buildExclusions(cardType: string): string[] {
   const exclusions = [...BASE_EXCLUSIONS, ...TCG_JUNK_EXCLUSIONS];
   if (cardType === 'single') {
@@ -83,6 +105,10 @@ function getTimeRemaining(endDate: string): string {
 
 async function searchActiveListings(query: string, limit = 100, sort = 'best_match', cardType = 'single', minPrice = 0, maxPrice = 0, buyingOptions = 'ALL', offset = 0) {
   const token = await getAccessToken();
+
+  // Strip decorative terms for broader eBay results
+  const { simplified, decorativeFound } = simplifyQuery(query);
+  const searchQuery = simplified || query;
   
   const sortMap: Record<string, string> = {
     price_low: 'price',
@@ -101,7 +127,7 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   else if (cardType === 'sealed') intentSuffix = 'sealed';
   else if (cardType === 'packs') intentSuffix = 'pack';
 
-  const fullQuery = `${query} ${intentSuffix} ${exclusionString}`;
+  const fullQuery = `${searchQuery} ${intentSuffix} ${exclusionString}`;
   
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   url.searchParams.set('q', fullQuery);
@@ -166,8 +192,18 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
     watchCount: item.watchCount || 0,
   }));
 
+  // Boost results containing decorative terms to the top
+  if (decorativeFound.length > 0) {
+    items.sort((a: any, b: any) => {
+      const titleA = a.title.toLowerCase();
+      const titleB = b.title.toLowerCase();
+      const scoreA = decorativeFound.filter((t: string) => titleA.includes(t)).length;
+      const scoreB = decorativeFound.filter((t: string) => titleB.includes(t)).length;
+      return scoreB - scoreA;
+    });
+  }
+
   const hasMore = (offset + items.length) < total;
-  return { items, total, offset, hasMore };
 }
 
 async function searchSoldListings(query: string, limit = 10) {
