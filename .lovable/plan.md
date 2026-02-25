@@ -1,126 +1,74 @@
 
 
-# Landing Hub Redesign: Full-Width 2-Column Layout
+# Premium Navigation Header Redesign
 
-Replaces the narrow centered "postcard" hero with a full-width, structured, two-column landing page that feels shipped.
+Updates only `src/components/TabNavigation.tsx` -- pure styling and label changes, no routing or functionality modifications.
 
-## Scope
+## Changes
 
-- File: `src/pages/Index.tsx`, lines 324-490 (the idle/hub else branch)
-- No changes to search logic, API calls, routing, result states, or any code above line 324
+### 1. Update tab labels (lines 9-12)
 
-## New Import
+Rename visible labels:
+- `TCG Lab` -> `TCG Market`, shortLabel `TCG` stays
+- `Sports Lab` -> `Sports Market`, shortLabel `Sports` stays
 
-Add `Search, Zap, Eye, ChevronRight` to the existing `lucide-react` import (line 4) for icons used in "How it works" and "Why OmniMarket" sections.
+### 2. Brand wordmark lockup (lines 93-96)
 
-## New CSS
-
-Add a `<style>` block inside the hub JSX for the marquee keyframe:
-
-```css
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-```
-
-## New Handlers
-
-Add two simple handlers before the return statement:
-
-- `handleFocusSearch`: calls `document.querySelector<HTMLInputElement>('input')?.focus()`
-- `marketTilesRef = useRef<HTMLDivElement>(null)` + `handleExploreMarkets`: scrolls `marketTilesRef` into view
-
-## JSX Structure (replaces lines 324-490)
-
-### Outer wrapper
-```
-<div className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50">
-  {/* glows + dot grid (kept) */}
-  <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 py-12 md:py-16">
-    ...content...
-  </div>
-</div>
-```
-
-Full width, no rounded-3xl card border.
-
-### A) Hero: 2-column grid
+Replace the single `<span>` with a stacked wordmark wrapped in a `<Link to="/">`:
 
 ```
-grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start
+<Link to="/" className="flex flex-col leading-none select-none shrink-0">
+  <span className="text-[14px] md:text-[15px] font-semibold tracking-tight text-slate-900">OmniMarket</span>
+  <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase text-slate-500">Cards</span>
+</Link>
 ```
 
-**Left column** (text-left on desktop):
-1. Wordmark (OMNIMARKET / Cards) -- left-aligned on lg
-2. Headline h1
-3. Subtext p
-4. Value chips (flex-wrap, justify-start on lg)
-5. CTA row: two buttons
-   - "Start with Search" (primary dark, calls handleFocusSearch)
-   - "Explore Markets" (secondary outline, calls handleExploreMarkets)
+Add `Link` to the `react-router-dom` import.
 
-**Right column** -- "Live Surface" card:
-- `rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm shadow-sm p-5`
-- Contains:
+### 3. Header container (line 91-92)
 
-  **i) Marquee ticker** (Trending Now):
-  - Heading "Trending Now"
-  - `overflow-hidden` container
-  - Inner flex with `animate-[marquee_18s_linear_infinite]`
-  - Pills rendered twice for seamless loop
+Replace the current `<header>` and inner `<div>` classes:
 
-  **ii) Compact stat strip** (Live Market Pulse):
-  - `grid grid-cols-3 gap-2`
-  - Three small cards: TCG total, Sports total, "Updated X ago"
-  - Skeleton states for loading, muted text for error
+```
+<header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+  <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
+```
 
-  **iii) Featured preview** (3 cards, not 6):
-  - Heading "Featured Listings"
-  - `grid grid-cols-2 lg:grid-cols-3 gap-2`
-  - Show `hubFeatured.slice(0, 3)` with image + price + external link icon
-  - Skeleton states (3 cards)
-  - "View all live listings" text link at bottom (no-op anchor, just visual)
+### 4. Tab styling (lines 28-57)
 
-### B) Market Tiles (full-width, below hero grid)
+Replace the desktop NavLink classes with active pill styling:
 
-- `ref={marketTilesRef}`
-- `grid grid-cols-1 md:grid-cols-2 gap-4 mt-10`
-- Each tile gets:
-  - Accent top border: TCG = `border-t-2 border-cyan-400/40`, Sports = `border-t-2 border-blue-400/40`
-  - Title, description
-  - 3 bullet features: e.g. "Chase cards", "Set search", "Clean results" for TCG; "Player search", "Brand filter", "Gem rate" for Sports
-  - CTA button with ArrowRight (kept from current)
+- Base: `px-3 py-2 rounded-xl text-sm font-medium transition-all`
+- Inactive: `text-slate-600 hover:text-slate-900 hover:bg-slate-100/70`
+- Active: `text-slate-900 bg-slate-100 border border-slate-200`
+- Remove the absolute bottom-bar indicator spans (no longer needed with pill style)
 
-### C) "How It Works" row
+### 5. Search bar (lines 99-113)
 
-- `mt-10`
-- `grid grid-cols-1 md:grid-cols-3 gap-4`
-- Three cards with icon + step number + title + description:
-  1. Search icon -- "Search or pick a market"
-  2. Eye icon -- "Filter to clean listings"
-  3. Zap icon -- "Watchlist and track opportunities"
-- Styling: `rounded-2xl border border-slate-200 bg-white/70 p-5`
+Replace with premium command bar styling:
 
-### D) "Why OmniMarket" row
+- Remove the `isFocused` width toggle (use fixed responsive widths)
+- Wrapper: `w-[260px] md:w-[340px] lg:w-[420px]`
+- Input: `h-10 md:h-11 rounded-xl bg-white border border-slate-200 pl-10 pr-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300`
+- Icon: `absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400`
+- Placeholder: `"Search any card, set, or player..."`
+- Remove `isFocused` state (no longer needed)
 
-- `mt-8`
-- `grid grid-cols-1 md:grid-cols-3 gap-4`
-- Three small cards:
-  1. "Clean Results" -- "No lots, no duplicates"
-  2. "Live Pricing" -- "Real-time eBay data"
-  3. "Fast Discovery" -- "Find undervalued cards quickly"
-- Same card styling as above
+### 6. Watchlist button alignment
 
-## Spacing
+The `WatchlistDropdown` already renders a `Button` with `h-11 w-11`. Update its wrapper gap to `gap-3` for better spacing with the wider search bar.
 
-- Consistent `mt-8` / `mt-10` between major sections
-- No excessive padding
+### 7. Mobile bottom bar (lines 60-87)
+
+- Update labels to match (shortLabels unchanged, so no visible change)
+- Keep existing mobile structure and styling intact
+- No layout changes on mobile
 
 ## What does NOT change
 
-- All code before line 324 (search logic, handlers, hub data loading, state, helpers)
-- Results flow (toolbar, loading grid, error, listing grid, empty state)
-- Routing, API calls, imports of search/watchlist modules
-- `loadHubData`, cache logic, `performSearch`
+- Routes (`/tcg`, `/sports`, `/`)
+- Search handler logic (`handleHeaderSearch`)
+- Watchlist dropdown component and behavior
+- Mobile bottom navigation structure
+- Any other files
 
