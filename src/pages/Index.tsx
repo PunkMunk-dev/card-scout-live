@@ -380,22 +380,8 @@ export default function Index() {
                 {/* Right column — Live Surface glass card */}
                 <div className="lg:col-span-6">
                   <div className="glass-panel p-8 relative overflow-hidden">
-                    {/* A) Trending ticker */}
+                    {/* Live Stats */}
                     <div>
-                      <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2 mb-3">Trending Now</p>
-                      <div className="overflow-hidden rounded-lg hover:[&>div]:![animation-play-state:paused]">
-                        <div className="flex gap-3 w-max animate-marquee">
-                          {[...trending, ...trending].map((t, i) => (
-                            <span key={i} className="whitespace-nowrap bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.10)] backdrop-blur-md rounded-full px-3 py-1 text-[11px] text-om-text-1">
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* B) Live Stats */}
-                    <div className="mt-6">
                       <p className="text-[11px] uppercase tracking-[0.30em] text-om-text-2 mb-3">Live Market Pulse</p>
                       {hubLoading ? (
                         <div className="grid grid-cols-3 gap-3">
