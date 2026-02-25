@@ -38,7 +38,7 @@ export function TabNavigation() {
               ? 'text-primary'
               : 'text-muted-foreground hover:text-foreground'
             : isActive
-              ? 'text-[#F5F7FF] bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)]'
+              ? 'text-[#F5F7FF] bg-[rgba(10,132,255,0.12)] border border-[rgba(10,132,255,0.25)]'
               : 'text-[#7F8AA3] hover:text-[#B8C0D4] hover:bg-[rgba(255,255,255,0.06)]'
         )
       }
@@ -85,7 +85,7 @@ export function TabNavigation() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0B0F16]/90 backdrop-blur-xl border-b border-[rgba(255,255,255,0.08)]">
+    <header className="sticky top-0 z-50 bg-[#0B0F16]/70 backdrop-blur-xl border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.06)]">
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex flex-col leading-none select-none shrink-0">
@@ -103,7 +103,7 @@ export function TabNavigation() {
                 value={headerQuery}
                 onChange={(e) => setHeaderQuery(e.target.value)}
                 placeholder="Search any card, set, or player..."
-                className="flex h-10 md:h-11 w-full rounded-xl bg-[#121A28] border border-[rgba(255,255,255,0.10)] pl-10 pr-3 text-sm text-[#F5F7FF] placeholder:text-[#59647C] focus:outline-none focus:ring-2 focus:ring-[rgba(0,185,255,0.18)] focus:border-[rgba(255,255,255,0.20)] transition-all"
+                className="flex h-10 md:h-11 w-full rounded-xl bg-[#121A28] border border-[rgba(255,255,255,0.10)] pl-10 pr-3 text-sm text-[#F5F7FF] placeholder:text-[#59647C] focus:outline-none focus:ring-2 focus:ring-[rgba(10,132,255,0.20)] focus:border-[rgba(255,255,255,0.16)] transition-all"
               />
             </div>
           </form>
