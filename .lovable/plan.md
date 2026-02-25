@@ -1,74 +1,95 @@
 
+# Dark Premium Landing Redesign
 
-# Premium Navigation Header Redesign
+Replaces the light hub section (lines 328-551) with a dark, two-column financial-app aesthetic. No changes to search logic, handlers, routing, or result states.
 
-Updates only `src/components/TabNavigation.tsx` -- pure styling and label changes, no routing or functionality modifications.
+## Scope
+
+- File: `src/pages/Index.tsx`, lines 328-551 (the idle/hub `else` branch)
+- No other files modified
 
 ## Changes
 
-### 1. Update tab labels (lines 9-12)
+### 1. Dark outer wrapper (replaces lines 328-333)
 
-Rename visible labels:
-- `TCG Lab` -> `TCG Market`, shortLabel `TCG` stays
-- `Sports Lab` -> `Sports Market`, shortLabel `Sports` stays
-
-### 2. Brand wordmark lockup (lines 93-96)
-
-Replace the single `<span>` with a stacked wordmark wrapped in a `<Link to="/">`:
+Replace the light gradient wrapper with:
 
 ```
-<Link to="/" className="flex flex-col leading-none select-none shrink-0">
-  <span className="text-[14px] md:text-[15px] font-semibold tracking-tight text-slate-900">OmniMarket</span>
-  <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase text-slate-500">Cards</span>
-</Link>
+<div className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+  {/* Grid texture */}
+  <div className="pointer-events-none absolute inset-0 opacity-[0.06]"
+    style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '28px 28px' }} />
+  {/* Cyan glow top-left */}
+  <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+  {/* Blue glow bottom-right */}
+  <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
 ```
 
-Add `Link` to the `react-router-dom` import.
-
-### 3. Header container (line 91-92)
-
-Replace the current `<header>` and inner `<div>` classes:
+### 2. Hero grid -- 12-column layout (replaces lines 343-475)
 
 ```
-<header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-  <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
+grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[80vh]
 ```
 
-### 4. Tab styling (lines 28-57)
+**Left column** (`lg:col-span-6`):
+- Wordmark: `OMNIMARKET` (text-3xl font-semibold) + `Cards` (text-xs tracking-[0.35em] uppercase text-white/60)
+- Headline: `text-4xl md:text-5xl font-semibold tracking-tight text-white` -- "Discover the market before it moves."
+- Subtext: `text-slate-400 max-w-[480px]`
+- Chips: `rounded-full bg-white/5 border border-white/10 text-xs px-3 py-1 text-slate-300`
+- CTA row:
+  - Primary: `bg-white text-slate-900 rounded-xl h-11 px-5 font-medium hover:bg-slate-200`
+  - Secondary: `bg-white/5 border border-white/10 text-white rounded-xl h-11 px-5 hover:bg-white/10`
 
-Replace the desktop NavLink classes with active pill styling:
+**Right column** (`lg:col-span-6`) -- Live Surface card:
+- Card: `rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-6 shadow-2xl`
+- Contains three sub-sections:
 
-- Base: `px-3 py-2 rounded-xl text-sm font-medium transition-all`
-- Inactive: `text-slate-600 hover:text-slate-900 hover:bg-slate-100/70`
-- Active: `text-slate-900 bg-slate-100 border border-slate-200`
-- Remove the absolute bottom-bar indicator spans (no longer needed with pill style)
+  **A) Trending ticker:**
+  - Label: `text-xs uppercase tracking-[0.3em] text-slate-400`
+  - Marquee row with `animate-[marquee_18s_linear_infinite]`, pills rendered twice
+  - Pills: `bg-white/10 border border-white/10 rounded-full px-3 py-1 text-xs text-slate-200`
 
-### 5. Search bar (lines 99-113)
+  **B) Live Stats:**
+  - `grid grid-cols-3 gap-3 mt-6`
+  - Each: `rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center`
+  - Number: `text-xl font-semibold text-white`
+  - Label: `text-xs text-slate-400 uppercase tracking-wide`
+  - Skeleton states use dark-appropriate styling
 
-Replace with premium command bar styling:
+  **C) Featured (3 cards max):**
+  - `grid grid-cols-3 gap-3 mt-6`
+  - Each: `rounded-xl bg-slate-900 border border-white/10 overflow-hidden hover:scale-[1.02] transition`
+  - Image top, price + title bottom with dark text colors
+  - Footer link: `text-xs text-slate-400 hover:text-white` -- "View all live listings"
 
-- Remove the `isFocused` width toggle (use fixed responsive widths)
-- Wrapper: `w-[260px] md:w-[340px] lg:w-[420px]`
-- Input: `h-10 md:h-11 rounded-xl bg-white border border-slate-200 pl-10 pr-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300`
-- Icon: `absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400`
-- Placeholder: `"Search any card, set, or player..."`
-- Remove `isFocused` state (no longer needed)
+### 3. Market tiles -- below hero (replaces lines 477-509)
 
-### 6. Watchlist button alignment
+- `mt-20 grid grid-cols-1 md:grid-cols-2 gap-6`
+- Each tile: `rounded-3xl bg-white/5 border border-white/10 p-8 hover:bg-white/10 transition`
+- Title: `text-lg font-semibold text-white`
+- Description: `text-slate-400`
+- Button: `mt-4 bg-white text-slate-900 rounded-xl h-10 px-4 font-medium`
+- Remove bullet lists (`<ul>` blocks deleted)
 
-The `WatchlistDropdown` already renders a `Button` with `h-11 w-11`. Update its wrapper gap to `gap-3` for better spacing with the wider search bar.
+### 4. Remove "How It Works" and "Why OmniMarket" sections (lines 511-549)
 
-### 7. Mobile bottom bar (lines 60-87)
+Delete these entirely. The spec calls for only 2 primary vertical sections (hero + market tiles). No clutter.
 
-- Update labels to match (shortLabels unchanged, so no visible change)
-- Keep existing mobile structure and styling intact
-- No layout changes on mobile
+### 5. Marquee keyframes (line 334-339)
+
+Keep the existing `<style>` block with the marquee keyframe -- just moves inside the new dark wrapper.
+
+### 6. Spacing
+
+- Hero section: `py-12 md:py-0` (vertically centered via `items-center min-h-[80vh]`)
+- Market tiles: `mt-20` gap from hero
+- Inner container: `mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8`
+- Bottom padding: `pb-16`
 
 ## What does NOT change
 
-- Routes (`/tcg`, `/sports`, `/`)
-- Search handler logic (`handleHeaderSearch`)
-- Watchlist dropdown component and behavior
-- Mobile bottom navigation structure
-- Any other files
-
+- Lines 1-327 (imports, state, handlers, search logic, toolbar, result grid, error/empty states)
+- `loadHubData`, cache logic, `performSearch`, routing
+- `hubPulse`, `hubFeatured`, `hubLoading`, `hubError` state usage (just restyled)
+- `marketTilesRef`, `handleFocusSearch`, `handleExploreMarkets` handlers
+- No new files
