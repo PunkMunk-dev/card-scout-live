@@ -124,7 +124,7 @@ export default function Index() {
       const response = await searchEbay({
         query: searchQuery,
         page,
-        limit: 24,
+        limit: 48,
         sort: activeSort,
         buyingOptions: deriveBuyingOptions(activeSort),
       });
