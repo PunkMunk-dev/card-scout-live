@@ -1,95 +1,191 @@
 
-# Dark Premium Landing Redesign
 
-Replaces the light hub section (lines 328-551) with a dark, two-column financial-app aesthetic. No changes to search logic, handlers, routing, or result states.
+# Premium Dark Landing Redesign — Apple x Hard Rock x Glass
 
-## Scope
+Complete visual overhaul of the landing hub with tokenized design system, glass morphism, PSA background texture, and micro-interaction polish. Three files modified; zero functional changes.
 
-- File: `src/pages/Index.tsx`, lines 328-551 (the idle/hub `else` branch)
-- No other files modified
+## Files Modified
 
-## Changes
+1. `src/index.css` — Design tokens + glass morphism class
+2. `tailwind.config.ts` — Color tokens + animation keyframes
+3. `src/pages/Index.tsx` — Hub section (lines 328-505) restyled
+4. `src/components/TabNavigation.tsx` — Nav matched to dark system
 
-### 1. Dark outer wrapper (replaces lines 328-333)
+## A) Design System Tokens
 
-Replace the light gradient wrapper with:
+### A1) CSS Variables (`src/index.css`)
+
+Add new `:root` block with landing-specific tokens:
+
+```css
+:root {
+  /* Landing neutrals */
+  --om-bg-0: #0B0F16;
+  --om-bg-1: #0E1420;
+  --om-bg-2: #121A28;
+  --om-bg-3: #162033;
+  --om-text-0: #F5F7FF;
+  --om-text-1: #B8C0D4;
+  --om-text-2: #7F8AA3;
+  --om-text-3: #59647C;
+  --om-border-0: rgba(255,255,255,0.08);
+  --om-border-1: rgba(255,255,255,0.12);
+  --om-divider: rgba(255,255,255,0.06);
+  --om-accent: #00B9FF;
+  --om-focus-ring: rgba(0,185,255,0.18);
+  --om-success: #2EE59D;
+  --om-warning: #FFCC66;
+  --om-danger: #FF5C7A;
+
+  /* Glass morphism */
+  --glass-fill: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.12);
+  --glass-highlight: rgba(255,255,255,0.08);
+  --glass-shadow: rgba(0,0,0,0.55);
+  --glass-blur: 20px;
+}
+```
+
+### A2) Glass Panel Class (`src/index.css`)
+
+Add `.glass-panel` in `@layer components`:
+
+```css
+.glass-panel {
+  position: relative;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: 28px;
+  box-shadow:
+    0 20px 60px var(--glass-shadow),
+    inset 0 1px 0 var(--glass-highlight);
+  transition:
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.12) 0%,
+    rgba(255,255,255,0.05) 35%,
+    rgba(255,255,255,0.00) 70%);
+  opacity: 0.35;
+}
+.glass-panel:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.65),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+```
+
+### A3) Tailwind Config Extensions (`tailwind.config.ts`)
+
+Add to `theme.extend.colors`:
+
+```ts
+om: {
+  bg: { 0: '#0B0F16', 1: '#0E1420', 2: '#121A28', 3: '#162033' },
+  text: { 0: '#F5F7FF', 1: '#B8C0D4', 2: '#7F8AA3', 3: '#59647C' },
+  accent: '#00B9FF',
+}
+```
+
+Add to `keyframes`:
+
+```ts
+marquee: {
+  '0%': { transform: 'translateX(0)' },
+  '100%': { transform: 'translateX(-50%)' },
+}
+```
+
+Add to `animation`:
+
+```ts
+marquee: 'marquee 22s linear infinite',
+```
+
+## B) Landing Hub Redesign (`src/pages/Index.tsx`, lines 328-505)
+
+### B1) Background System
+
+Replace the current outer wrapper with:
+
+- Base: `bg-[#0B0F16]` with gradient `from-[#0B0F16] via-[#0E1420] to-[#0B0F16]`
+- Grid texture at `opacity-[0.04]`, `backgroundSize: '32px 32px'`
+- Ambient glows: `w-[600px] h-[600px]` with `blur-[140px]` (cyan top-left, blue bottom-right)
+- PSA card image as ultra-blurred background layer: `blur-[28px] opacity-[0.07] scale-110` with radial gradient mask fading edges. Copy `user-uploads://image-2.png` to `src/assets/psa-mosaic.jpg` and import it
+
+### B2) Hero Grid
 
 ```
-<div className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
-  {/* Grid texture */}
-  <div className="pointer-events-none absolute inset-0 opacity-[0.06]"
-    style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '28px 28px' }} />
-  {/* Cyan glow top-left */}
-  <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-  {/* Blue glow bottom-right */}
-  <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
-```
-
-### 2. Hero grid -- 12-column layout (replaces lines 343-475)
-
-```
-grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[80vh]
+grid grid-cols-1 lg:grid-cols-12 gap-16 items-center min-h-[85vh]
 ```
 
 **Left column** (`lg:col-span-6`):
-- Wordmark: `OMNIMARKET` (text-3xl font-semibold) + `Cards` (text-xs tracking-[0.35em] uppercase text-white/60)
-- Headline: `text-4xl md:text-5xl font-semibold tracking-tight text-white` -- "Discover the market before it moves."
-- Subtext: `text-slate-400 max-w-[480px]`
-- Chips: `rounded-full bg-white/5 border border-white/10 text-xs px-3 py-1 text-slate-300`
-- CTA row:
-  - Primary: `bg-white text-slate-900 rounded-xl h-11 px-5 font-medium hover:bg-slate-200`
-  - Secondary: `bg-white/5 border border-white/10 text-white rounded-xl h-11 px-5 hover:bg-white/10`
+- Wordmark: `text-[11px] font-medium uppercase tracking-[0.30em] text-[#B8C0D4]` — "OMNIMARKET CARDS"
+- Headline: `text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] text-[#F5F7FF] max-w-[540px]`
+- Subtext: `text-[14px] leading-[1.55] text-[#7F8AA3] max-w-[480px]`
+- No chips (removed for declutter)
+- Two CTAs only:
+  - Primary: `bg-white text-[#0B0F16] rounded-xl h-11 px-6 font-medium` with hover `translateY(-1px)` + shadow, active `scale(0.98)`
+  - Secondary: `bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.10)] text-[#F5F7FF] rounded-xl h-11 px-6` with hover `bg-[rgba(255,255,255,0.10)]`
 
-**Right column** (`lg:col-span-6`) -- Live Surface card:
-- Card: `rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-6 shadow-2xl`
-- Contains three sub-sections:
+**Right column** (`lg:col-span-6`) — Uses `.glass-panel` class:
 
-  **A) Trending ticker:**
-  - Label: `text-xs uppercase tracking-[0.3em] text-slate-400`
-  - Marquee row with `animate-[marquee_18s_linear_infinite]`, pills rendered twice
-  - Pills: `bg-white/10 border border-white/10 rounded-full px-3 py-1 text-xs text-slate-200`
+A) **Trending ticker**: `animate-marquee` (22s), pause on hover via `hover:[animation-play-state:paused]` on container. Pills: `bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.10)] backdrop-blur-md rounded-full px-3 py-1 text-[11px] text-[#B8C0D4]`
 
-  **B) Live Stats:**
-  - `grid grid-cols-3 gap-3 mt-6`
-  - Each: `rounded-2xl bg-slate-900/70 border border-white/10 p-4 text-center`
-  - Number: `text-xl font-semibold text-white`
-  - Label: `text-xs text-slate-400 uppercase tracking-wide`
-  - Skeleton states use dark-appropriate styling
+B) **Stats**: `grid grid-cols-3 gap-3 mt-6`. Each card: `rounded-2xl bg-[#0E1420]/60 border border-[rgba(255,255,255,0.10)] p-4 text-center`. Number: `text-[24px] font-semibold text-[#F5F7FF]`. Label: `text-[11px] uppercase tracking-[0.30em] text-[#7F8AA3]`
 
-  **C) Featured (3 cards max):**
-  - `grid grid-cols-3 gap-3 mt-6`
-  - Each: `rounded-xl bg-slate-900 border border-white/10 overflow-hidden hover:scale-[1.02] transition`
-  - Image top, price + title bottom with dark text colors
-  - Footer link: `text-xs text-slate-400 hover:text-white` -- "View all live listings"
+C) **Featured** (3 max): `grid grid-cols-3 gap-4 mt-6`. Cards: `rounded-xl bg-[#0E1420]/70 border border-[rgba(255,255,255,0.10)] overflow-hidden` with hover `translateY(-2px)` + border brighten + glow shadow. Price: `text-[14px] font-semibold text-[#F5F7FF]`. Title: `text-[11px] text-[#7F8AA3]`
 
-### 3. Market tiles -- below hero (replaces lines 477-509)
+### B3) Market Tiles
 
-- `mt-20 grid grid-cols-1 md:grid-cols-2 gap-6`
-- Each tile: `rounded-3xl bg-white/5 border border-white/10 p-8 hover:bg-white/10 transition`
-- Title: `text-lg font-semibold text-white`
-- Description: `text-slate-400`
-- Button: `mt-4 bg-white text-slate-900 rounded-xl h-10 px-4 font-medium`
-- Remove bullet lists (`<ul>` blocks deleted)
+Below hero, `mt-24`:
+- `grid grid-cols-1 md:grid-cols-2 gap-8`
+- Each tile: `rounded-3xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] p-10` with hover `bg-[rgba(255,255,255,0.10)]` + `translateY(-2px)`
+- Title: `text-[16px] font-semibold text-[#F5F7FF]`
+- Description: `text-[14px] text-[#7F8AA3]`
+- Button: `bg-white text-[#0B0F16] rounded-xl h-10 px-5 font-medium`
 
-### 4. Remove "How It Works" and "Why OmniMarket" sections (lines 511-549)
+### B4) Removed
 
-Delete these entirely. The spec calls for only 2 primary vertical sections (hero + market tiles). No clutter.
+- Inline `<style>` marquee keyframes (moved to Tailwind config)
+- Chips row
+- Any standalone sections outside hero
 
-### 5. Marquee keyframes (line 334-339)
+## C) Nav Update (`src/components/TabNavigation.tsx`)
 
-Keep the existing `<style>` block with the marquee keyframe -- just moves inside the new dark wrapper.
+Match the dark system on desktop:
 
-### 6. Spacing
+- Header: `bg-[#0B0F16]/90 backdrop-blur-xl border-b border-[rgba(255,255,255,0.08)]`
+- Wordmark: `text-[#F5F7FF]` / `text-[#7F8AA3]`
+- Tabs inactive: `text-[#7F8AA3] hover:text-[#B8C0D4] hover:bg-[rgba(255,255,255,0.06)]`
+- Tabs active: `text-[#F5F7FF] bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.12)]`
+- Search input: `bg-[#121A28] border border-[rgba(255,255,255,0.10)] text-[#F5F7FF] placeholder:text-[#59647C] focus:ring-2 focus:ring-[rgba(0,185,255,0.18)]`
+- Remove shadow from header
 
-- Hero section: `py-12 md:py-0` (vertically centered via `items-center min-h-[80vh]`)
-- Market tiles: `mt-20` gap from hero
-- Inner container: `mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8`
-- Bottom padding: `pb-16`
+Mobile bottom bar stays unchanged (uses existing card/border tokens).
 
-## What does NOT change
+## D) Micro-interactions (applied inline in Index.tsx)
 
-- Lines 1-327 (imports, state, handlers, search logic, toolbar, result grid, error/empty states)
-- `loadHubData`, cache logic, `performSearch`, routing
-- `hubPulse`, `hubFeatured`, `hubLoading`, `hubError` state usage (just restyled)
-- `marketTilesRef`, `handleFocusSearch`, `handleExploreMarkets` handlers
-- No new files
+- All transitions: `duration-200` with `cubic-bezier(0.16, 1, 0.3, 1)` via inline style or Tailwind `ease-out`
+- Buttons: hover `translateY(-1px)`, active `scale(0.98)` via `hover:-translate-y-px active:scale-[0.98]`
+- Cards: hover `translateY(-2px)` via `hover:-translate-y-0.5`
+- Marquee: `hover:[animation-play-state:paused]` on overflow container
+- Focus ring: `focus:ring-2 focus:ring-[rgba(0,185,255,0.18)]` on interactive elements
+
+## What Does NOT Change
+
+- Lines 1-327 of Index.tsx (all logic, state, handlers, API calls)
+- Routes, search behavior, watchlist
+- Mobile bottom nav structure
+- Any other page files
+
