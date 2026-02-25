@@ -28,6 +28,9 @@ export function cleanListingTitle(title: string): string {
   // Remove seller promo phrases
   cleaned = cleaned.replace(/\b(free\s+shipping|ships?\s+free|fast\s+ship(ping)?|must\s+see|invest|hot|fire|rare|wow|l@@k|look|📈|🔥)\b/gi, '');
 
+  // Remove eBay listing filler words
+  cleaned = cleaned.replace(/\b(lot|repack|mystery|bundle|break|pack|box|hobby)\b/gi, '');
+
   // Remove parenthetical notes like (Read Description), (PSA 10), etc.
   cleaned = cleaned.replace(/\([^)]{0,40}\)/g, '');
 
