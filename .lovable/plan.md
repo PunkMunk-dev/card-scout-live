@@ -1,44 +1,64 @@
 
 
-# Faster Search Transition on Card Finder
+# Fix: Only One Listing Showing for Noisy Search Queries
 
 ## Problem
-When you search from the header bar, the current code clears all existing results (`setItems([])`) before the API call starts. This causes the entire page to flash to a skeleton loading grid, making it feel like a full page reload even though you're staying on the same page.
+
+The current URL query is: `ANTHONY EDWARDS ROOKIE CARD 2020 Illusions $$ GREEN VERSION Basketball RC!`
+
+This raw eBay title contains noise characters (`$$`, `!`) and filler words (`RC`, `VERSION`) that cause two problems:
+
+1. **eBay returns fewer matches** because the query string itself is too specific/noisy
+2. **The edge function's title-match filter rejects most results** because it extracts key terms like `$$` and `rc!` that don't appear in other listings' titles (75% match threshold fails)
+
+## Root Cause
+
+`cleanListingTitle()` doesn't strip:
+- Currency/price symbols: `$$`, `$`, price patterns
+- Trailing punctuation on words: `RC!`, `CARD!!`
+- Common filler words that don't help identify a card: `RC`, `VERSION`, `CARD`, `ROOKIE CARD`, `BASKETBALL`
+
+So even when `extractSearchQuery` cleans and truncates, the result still contains noise.
 
 ## Solution
-Keep the existing results visible while the new search is loading, and overlay a subtle loading indicator. The results only swap once new data arrives -- no blank/skeleton flash.
 
-### Changes in `src/pages/Index.tsx`
+### 1. Improve `cleanListingTitle()` in `src/lib/cleanTitle.ts`
 
-1. **Stop clearing items on new search** -- Remove `setItems([])` from the URL-change effect (line 57) and from `handleSortChange`. The items will stay on screen until the API responds with new ones.
+Add rules to strip:
+- Currency symbols and repeated special chars (`$$`, `$$$`, `!!!`)
+- Common card-type filler words: `RC`, `ROOKIE CARD`, `BASKETBALL`, `FOOTBALL`, `BASEBALL`, `CARD`
+- Trailing/leading punctuation from individual words (`RC!` becomes empty after removing `RC`)
+- Stray special characters that aren't part of set IDs
 
-2. **Add a loading overlay instead of replacing content** -- When `isLoading` is true AND there are already items on screen, show the existing `ListingGrid` with reduced opacity and a small centered spinner overlay, rather than swapping to the full `LoadingGrid` skeleton.
+### 2. No edge function changes needed
 
-3. **Only show the skeleton grid on the very first search** (when there are no existing items to display).
+The edge function's `extractKeyTerms` already strips `#` and `-`. The real fix is ensuring the *query sent to eBay* is clean. Once `cleanListingTitle` properly strips `$$`, `RC!`, etc., the `extractSearchQuery` function (which calls `cleanListingTitle`) will produce a much better query like: `ANTHONY EDWARDS 2020 Illusions GREEN` instead of the current noisy string.
 
-### Visual behavior after the change
+## Specific Changes
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| First search (from hero) | Skeleton grid | Skeleton grid (unchanged) |
-| New search while results showing | Results vanish, skeleton grid, results appear | Results dim slightly with spinner, new results fade in |
-| Sort change | Results vanish, skeleton grid | Results dim, new results replace |
+| File | Change |
+|------|--------|
+| `src/lib/cleanTitle.ts` | Add stripping rules for: currency symbols (`$`), repeated punctuation (`!!`, `$$`), sport-category words (`basketball`, `football`, `baseball`, `soccer`), generic card terms (`RC`, `rookie card`, `card`, `version`), and clean trailing punctuation from remaining words |
 
-### Technical Detail
+### Updated `cleanListingTitle` additions:
 
+```typescript
+// Remove currency symbols and price-like patterns
+cleaned = cleaned.replace(/\$+/g, '');
+cleaned = cleaned.replace(/\b\d+\s*(?:USD|EUR|GBP)\b/gi, '');
+
+// Remove repeated punctuation (!! $$)
+cleaned = cleaned.replace(/([!@#$%^&*])\1+/g, '');
+
+// Remove sport category words (too broad for search)
+cleaned = cleaned.replace(/\b(basketball|football|baseball|soccer|hockey)\b/gi, '');
+
+// Remove generic card terms
+cleaned = cleaned.replace(/\b(RC|rookie\s+card|card|cards|version|ver)\b/gi, '');
+
+// Clean remaining punctuation from word boundaries
+cleaned = cleaned.replace(/[!?]+\b|\b[!?]+/g, '');
 ```
-// Current (jarring):
-if (isLoading) return <LoadingGrid />
-else if (items.length > 0) return <ListingGrid />
 
-// New (smooth):
-if (isLoading && items.length === 0) return <LoadingGrid />  // first search only
-else if (hasSearched && items.length > 0) return (
-  <div className="relative">
-    {isLoading && <overlay spinner />}
-    <ListingGrid className={isLoading ? "opacity-50 pointer-events-none" : ""} />
-  </div>
-)
-```
+After this fix, the same watchlist title becomes a search for approximately: `ANTHONY EDWARDS 2020 Illusions GREEN` -- broad enough to return dozens of relevant listings.
 
-Only `src/pages/Index.tsx` needs changes. No new files or dependencies.
