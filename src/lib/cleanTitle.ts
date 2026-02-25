@@ -18,6 +18,13 @@ export function cleanListingTitle(title: string): string {
   // Remove population data
   cleaned = cleaned.replace(/\b(low\s+)?pop(ulation)?[:\s]*\d+(\s*[\/]\s*\d+)?(\s+of\s+\d+)?\b/gi, '');
 
+  // Remove currency symbols and price-like patterns
+  cleaned = cleaned.replace(/\$+/g, '');
+  cleaned = cleaned.replace(/\b\d+\s*(?:USD|EUR|GBP)\b/gi, '');
+
+  // Remove repeated punctuation (!!, @@, etc.)
+  cleaned = cleaned.replace(/([!@#%^&*])\1+/g, '');
+
   // Remove seller promo phrases
   cleaned = cleaned.replace(/\b(free\s+shipping|ships?\s+free|fast\s+ship(ping)?|must\s+see|invest|hot|fire|rare|wow|l@@k|look|📈|🔥)\b/gi, '');
 
@@ -27,8 +34,17 @@ export function cleanListingTitle(title: string): string {
   // Remove standalone card condition shorthand
   cleaned = cleaned.replace(/\b(NM|NM\+|NM-MT|MINT|NEAR MINT|EX|VG|GOOD)\b/gi, '');
 
+  // Remove sport category words (too broad for search)
+  cleaned = cleaned.replace(/\b(basketball|football|baseball|soccer|hockey)\b/gi, '');
+
+  // Remove generic card terms
+  cleaned = cleaned.replace(/\b(RC|rookie\s+card|card|cards|version|ver)\b/gi, '');
+
   // Remove hash card numbers like #123 but keep set IDs like OP07-051
   cleaned = cleaned.replace(/#\d+\b/g, '');
+
+  // Clean remaining punctuation from word boundaries
+  cleaned = cleaned.replace(/[!?]+/g, '');
 
   // Remove trailing/leading dashes, pipes, slashes used as separators
   cleaned = cleaned.replace(/[|~]/g, ' ');
