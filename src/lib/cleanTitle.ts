@@ -41,7 +41,10 @@ export function cleanListingTitle(title: string): string {
   cleaned = cleaned.replace(/\b(basketball|football|baseball|soccer|hockey)\b/gi, '');
 
   // Remove generic card terms
-  cleaned = cleaned.replace(/\b(RC|rookie\s+card|card|cards)\b/gi, '');
+  cleaned = cleaned.replace(/\b(rookie\s+card|card|cards)\b/gi, '');
+
+  // Convert card number hash to slash format (#256 -> /256) for broader eBay matching
+  cleaned = cleaned.replace(/#(\d+)/g, '/$1');
 
 
   // Clean remaining punctuation from word boundaries
