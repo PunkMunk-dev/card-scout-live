@@ -24,7 +24,7 @@ export function WatchlistDropdown({ onSearchItem }: WatchlistDropdownProps) {
           </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0 bg-popover border-border z-50">
+      <PopoverContent align="end" className="w-96 p-0 bg-popover border-border z-50">
         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <span className="text-sm font-semibold text-foreground">Starred Cards ({count})</span>
           <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-destructive" onClick={clearWatchlist}>
@@ -32,19 +32,19 @@ export function WatchlistDropdown({ onSearchItem }: WatchlistDropdownProps) {
             Clear All
           </Button>
         </div>
-        <ScrollArea className="max-h-72">
+        <ScrollArea className="max-h-[28rem]">
           <div className="divide-y divide-border">
             {watchlist.map((item: WatchlistItem) => (
-              <div key={item.itemId} className="flex items-start gap-2 p-2 hover:bg-muted/50 transition-colors">
+              <div key={item.itemId} className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors">
                 {item.imageUrl && (
                   <img
                     src={item.imageUrl}
                     alt=""
-                    className="w-10 h-10 rounded object-cover shrink-0 bg-muted"
+                    className="w-20 h-20 rounded object-contain shrink-0 bg-muted"
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground line-clamp-2 leading-snug">{item.title}</p>
+                  <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">{item.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">${item.price.value}</p>
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">
