@@ -1,57 +1,66 @@
 
 
-# Clean Up Landing Page -- Remove/Fix Non-Working Items
+# Fuzzy Matching for Watchlist Search
 
-## Issues Found
+## Problem
 
-1. **"View all live listings" text** (line 438) -- looks like a link but does nothing (`cursor-default`, no `onClick`). Dead UI element.
-2. **Live Market Pulse + Featured Listings glass card** -- fires 3 eBay API calls on every cold landing page load just for vanity stats. Often fails silently ("Live preview unavailable"). The featured results are generic ("rookie card") and not curated. This entire right-column glass panel adds load time and fragility for little user value.
-3. **"Start Searching" button** -- calls `handleFocusSearch` which tries to focus an `<input>` element, but the search input lives in the sticky header and may not be visible/focusable on the hero viewport. Unreliable behavior.
-4. **Unused imports** -- `Skeleton`, `Search` are imported but never used.
-5. **`handleClear` function** -- defined but never called anywhere in the render.
-6. **Console warning** -- "Function components cannot be given refs" for `Index` (harmless but noisy).
+When clicking the search icon on a watchlist item, the full raw eBay listing title is used as the search query verbatim. These titles contain noise like grading info, seller promo text, condition codes, and overly specific details (e.g. "360HP Korean Card"). This makes the query too narrow and eBay returns few or no matches.
 
-## Plan
+## Solution
 
-### 1. Remove the entire Live Surface glass card (right column)
+1. **Clean the title** using the existing `cleanListingTitle()` utility before passing it to search
+2. **Trim the cleaned title** to its core identifying terms (first ~8 meaningful words) so eBay's search engine can fuzzy-match similar listings
+3. Apply this in both the watchlist dropdown search action and the header search bar (when receiving watchlist searches)
 
-Delete the hub state, hub cache helpers, hub loader, and the right-column glass panel (Live Market Pulse + Featured Listings). This removes ~150 lines of code, 3 unnecessary API calls on page load, and all the dead/fragile UI.
+## Changes
 
-**What stays**: Hero left column (headline, subtitle, CTAs) and Market Tiles below.
+### 1. Create a `extractSearchQuery` helper in `src/lib/cleanTitle.ts`
 
-**Layout change**: The hero switches from a 2-column grid to a single centered column, which is cleaner and more focused.
+Add a new exported function that:
+- Runs `cleanListingTitle()` to strip grading, promos, emojis, pop data, condition codes
+- Splits into words and keeps only the first 8 meaningful words (enough to identify the card without over-constraining)
+- Returns a concise, fuzzy-friendly search string
 
-### 2. Replace "Start Searching" with a direct link
+```
+export function extractSearchQuery(title: string, maxWords = 8): string {
+  const cleaned = cleanListingTitle(title);
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+  return words.slice(0, maxWords).join(' ');
+}
+```
 
-Change the "Start Searching" button to navigate to the header search input reliably, or simply scroll up. Alternatively, keep it but use a more reliable selector.
+### 2. Update `WatchlistDropdown.tsx` (line 56)
 
-### 3. Remove dead code
+Import `extractSearchQuery` and use it when the search button is clicked:
 
-- Delete `handleClear` (unused)
-- Delete unused imports (`Skeleton`, `Search`)
-- Delete hub cache helpers (`readHubCache`, `writeHubCache`, `minutesAgo`, `HubPulse` type, `HUB_CACHE_KEY`, `HUB_CACHE_TTL_MS`)
-- Delete hub state variables and `loadHubData` callback
-- Delete `formatPrice` (only used by removed featured cards)
+```
+// Before
+onClick={() => onSearchItem(item.title)}
 
-### 4. Remove "View all live listings" dead text
+// After  
+onClick={() => onSearchItem(extractSearchQuery(item.title))}
+```
 
-Already handled by removing the glass card entirely.
+### 3. Update `TabNavigation.tsx` (line 110-112)
 
----
+Also clean the title when the watchlist dropdown triggers a search via `onSearchItem`:
 
-### Technical Summary
+```
+// Before
+onSearchItem={(title) => navigate(`/?q=${encodeURIComponent(title)}`)}
 
-**File: `src/pages/Index.tsx`**
+// After
+onSearchItem={(query) => navigate(`/?q=${encodeURIComponent(query)}`)}
+```
 
-| Section | Action |
-|---------|--------|
-| Lines 4-7 | Remove unused imports (`Skeleton`, `Search`, `ExternalLink`) |
-| Lines 37-62 | Delete hub cache helpers, `HubPulse` type, `minutesAgo` |
-| Lines 79-83 | Delete hub state variables |
-| Lines 166-175 | Delete `handleClear` |
-| Lines 199-245 | Delete `loadHubData`, hub trigger effect, `hubLoadedRef` |
-| Lines 247-250 | Delete `formatPrice` |
-| Lines 362-445 | Replace 2-column hero grid with single centered column; remove glass card entirely |
+No change needed here since the cleaning now happens in WatchlistDropdown. The variable rename is just for clarity.
 
-The hero section becomes a clean centered layout with the headline, subtitle, and two CTA buttons, followed by the Market Tiles below.
+## Summary
+
+| File | Change |
+|------|--------|
+| `src/lib/cleanTitle.ts` | Add `extractSearchQuery()` -- cleans title and truncates to 8 words |
+| `src/components/WatchlistDropdown.tsx` | Use `extractSearchQuery(item.title)` instead of raw `item.title` |
+
+This ensures a title like "Pokémon Mega Charizard X EX 073/080 M2 RR Full Art Holo 360HP Korean Card" becomes a search for "Pokémon Mega Charizard X 073/080 M2 RR" -- specific enough to find the same card, broad enough to surface similar listings.
 
