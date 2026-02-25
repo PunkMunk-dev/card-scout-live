@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, ExternalLink } from "lucide-react";
+import { Loader2, ArrowRight, ExternalLink, Search, Eye, Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -268,6 +268,9 @@ export default function Index() {
 
   const trending = getTrendingLabels();
 
+  const marketTilesRef = useRef<HTMLDivElement>(null);
+  const handleFocusSearch = () => document.querySelector<HTMLInputElement>('input')?.focus();
+  const handleExploreMarkets = () => marketTilesRef.current?.scrollIntoView({ behavior: 'smooth' });
   return (
     <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
       {/* Toolbar: sort + results count */}
@@ -322,166 +325,224 @@ export default function Index() {
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 via-white to-slate-50">
+          <div className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50">
             {/* glow accents */}
             <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl" />
             <div className="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-            {/* subtle grid */}
             <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.08)_1px,transparent_0)] [background-size:24px_24px]" />
 
-            <div className="relative px-6 py-12 md:px-10 md:py-16">
-              {/* Wordmark */}
-              <div className="flex flex-col items-center text-center select-none">
-                <div className="flex flex-col leading-none">
-                  <span className="text-[28px] md:text-[34px] font-semibold tracking-tight text-slate-900">
-                    OMNIMARKET
-                  </span>
-                  <span className="mt-1 text-[12px] tracking-[0.35em] uppercase text-slate-500">
-                    Cards
-                  </span>
+            <style>{`
+              @keyframes marquee {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+              }
+            `}</style>
+
+            <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 py-12 md:py-16">
+              {/* ── A) Hero 2-column grid ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+                {/* Left column */}
+                <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+                  <div className="flex flex-col leading-none">
+                    <span className="text-[28px] md:text-[34px] font-semibold tracking-tight text-slate-900">OMNIMARKET</span>
+                    <span className="mt-1 text-[12px] tracking-[0.35em] uppercase text-slate-500">Cards</span>
+                  </div>
+
+                  <h1 className="mt-5 text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+                    Discover the market before it moves.
+                  </h1>
+                  <p className="mt-3 max-w-xl text-sm md:text-base text-slate-600">
+                    Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap items-center justify-center lg:justify-start gap-2">
+                    <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Live Listings</div>
+                    <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Undervalued Finds</div>
+                    <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Clean Results</div>
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-3">
+                    <button
+                      onClick={handleFocusSearch}
+                      className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 h-10 text-sm font-medium text-white hover:bg-slate-800 transition"
+                    >
+                      <Search className="mr-2 h-3.5 w-3.5" /> Start with Search
+                    </button>
+                    <button
+                      onClick={handleExploreMarkets}
+                      className="inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 px-4 h-10 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                    >
+                      Explore Markets <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right column — Live Surface */}
+                <div className="rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm shadow-sm p-5 space-y-5">
+                  {/* i) Marquee ticker */}
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-500 mb-2">Trending Now</p>
+                    <div className="overflow-hidden rounded-lg">
+                      <div className="flex gap-2 w-max" style={{ animation: 'marquee 18s linear infinite' }}>
+                        {[...trending, ...trending].map((t, i) => (
+                          <div key={i} className="whitespace-nowrap rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs text-slate-700">
+                            {t}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ii) Compact stat strip */}
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-500 mb-2">Live Market Pulse</p>
+                    {hubLoading ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        <Skeleton className="h-16 rounded-2xl" />
+                        <Skeleton className="h-16 rounded-2xl" />
+                        <Skeleton className="h-16 rounded-2xl" />
+                      </div>
+                    ) : hubError ? (
+                      <p className="text-xs italic text-muted-foreground">{hubError}</p>
+                    ) : hubPulse ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 text-center">
+                          <p className="text-base font-bold text-slate-900 tabular-nums">{hubPulse.tcgTotal.toLocaleString()}</p>
+                          <p className="text-[10px] text-slate-500">TCG Listings</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 text-center">
+                          <p className="text-base font-bold text-slate-900 tabular-nums">{hubPulse.sportsTotal.toLocaleString()}</p>
+                          <p className="text-[10px] text-slate-500">Sports Listings</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 text-center">
+                          <p className="text-base font-bold text-slate-900 tabular-nums">{minutesAgo(hubPulse.updatedAt)}</p>
+                          <p className="text-[10px] text-slate-500">Updated</p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* iii) Featured preview (3 cards) */}
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-500 mb-2">Featured Listings</p>
+                    {hubLoading ? (
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <div key={i} className="rounded-xl border border-slate-200 bg-white/70 overflow-hidden">
+                            <Skeleton className="aspect-square w-full rounded-none" />
+                            <div className="p-2 space-y-1.5">
+                              <Skeleton className="h-3 w-3/4" />
+                              <Skeleton className="h-3.5 w-12" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : hubFeatured.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                          {hubFeatured.slice(0, 3).map((item) => (
+                            <a
+                              key={item.itemId}
+                              href={item.itemUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="group/card rounded-xl border border-slate-200 bg-white/70 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                            >
+                              <div className="aspect-square bg-slate-100 overflow-hidden">
+                                {item.imageUrl ? (
+                                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain group-hover/card:scale-[1.03] transition-transform duration-300" loading="lazy" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px]">No Image</div>
+                                )}
+                              </div>
+                              <div className="p-2 space-y-0.5">
+                                <p className="text-[10px] leading-tight line-clamp-2 text-slate-700">{item.title}</p>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold text-slate-900 tabular-nums">{formatPrice(item.price.value, item.price.currency)}</span>
+                                  <ExternalLink className="h-2.5 w-2.5 text-slate-400" />
+                                </div>
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                        <p className="mt-2 text-[11px] text-slate-500 text-center cursor-default">View all live listings ↓</p>
+                      </>
+                    ) : (
+                      <p className="text-xs italic text-muted-foreground">No featured listings available.</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Hero copy */}
-              <div className="mt-5 flex flex-col items-center text-center">
-                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
-                  Discover the market before it moves.
-                </h1>
-                <p className="mt-3 max-w-xl text-sm md:text-base text-slate-600">
-                  Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
-                </p>
-              </div>
-
-              {/* Value chips */}
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-                <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Live Listings</div>
-                <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Undervalued Finds</div>
-                <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Clean Results</div>
-              </div>
-
-              {/* ── A) Live Market Pulse ── */}
-              <div className="mt-8">
-                <div className="mb-3 text-xs font-semibold tracking-[0.28em] uppercase text-slate-500">
-                  Live Market Pulse
-                </div>
-                {hubLoading ? (
-                  <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-                    <Skeleton className="h-20 rounded-2xl" />
-                    <Skeleton className="h-20 rounded-2xl" />
-                  </div>
-                ) : hubError ? (
-                  <p className="text-xs italic text-muted-foreground text-center">{hubError}</p>
-                ) : hubPulse ? (
-                  <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-                    <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm p-4 text-center">
-                      <p className="text-lg font-bold text-slate-900 tabular-nums">{hubPulse.tcgTotal.toLocaleString()}</p>
-                      <p className="text-[11px] text-slate-500">TCG Listings</p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm p-4 text-center">
-                      <p className="text-lg font-bold text-slate-900 tabular-nums">{hubPulse.sportsTotal.toLocaleString()}</p>
-                      <p className="text-[11px] text-slate-500">Sports Listings</p>
-                    </div>
-                    <p className="col-span-2 text-center text-[10px] text-slate-400 mt-1">
-                      Updated {minutesAgo(hubPulse.updatedAt)}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-
-              {/* Market tiles */}
-              <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mx-auto">
+              {/* ── B) Market Tiles ── */}
+              <div ref={marketTilesRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
                 <Link
                   to="/tcg"
-                  className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
+                  className="group rounded-2xl border border-slate-200 border-t-2 border-t-cyan-400/40 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
                 >
                   <h3 className="font-semibold text-slate-900 mb-1">TCG Market</h3>
-                  <p className="text-xs text-slate-500 mb-4">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                  <p className="text-xs text-slate-500 mb-3">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                  <ul className="mb-4 space-y-1">
+                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-cyan-500" />Chase cards</li>
+                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-cyan-500" />Set search</li>
+                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-cyan-500" />Clean results</li>
+                  </ul>
                   <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
                     Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
                 <Link
                   to="/sports"
-                  className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
+                  className="group rounded-2xl border border-slate-200 border-t-2 border-t-blue-400/40 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
                 >
                   <h3 className="font-semibold text-slate-900 mb-1">Sports Market</h3>
-                  <p className="text-xs text-slate-500 mb-4">Search sports cards by player, brand, and traits.</p>
+                  <p className="text-xs text-slate-500 mb-3">Search sports cards by player, brand, and traits.</p>
+                  <ul className="mb-4 space-y-1">
+                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-blue-500" />Player search</li>
+                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-blue-500" />Brand filter</li>
+                    <li className="text-xs text-slate-600 flex items-center gap-1.5"><ChevronRight className="h-3 w-3 text-blue-500" />Gem rate</li>
+                  </ul>
                   <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
                     Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
               </div>
 
-              {/* ── B) Featured Live Listings ── */}
+              {/* ── C) How It Works ── */}
               <div className="mt-10">
-                <div className="mb-3 text-xs font-semibold tracking-[0.28em] uppercase text-slate-500">
-                  Featured Live Listings
-                </div>
-                {hubLoading ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="rounded-2xl border border-slate-200 bg-white/70 overflow-hidden">
-                        <Skeleton className="aspect-square w-full rounded-none" />
-                        <div className="p-2.5 space-y-2">
-                          <Skeleton className="h-3 w-3/4" />
-                          <Skeleton className="h-4 w-12" />
+                <h2 className="text-sm font-semibold tracking-[0.2em] uppercase text-slate-500 mb-4">How It Works</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { icon: Search, step: '01', title: 'Search or pick a market', desc: 'Use the universal search bar or jump into TCG / Sports.' },
+                    { icon: Eye, step: '02', title: 'Filter to clean listings', desc: 'No lots, no duplicates—only real singles with images.' },
+                    { icon: Zap, step: '03', title: 'Watchlist & track', desc: 'Save cards, track prices, and spot opportunities fast.' },
+                  ].map((s) => (
+                    <div key={s.step} className="rounded-2xl border border-slate-200 bg-white/70 p-5">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                          <s.icon className="h-4 w-4 text-slate-600" />
                         </div>
+                        <span className="text-[10px] font-bold text-slate-400">{s.step}</span>
                       </div>
-                    ))}
-                  </div>
-                ) : hubFeatured.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                    {hubFeatured.map((item) => (
-                      <a
-                        key={item.itemId}
-                        href={item.itemUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group/card rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                      >
-                        <div className="aspect-square bg-slate-100 overflow-hidden">
-                          {item.imageUrl ? (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.title}
-                              className="w-full h-full object-contain group-hover/card:scale-[1.03] transition-transform duration-300"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px]">
-                              No Image
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-2.5 space-y-1">
-                          <p className="text-[11px] leading-tight line-clamp-2 text-slate-700">{item.title}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-slate-900 tabular-nums">
-                              {formatPrice(item.price.value, item.price.currency)}
-                            </span>
-                            <ExternalLink className="h-3 w-3 text-slate-400" />
-                          </div>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs italic text-muted-foreground text-center">No featured listings available.</p>
-                )}
+                      <h3 className="text-sm font-semibold text-slate-900">{s.title}</h3>
+                      <p className="mt-1 text-xs text-slate-500">{s.desc}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Trending Now */}
-              <div className="mt-10">
-                <div className="mb-3 text-xs font-semibold tracking-[0.28em] uppercase text-slate-500">
-                  Trending Now
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {trending.map((t) => (
-                    <div
-                      key={t}
-                      className="whitespace-nowrap rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs text-slate-700 hover:bg-white transition"
-                    >
-                      {t}
+              {/* ── D) Why OmniMarket ── */}
+              <div className="mt-8">
+                <h2 className="text-sm font-semibold tracking-[0.2em] uppercase text-slate-500 mb-4">Why OmniMarket</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { title: 'Clean Results', desc: 'No lots, no duplicates—only real cards.' },
+                    { title: 'Live Pricing', desc: 'Real-time eBay data, always current.' },
+                    { title: 'Fast Discovery', desc: 'Find undervalued cards quickly.' },
+                  ].map((v) => (
+                    <div key={v.title} className="rounded-2xl border border-slate-200 bg-white/70 p-5">
+                      <h3 className="text-sm font-semibold text-slate-900">{v.title}</h3>
+                      <p className="mt-1 text-xs text-slate-500">{v.desc}</p>
                     </div>
                   ))}
                 </div>
