@@ -62,6 +62,8 @@ const DECORATIVE_TERMS = [
   'textured rare', 'gold rare', 'art rare',
   'premium rare', 'hyper rare', 'rainbow rare',
   'character rare', 'super rare',
+  'parallel rare', 'leader card', 'promo',
+  'tournament pack', 'stamped', 'reverse holo',
 ];
 
 function simplifyQuery(query: string): { simplified: string; decorativeFound: string[] } {
