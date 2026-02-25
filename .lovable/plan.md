@@ -1,27 +1,25 @@
 
 
-# Fix: Missing Return Statement in `tcg-ebay-search`
+# Add More Decorative Terms to Both Edge Functions
 
-## Problem Found
-The edge function returns an **empty response body** for all queries. The last edit accidentally deleted the `return` statement from `searchActiveListings`. Line 206 computes `hasMore` but the function ends without returning anything.
+## What Changes
+Add 6 new decorative/variant terms to the `DECORATIVE_TERMS` array in both edge functions so that searches like "Charizard reverse holo" or "Luffy leader card" correctly strip those terms for the eBay API call while boosting matching results to the top.
 
-Looking at the diff, the original line:
-```
-return { items, total, offset, hasMore };
-```
-was removed when the boosting logic was added.
+## New Terms Being Added
+- `parallel rare` -- common in One Piece and other TCGs
+- `leader card` -- One Piece TCG leader cards
+- `promo` -- promotional cards across all TCGs
+- `tournament pack` -- tournament-exclusive printings
+- `stamped` -- stamped/foil variants
+- `reverse holo` -- reverse holographic Pokemon cards
 
-## Fix
+## Files Modified
 
-**File:** `supabase/functions/tcg-ebay-search/index.ts`
+### 1. `supabase/functions/ebay-search/index.ts` (Sports Lab search)
+Update the `DECORATIVE_TERMS` array (lines 172-178) to add the 6 new terms.
 
-**Line 206** -- add the missing return statement:
+### 2. `supabase/functions/tcg-ebay-search/index.ts` (TCG Lab search)
+Update the `DECORATIVE_TERMS` array (lines 59-65) to add the same 6 new terms.
 
-```ts
-  const hasMore = (offset + items.length) < total;
-  return { items, total, offset, hasMore };
-}
-```
-
-This is a one-line fix. The function will then correctly return results, with decorative-term matches boosted to the top.
+Both arrays will be kept in sync. No other code changes needed -- the existing `simplifyQuery` function already iterates over the full array.
 
