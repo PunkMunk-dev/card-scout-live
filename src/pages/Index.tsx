@@ -200,34 +200,92 @@ export default function Index() {
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
-          <div className="flex flex-col items-center pt-12 pb-8">
-            <h2 className="text-xl font-bold mb-2">Welcome to OmniMarket Cards</h2>
-            <p className="text-muted-foreground text-sm mb-8 text-center max-w-md">
-              Use the search bar above to find any card on eBay, or jump into a lab for guided searching.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
-              <Link
-                to="/tcg"
-                className="group rounded-xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-md transition-all"
-              >
-                <FlaskConical className="h-6 w-6 text-primary mb-3" />
-                <h3 className="font-semibold mb-1">TCG Lab</h3>
-                <p className="text-xs text-muted-foreground mb-3">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
-                <span className="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-                  Go to TCG Lab <ArrowRight className="h-3 w-3" />
-                </span>
-              </Link>
-              <Link
-                to="/sports"
-                className="group rounded-xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-md transition-all"
-              >
-                <Trophy className="h-6 w-6 text-primary mb-3" />
-                <h3 className="font-semibold mb-1">Sports Lab</h3>
-                <p className="text-xs text-muted-foreground mb-3">Search sports cards by player, brand, and traits.</p>
-                <span className="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-                  Go to Sports Lab <ArrowRight className="h-3 w-3" />
-                </span>
-              </Link>
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 via-white to-slate-50">
+            {/* glow accents */}
+            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl" />
+            <div className="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
+            {/* subtle grid */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.08)_1px,transparent_0)] [background-size:24px_24px]" />
+
+            <div className="relative px-6 py-12 md:px-10 md:py-16">
+              {/* Wordmark */}
+              <div className="flex flex-col items-center text-center select-none">
+                <div className="flex flex-col leading-none">
+                  <span className="text-[28px] md:text-[34px] font-semibold tracking-tight text-slate-900">
+                    OMNIMARKET
+                  </span>
+                  <span className="mt-1 text-[12px] tracking-[0.35em] uppercase text-slate-500">
+                    Cards
+                  </span>
+                </div>
+              </div>
+
+              {/* Hero copy */}
+              <div className="mt-5 flex flex-col items-center text-center">
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+                  Discover the market before it moves.
+                </h1>
+                <p className="mt-3 max-w-xl text-sm md:text-base text-slate-600">
+                  Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
+                </p>
+              </div>
+
+              {/* Value chips */}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Live Listings</div>
+                <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Undervalued Finds</div>
+                <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Clean Results</div>
+              </div>
+
+              {/* Market tiles */}
+              <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mx-auto">
+                <Link
+                  to="/tcg"
+                  className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
+                >
+                  <FlaskConical className="h-6 w-6 text-slate-900 mb-3" />
+                  <h3 className="font-semibold text-slate-900 mb-1">TCG Market</h3>
+                  <p className="text-xs text-slate-500 mb-4">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                  <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
+                    Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                  </span>
+                </Link>
+                <Link
+                  to="/sports"
+                  className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
+                >
+                  <Trophy className="h-6 w-6 text-slate-900 mb-3" />
+                  <h3 className="font-semibold text-slate-900 mb-1">Sports Market</h3>
+                  <p className="text-xs text-slate-500 mb-4">Search sports cards by player, brand, and traits.</p>
+                  <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
+                    Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                  </span>
+                </Link>
+              </div>
+
+              {/* Trending Now */}
+              <div className="mt-10">
+                <div className="mb-3 text-xs font-semibold tracking-[0.28em] uppercase text-slate-500">
+                  Trending Now
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {[
+                    "Wembanyama Chrome — Moving",
+                    "Ja'Marr Chase RC — Hot",
+                    "Pikachu SIR — Trending",
+                    "One Piece OP-05 — Up",
+                    "Prizm Rookie QBs — Active",
+                    "PSA 10 spreads — Watch",
+                  ].map((t) => (
+                    <div
+                      key={t}
+                      className="whitespace-nowrap rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs text-slate-700 hover:bg-white transition"
+                    >
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
