@@ -1,16 +1,15 @@
 
 
-# Rename OmniMarket(TM) to OmniMarket Cards(TM)
+# Remove ™ from Brand Name
 
-Simple text replacement in two files:
+Update "OmniMarket Cards™" to "OmniMarket Cards" in two files:
 
 ## Changes
 
 ### 1. `index.html`
-- Line 7: `<title>OmniMarket™</title>` -> `<title>OmniMarket Cards™</title>`
-- Line 11: `og:title` content -> `OmniMarket Cards™`
+- Line 7: `<title>OmniMarket Cards™</title>` → `<title>OmniMarket Cards</title>`
+- Line 11: `og:title` → `OmniMarket Cards`
 
 ### 2. `src/components/TabNavigation.tsx`
-- Line 65: Header brand text -> `OmniMarket Cards™`
+- Line 65: Header text → `OmniMarket Cards`
 
-All three occurrences will be updated from "OmniMarket™" to "OmniMarket Cards™".
