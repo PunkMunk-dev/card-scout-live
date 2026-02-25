@@ -219,9 +219,9 @@ export default function Index() {
     setHubError(null);
     try {
       const [tcgRes, sportsRes, featuredRes] = await Promise.all([
-        searchEbay({ query: 'pokemon OR "one piece"', limit: 1 }),
-        searchEbay({ query: 'panini OR topps', limit: 1 }),
-        searchEbay({ query: 'rookie OR chrome OR holo', limit: 6 }),
+        searchEbay({ query: 'pokemon cards', limit: 1 }),
+        searchEbay({ query: 'topps chrome', limit: 1 }),
+        searchEbay({ query: 'rookie card', limit: 6 }),
       ]);
 
       const pulse: HubPulse = {
@@ -243,6 +243,7 @@ export default function Index() {
   }, []);
 
   /* ── Trigger hub load only when idle ── */
+  const hubLoadedRef = useRef(false);
   useEffect(() => {
     const isIdleHub = !isLoading && !error && items.length === 0 && !query;
     if (!isIdleHub) return;
@@ -254,6 +255,8 @@ export default function Index() {
       return;
     }
 
+    if (hubLoadedRef.current) return;
+    hubLoadedRef.current = true;
     loadHubData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, error, items.length, query]);
