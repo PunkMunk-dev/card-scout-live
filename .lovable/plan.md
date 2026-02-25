@@ -1,18 +1,31 @@
 
 
-# Preserve Identifying Details in cleanListingTitle
+# Preserve "RC" in cleanListingTitle
 
 ## Problem
-Two regex rules are removing meaningful card identifiers:
-- `version` / `ver` (line 44) -- these describe variants like "Green Version", "Holo Ver"
-- `#123` card numbers (line 47) -- these identify specific cards in a set like "#45"
+The current regex on line 44 strips "RC" (Rookie Card abbreviation) from titles. "RC" is a meaningful identifier in card collecting that helps narrow search results to rookie cards specifically.
 
-## Changes (single file: `src/lib/cleanTitle.ts`)
+## Change
 
-1. **Line 44**: Remove `version` and `ver` from the generic card terms regex, keeping only truly generic words:
-   - Before: `\b(RC|rookie\s+card|card|cards|version|ver)\b`
-   - After: `\b(RC|rookie\s+card|card|cards)\b`
+**File: `src/lib/cleanTitle.ts`, line 44**
 
-2. **Line 47**: Delete the `#\d+` removal rule entirely so card numbers like `#45`, `#123` are preserved in the search query.
+Remove `RC` from the generic card terms regex so it's preserved in the cleaned output.
 
-No other files change. Variant/parallel terms like "Prizm", "Chrome", "Parallel", "Holo", "Refractor" are already preserved.
+- **Before**: `cleaned = cleaned.replace(/\b(RC|rookie\s+card|card|cards)\b/gi, '');`
+- **After**: `cleaned = cleaned.replace(/\b(rookie\s+card|card|cards)\b/gi, '');`
+
+Also add the `#` to `/` conversion for card numbers (from the previously approved plan):
+
+**Add after line 46** (after the generic card terms removal):
+```typescript
+// Convert card number hash to slash format (#256 -> /256) for broader eBay matching
+cleaned = cleaned.replace(/#(\d+)/g, '/$1');
+```
+
+## Result
+
+Input: `ANTHONY EDWARDS 2020 Prizm #256 Green Version Basketball RC!`
+Output: `ANTHONY EDWARDS 2020 Prizm /256 Green Version RC`
+
+Single file, two small edits.
+
