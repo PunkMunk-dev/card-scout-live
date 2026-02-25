@@ -33,28 +33,21 @@ interface ResultsToolbarProps {
 }
 
 export function ResultsToolbar({
-  resultCount,
-  totalCount,
-  showAuctionsOnly,
-  onToggleAuctions,
-  priceRange,
-  onPriceRangeChange,
-  sortOption,
-  onSortChange,
-  filteredOutCount,
+  resultCount, totalCount, showAuctionsOnly, onToggleAuctions,
+  priceRange, onPriceRangeChange, sortOption, onSortChange, filteredOutCount,
 }: ResultsToolbarProps) {
   return (
-    <div className="rounded-lg border border-border/30 bg-card/30 backdrop-blur-sm px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="om-toolbar px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-mono">
-          <span className="font-semibold text-foreground tabular-nums">{resultCount}</span>
+          <span className="font-semibold tabular-nums" style={{ color: 'var(--om-text-0)' }}>{resultCount}</span>
           {totalCount !== resultCount && (
-            <span className="text-muted-foreground">/ {totalCount}</span>
+            <span style={{ color: 'var(--om-text-2)' }}>/ {totalCount}</span>
           )}
-          <span className="text-muted-foreground/70">cards</span>
+          <span style={{ color: 'var(--om-text-3)' }}>cards</span>
         </span>
         {!!filteredOutCount && filteredOutCount > 0 && (
-          <span className="text-[10px] text-muted-foreground/60 font-mono">{filteredOutCount} filtered</span>
+          <span className="text-[10px] font-mono" style={{ color: 'var(--om-text-3)' }}>{filteredOutCount} filtered</span>
         )}
       </div>
 
@@ -62,22 +55,20 @@ export function ResultsToolbar({
         <button
           onClick={onToggleAuctions}
           className={cn(
-            'h-7 px-3 rounded-full text-[11px] font-medium border transition-colors',
-            showAuctionsOnly
-              ? 'bg-primary/15 text-primary border-primary/30'
-              : 'bg-secondary/50 text-muted-foreground border-border/30 hover:text-foreground hover:border-border/50'
+            'om-btn om-pill',
+            showAuctionsOnly && 'om-pill-active'
           )}
         >
           Auctions
         </button>
 
         <Select value={priceRange} onValueChange={(v) => onPriceRangeChange(v as PriceRange)}>
-          <SelectTrigger className="h-7 w-[110px] text-[11px] bg-secondary/50 border-border/30 rounded-full">
+          <SelectTrigger className="h-7 w-[110px] text-[11px] om-input rounded-full border-white/10">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="om-dropdown">
             {PRICE_RANGES.map((range) => (
-              <SelectItem key={range.value} value={range.value} className="text-xs">
+              <SelectItem key={range.value} value={range.value} className="text-xs text-[var(--om-text-1)] hover:bg-white/5">
                 {range.label}
               </SelectItem>
             ))}
@@ -85,17 +76,17 @@ export function ResultsToolbar({
         </Select>
 
         <div className="flex items-center gap-1.5">
-          <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+          <ArrowUpDown className="h-3 w-3" style={{ color: 'var(--om-text-3)' }} />
           <Select value={sortOption} onValueChange={(v) => onSortChange(v as SearchFilters['sort'])}>
-            <SelectTrigger className="h-7 w-[120px] text-[11px] bg-secondary/50 border-border/30 rounded-full">
+            <SelectTrigger className="h-7 w-[120px] text-[11px] om-input rounded-full border-white/10">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              {showAuctionsOnly && <SelectItem value="ending_soonest">Ending Soonest</SelectItem>}
-              <SelectItem value="newly_listed">Newest</SelectItem>
-              <SelectItem value="best_match">Best Match</SelectItem>
-              <SelectItem value="price_low">Low to High</SelectItem>
-              <SelectItem value="price_high">High to Low</SelectItem>
+            <SelectContent className="om-dropdown">
+              {showAuctionsOnly && <SelectItem value="ending_soonest" className="text-xs text-[var(--om-text-1)]">Ending Soonest</SelectItem>}
+              <SelectItem value="newly_listed" className="text-xs text-[var(--om-text-1)]">Newest</SelectItem>
+              <SelectItem value="best_match" className="text-xs text-[var(--om-text-1)]">Best Match</SelectItem>
+              <SelectItem value="price_low" className="text-xs text-[var(--om-text-1)]">Low to High</SelectItem>
+              <SelectItem value="price_high" className="text-xs text-[var(--om-text-1)]">High to Low</SelectItem>
             </SelectContent>
           </Select>
         </div>

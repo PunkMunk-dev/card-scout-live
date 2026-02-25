@@ -13,7 +13,6 @@ import { GuidedSearchEmptyState } from '@/components/shared/GuidedSearchEmptySta
 import { useSportsRulesetSnapshot } from '@/hooks/useSportsRulesetSnapshot';
 import { useSportsQueryBuilderState } from '@/hooks/useSportsQueryBuilderState';
 import { useSportsWatchlist } from '@/contexts/SportsWatchlistContext';
-import { Card, CardContent } from '@/components/ui/card';
 import type { SearchMode } from '@/components/sports-lab/SearchModeToggle';
 
 export default function SportsLab() {
@@ -56,28 +55,34 @@ export default function SportsLab() {
   const handleSearchModeChange = useCallback((mode: SearchMode) => { setSearchMode(mode); setResultCount(undefined); }, []);
 
   if (isLoading) return (
-    <div className="min-h-[calc(100vh-48px)]">
-      <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-md border-b border-border"><div className="max-w-6xl mx-auto px-4 py-4"><Skeleton className="h-8 w-48" /></div></div>
-      <div className="max-w-6xl mx-auto p-4"><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}</div></div>
+    <div className="om-page-bg">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pt-4">
+        <div className="om-command-bar px-5 py-4"><Skeleton className="h-8 w-48 om-shimmer" /></div>
+      </div>
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-6">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+      </div>
     </div>
   );
 
   if (error) return (
-    <div className="min-h-[calc(100vh-48px)] flex items-center justify-center p-4">
-      <Card className="max-w-md w-full"><CardContent className="pt-6"><p className="text-destructive text-center">Failed to load ruleset. Please try again later.</p></CardContent></Card>
+    <div className="om-page-bg flex items-center justify-center p-4">
+      <div className="om-card max-w-md w-full p-6">
+        <p className="text-center" style={{ color: 'var(--om-danger)' }}>Failed to load ruleset. Please try again later.</p>
+      </div>
     </div>
   );
 
   if (!snapshot?.ruleset) return (
-    <div className="min-h-[calc(100vh-48px)] flex items-center justify-center p-4">
-      <Card className="max-w-md w-full"><CardContent className="pt-6 text-center space-y-4">
-        <p className="text-muted-foreground">No published ruleset available yet. An admin needs to create and publish a ruleset first.</p>
-      </CardContent></Card>
+    <div className="om-page-bg flex items-center justify-center p-4">
+      <div className="om-card max-w-md w-full p-6 text-center space-y-4">
+        <p style={{ color: 'var(--om-text-2)' }}>No published ruleset available yet. An admin needs to create and publish a ruleset first.</p>
+      </div>
     </div>
   );
 
   return (
-    <div className="min-h-[calc(100vh-48px)] flex flex-col pb-16 sm:pb-0">
+    <div className="om-page-bg flex flex-col pb-16 sm:pb-0">
       <QueryHeader
         sports={snapshot.sports} players={filteredPlayers} ruleItems={filteredRuleItems}
         sportKey={state.sport_key} selectedPlayerId={state.selected_player_ids[0] ?? null}
@@ -89,7 +94,7 @@ export default function SportsLab() {
         searchMode={searchMode} onSearchModeChange={handleSearchModeChange}
         quickSearchQuery={quickSearchQuery} onQuickSearchChange={setQuickSearchQuery}
       />
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 lg:px-8 py-6">
         {searchMode === 'quick' ? (
           !canSearchQuick ? (
             <GuidedSearchEmptyState />
@@ -101,13 +106,16 @@ export default function SportsLab() {
         )}
       </main>
       <Sheet open={watchlistOpen} onOpenChange={setWatchlistOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0">
-          <SheetHeader className="px-6 pt-6 pb-4 border-b border-border"><SheetTitle>Watchlist</SheetTitle></SheetHeader>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 om-surface-1 border-l border-white/10">
+          <SheetHeader className="px-6 pt-6 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <SheetTitle style={{ color: 'var(--om-text-0)' }}>Watchlist</SheetTitle>
+          </SheetHeader>
           <WatchlistPanel />
         </SheetContent>
       </Sheet>
       <Button variant="outline" size="icon"
-        className={cn("fixed bottom-6 right-6 z-50 rounded-full shadow-md transition-opacity duration-300", showScrollTop ? "opacity-100" : "opacity-0 pointer-events-none")}
+        className={cn("fixed bottom-6 right-6 z-50 rounded-full shadow-md transition-opacity duration-300 om-btn border-white/10", showScrollTop ? "opacity-100" : "opacity-0 pointer-events-none")}
+        style={{ background: 'var(--om-bg-2)', color: 'var(--om-text-1)' }}
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
         <ChevronUp className="h-5 w-5" />
       </Button>

@@ -57,12 +57,7 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
   };
 
   const {
-    data,
-    isLoading,
-    error,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
+    data, isLoading, error, hasNextPage, fetchNextPage, isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ['terminal-listings', 'tcg', game, activeQuery, filters, showAuctionsOnly],
     queryFn: ({ pageParam = 0 }) => searchActiveListings(activeQuery, filters, 100, pageParam),
@@ -85,42 +80,30 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
 
   const processedResults = useMemo(() => {
     if (!allListings) return undefined;
-
-    const filterOptions = {
-      game,
-      cardType: 'single' as const,
-      hideDamaged: true,
-      hideBlurry: true,
-      dedupeEnabled: true,
-      cardNumber: '',
-      rarity: 'any' as const,
-    };
-
+    const filterOptions = { game, cardType: 'single' as const, hideDamaged: true, hideBlurry: true, dedupeEnabled: true, cardNumber: '', rarity: 'any' as const };
     const { passed, removedCount } = filterTcgListings(allListings, filterOptions);
     const result = dedupeTcgListings(passed);
     let final = result.deduped;
-
     if (sort === 'best_match') {
       final = [...final].sort((a, b) => (b.watchCount ?? 0) - (a.watchCount ?? 0));
     }
-
     return { listings: final, removedCount, dupsRemoved: result.duplicatesRemoved };
   }, [allListings, game, sort]);
 
   return (
     <div className="space-y-4">
       <div className="relative w-full sm:max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: 'var(--om-text-3)' }} />
         <Input
           type="text"
           placeholder="Search variants, numbers..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           maxLength={50}
-          className="h-8 pl-9 pr-8 text-xs bg-secondary/30 border-border/30 placeholder:text-muted-foreground/50 font-mono"
+          className="h-8 pl-9 pr-8 text-xs om-input rounded-lg font-mono"
         />
         {searchTerm && (
-          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 transition-colors" style={{ color: 'var(--om-text-2)' }}>
             <X className="h-3.5 w-3.5" />
           </button>
         )}

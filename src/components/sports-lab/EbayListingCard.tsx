@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Copy, Check, Info } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
 import { GemRateBadge } from './GemRateBadge';
@@ -54,13 +53,13 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
 
   return (
     <>
-      <Card className="overflow-hidden rounded-lg border border-border/40 shadow-card hover:shadow-cardHover transition-all duration-200">
+      <div className="om-card overflow-hidden">
         <a href={listing.itemWebUrl} target="_blank" rel="noopener noreferrer" className="block h-full">
-          <div className="aspect-square bg-muted overflow-hidden relative">
+          <div className="aspect-square overflow-hidden relative" style={{ background: 'var(--om-bg-3)' }}>
             {listing.imageUrl ? <img src={imageSrc || listing.imageUrl} alt={listing.title} className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]" loading="lazy" onError={handleImageError} /> :
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>}
+              <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: 'var(--om-text-3)' }}>No image</div>}
             <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-            <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[11px] font-semibold text-foreground/90 bg-black/50 backdrop-blur-sm">eBay</span>
+            <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-sm">eBay</span>
             <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
               <WatchlistStar listing={listing} />
               {isAuction && <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-orange-400 bg-black/50 backdrop-blur-sm">Auction</span>}
@@ -77,33 +76,34 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
             </div>
           </div>
           <div className="p-3 space-y-2.5">
-            <h3 className="text-sm font-medium leading-snug line-clamp-2 min-h-[2.5rem]">{listing.title}</h3>
+            <h3 className="text-sm font-medium leading-snug line-clamp-2 min-h-[2.5rem]" style={{ color: 'var(--om-text-0)' }}>{listing.title}</h3>
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <a href={ebaySoldUrl} target="_blank" rel="noopener noreferrer" className="min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-destructive/80 text-destructive-foreground hover:bg-destructive transition-colors">PSA 10</a>
+              <a href={ebaySoldUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/80 text-white hover:bg-red-500 transition-colors">PSA 10</a>
               <GemRateBadge searchContext={listing.searchContext} fallbackUrl={gemRateUrl} />
             </div>
             {soldMarketValue !== null && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span>PSA-10 Guide:</span><span className="font-medium text-foreground tabular-nums">${soldMarketValue.toFixed(2)}</span>
-                {soldConfidence === 'low' && <span className="text-yellow-500" title="Low confidence">*</span>}
-                {soldComps.length > 0 && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowComps(true); }} className="ml-0.5 text-primary hover:text-primary/80"><Info className="h-3.5 w-3.5" /></button>}
+              <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--om-text-2)' }}>
+                <span>PSA-10 Guide:</span><span className="font-medium tabular-nums" style={{ color: 'var(--om-text-0)' }}>${soldMarketValue.toFixed(2)}</span>
+                {soldConfidence === 'low' && <span style={{ color: 'var(--om-warning)' }} title="Low confidence">*</span>}
+                {soldComps.length > 0 && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowComps(true); }} className="ml-0.5" style={{ color: 'var(--om-accent)' }}><Info className="h-3.5 w-3.5" /></button>}
               </div>
             )}
             {expectedProfit !== null && (
               <div className="flex items-center gap-1.5 text-xs">
-                <span className="text-muted-foreground">Est. Profit:</span>
-                <span className={cn("font-semibold tabular-nums", expectedProfit >= 0 ? "text-green-500" : "text-destructive")}>{expectedProfit >= 0 ? '+' : ''}${expectedProfit.toFixed(0)}</span>
+                <span style={{ color: 'var(--om-text-2)' }}>Est. Profit:</span>
+                <span className={cn("font-semibold tabular-nums", expectedProfit >= 0 ? "text-green-500" : "text-red-500")}>{expectedProfit >= 0 ? '+' : ''}${expectedProfit.toFixed(0)}</span>
               </div>
             )}
-            <div className="flex items-center justify-end pt-1 border-t border-border">
+            <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); await navigator.clipboard.writeText(cleanListingTitle(listing.title)); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                className="w-8 h-8 flex items-center justify-center rounded-md bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all">
+                className="om-btn w-8 h-8 flex items-center justify-center rounded-md transition-all"
+                style={{ background: 'var(--om-bg-3)', color: 'var(--om-text-2)' }}>
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </button>
             </div>
           </div>
         </a>
-      </Card>
+      </div>
       <SoldCompsDialog open={showComps} onOpenChange={setShowComps} soldComps={soldComps} marketValue={soldMarketValue} confidence={soldConfidence} />
     </>
   );

@@ -189,6 +189,109 @@
   }
 }
 
+@layer components {
+  /* OmniMarket surface layers */
+  .om-surface-0 { background-color: var(--om-bg-0); }
+  .om-surface-1 { background-color: var(--om-bg-1); }
+  .om-surface-2 { background-color: var(--om-bg-2); }
+
+  /* OmniMarket card */
+  .om-card {
+    background: var(--om-bg-2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1rem;
+    transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .om-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 0 80px rgba(0,185,255,0.06);
+  }
+
+  /* OmniMarket toolbar */
+  .om-toolbar {
+    background: var(--om-bg-1);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.75rem;
+  }
+
+  /* OmniMarket input */
+  .om-input {
+    background: var(--om-bg-2);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: var(--om-text-0);
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .om-input::placeholder {
+    color: var(--om-text-3);
+  }
+  .om-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0,185,255,0.18);
+    border-color: rgba(0,185,255,0.4);
+  }
+
+  /* OmniMarket command bar */
+  .om-command-bar {
+    background: #0E1420;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 1rem;
+  }
+
+  /* OmniMarket button micro-interactions */
+  .om-btn {
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .om-btn:hover {
+    transform: translateY(-1px);
+  }
+  .om-btn:active {
+    transform: scale(0.98);
+  }
+
+  /* OmniMarket page background gradient */
+  .om-page-bg {
+    background: linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 40%, var(--om-bg-0) 100%);
+    color: var(--om-text-0);
+    min-height: calc(100vh - 48px);
+  }
+
+  /* OmniMarket dropdown panel */
+  .om-dropdown {
+    background: var(--om-bg-1);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 0.5rem;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+
+  /* OmniMarket pill (filter toggle) */
+  .om-pill {
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--om-bg-2);
+    color: var(--om-text-2);
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .om-pill:hover {
+    border-color: rgba(255,255,255,0.16);
+    color: var(--om-text-1);
+  }
+  .om-pill-active {
+    background: rgba(0,185,255,0.15);
+    border-color: rgba(0,185,255,0.3);
+    color: var(--om-accent);
+  }
+
+  /* Skeleton shimmer on dark */
+  .om-shimmer {
+    background: var(--om-bg-3);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

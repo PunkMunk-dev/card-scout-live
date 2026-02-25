@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { Search, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -30,15 +29,19 @@ export const QuickSearchInput = forwardRef<HTMLDivElement, QuickSearchInputProps
 
     return (
       <div ref={ref} className={cn("relative flex-1", className)}>
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <Input type="text" value={localValue}
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: 'var(--om-text-3)' }} />
+        <input type="text" value={localValue}
           onChange={(e) => { const v = e.target.value.slice(0, MAX_LENGTH); setLocalValue(v); debouncedOnChange(v); }}
           onKeyDown={(e) => { if (e.key === 'Enter') { if (debounceRef.current) clearTimeout(debounceRef.current); onChange(localValue); } }}
-          placeholder={placeholder} className="pl-9 pr-9 h-10" maxLength={MAX_LENGTH} />
+          placeholder={placeholder}
+          className="om-input w-full pl-9 pr-9 h-10 rounded-lg text-sm"
+          maxLength={MAX_LENGTH}
+        />
         {localValue && (
           <Button type="button" variant="ghost" size="sm"
             onClick={() => { setLocalValue(''); if (debounceRef.current) clearTimeout(debounceRef.current); onChange(''); }}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+            style={{ color: 'var(--om-text-2)' }}>
             <X className="h-3.5 w-3.5" />
           </Button>
         )}
