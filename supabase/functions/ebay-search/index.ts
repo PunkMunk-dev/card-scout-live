@@ -169,6 +169,28 @@ function isJunkTitle(title: string): boolean {
 // Short terms that are critical for card identification
 const TCG_SHORT_TERMS = new Set(['v', 'gx', 'ex', 'sp', 'sr', 'ar', 'ur', 'fa', 'sa', 'sv', 'op']);
 
+const DECORATIVE_TERMS = [
+  'manga art', 'alternate art', 'alt art', 'full art',
+  'illustration rare', 'special art rare', 'secret rare',
+  'textured rare', 'gold rare', 'art rare',
+  'premium rare', 'hyper rare', 'rainbow rare',
+  'character rare', 'super rare',
+];
+
+function simplifyQuery(query: string): { simplified: string; decorativeFound: string[] } {
+  let simplified = query;
+  const decorativeFound: string[] = [];
+  for (const term of DECORATIVE_TERMS) {
+    const regex = new RegExp(term, 'gi');
+    if (regex.test(simplified)) {
+      decorativeFound.push(term.toLowerCase());
+      simplified = simplified.replace(regex, '').trim();
+    }
+  }
+  simplified = simplified.replace(/\s{2,}/g, ' ').trim();
+  return { simplified, decorativeFound };
+}
+
 const COMPOUND_TERMS: Record<string, string> = {
   'one piece': 'onepiece',
   'dragon ball': 'dragonball',
@@ -415,12 +437,17 @@ serve(async (req) => {
     const token = await getEbayToken();
     const sortParam = getSortParam(sort);
     const apiBuyingOptions = buyingOptions !== 'ALL' ? buyingOptions : undefined;
-    const { items: rawItems, total } = await searchEbay(token, query, requestLimit, offset, sortParam, apiBuyingOptions);
+
+    // Simplify query for eBay API (strip decorative terms)
+    const { simplified, decorativeFound } = simplifyQuery(query);
+    const searchQuery = simplified || query;
+
+    const { items: rawItems, total } = await searchEbay(token, searchQuery, requestLimit, offset, sortParam, apiBuyingOptions);
 
     let normalizedItems = rawItems.map(normalizeItem);
 
-    // Filter items that don't match the search query well
-    const keyTerms = extractKeyTerms(query);
+    // For title matching, use simplified query (don't penalize missing decorative terms)
+    const keyTerms = extractKeyTerms(simplified || query);
     normalizedItems = normalizedItems.filter(item => 
       titleMatchesQuery(item.title, keyTerms)
     );
@@ -464,7 +491,18 @@ serve(async (req) => {
       // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
   }
     
-    // Re-sort by price after filtering to ensure correct order
+    // Boost results containing decorative terms to the top
+    if (decorativeFound.length > 0) {
+      normalizedItems.sort((a, b) => {
+        const titleA = a.title.toLowerCase();
+        const titleB = b.title.toLowerCase();
+        const scoreA = decorativeFound.filter(t => titleA.includes(t)).length;
+        const scoreB = decorativeFound.filter(t => titleB.includes(t)).length;
+        return scoreB - scoreA;
+      });
+    }
+
+    // Re-sort by price after filtering to ensure correct order (overrides decorative boost)
     if (sort === 'price_asc') {
       normalizedItems.sort((a, b) => {
         const priceA = parseFloat(a.price.value);
