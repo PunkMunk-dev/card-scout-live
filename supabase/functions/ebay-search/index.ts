@@ -196,10 +196,10 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
     term.length <= 2 || /^\d+$/.test(term)
   );
   
-  // Require at least 85% of name-like terms to match
+  // Require at least 60% of name-like terms to match
   const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
   const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
-  const nameTermsMatch = nameMatchRatio >= 0.75;
+  const nameTermsMatch = nameMatchRatio >= 0.60;
   
   // At least 50% of other terms (numbers, short words) should match
   const otherMatchCount = otherTerms.filter(term => lowerTitle.includes(term)).length;
