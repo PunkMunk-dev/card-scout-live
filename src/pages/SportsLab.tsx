@@ -85,8 +85,8 @@ export default function SportsLab() {
         onSportChange={setSportKey} onSelectPlayer={selectPlayer} onSelectBrand={selectBrand}
         onSelectShowAll={() => setShowAllBrands(true)} onToggleTrait={toggleTrait} onClearTraits={clearTraits} onReset={reset}
         resultCount={(searchMode === 'guided' ? canSearchGuided : canSearchQuick) ? resultCount : undefined}
-        isLoading={isSearching} watchlistOpen={watchlistOpen} onWatchlistToggle={() => setWatchlistOpen(!watchlistOpen)}
-        watchlistCount={watchlistCount} searchMode={searchMode} onSearchModeChange={handleSearchModeChange}
+        isLoading={isSearching}
+        searchMode={searchMode} onSearchModeChange={handleSearchModeChange}
         quickSearchQuery={quickSearchQuery} onQuickSearchChange={setQuickSearchQuery}
       />
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">

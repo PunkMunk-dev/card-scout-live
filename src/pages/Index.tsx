@@ -1,15 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { SearchBar } from "@/components/SearchBar";
+import { Loader2, FlaskConical, Trophy, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
-import { WatchlistDropdown } from "@/components/WatchlistDropdown";
 import { searchEbay } from "@/lib/ebay-api";
 import { useSharedWatchlist } from "@/contexts/WatchlistContext";
 import type { EbayItem, SortOption } from "@/types/ebay";
@@ -24,7 +22,6 @@ export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   const [query, setQuery] = useState(urlQuery);
-  const [externalQuery, setExternalQuery] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<EbayItem[]>([]);
   const [total, setTotal] = useState(0);
   const [nextPage, setNextPage] = useState<number | null>(null);
@@ -41,7 +38,6 @@ export default function Index() {
     if (urlQuery && urlQuery !== lastSearchedRef.current) {
       lastSearchedRef.current = urlQuery;
       setQuery(urlQuery);
-      setExternalQuery(urlQuery);
       setItems([]);
       setError(null);
       performSearch(urlQuery, 1, false);
@@ -117,26 +113,8 @@ export default function Index() {
     }
   }, [sort]);
 
-  const handleSearch = (newQuery: string) => {
-    setQuery(newQuery);
-    setSearchParams(newQuery ? { q: newQuery } : {}, { replace: true });
-    setItems([]);
-    setError(null);
-    performSearch(newQuery, 1, false);
-  };
-
-  const handleSearchFromWatchlist = (title: string) => {
-    setExternalQuery(title);
-    setQuery(title);
-    setSearchParams(title ? { q: title } : {}, { replace: true });
-    setItems([]);
-    setError(null);
-    performSearch(title, 1, false);
-  };
-
   const handleClear = () => {
     setQuery("");
-    setExternalQuery(undefined);
     setSearchParams({}, { replace: true });
     setItems([]);
     setTotal(0);
@@ -170,21 +148,7 @@ export default function Index() {
 
   return (
     <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
-      {/* Search Section */}
-      <section className="bg-card border-b border-border">
-        <div className="container py-6 flex items-center gap-2">
-          <SearchBar 
-            onSearch={handleSearch} 
-            onClear={handleClear}
-            isLoading={isLoading} 
-            showClear={hasSearched}
-            externalQuery={externalQuery}
-          />
-          <WatchlistDropdown onSearchItem={handleSearchFromWatchlist} />
-        </div>
-      </section>
-
-      {/* Toolbar: sort + watchlist + results count */}
+      {/* Toolbar: sort + results count */}
       {hasSearched && (
         <div className="border-b border-border bg-card/50">
           <div className="container flex items-center gap-4 h-11">
@@ -236,7 +200,36 @@ export default function Index() {
         ) : hasSearched ? (
           <EmptyState query={query} />
         ) : (
-          <EmptyState />
+          <div className="flex flex-col items-center pt-12 pb-8">
+            <h2 className="text-xl font-bold mb-2">Welcome to OmniMarket Cards</h2>
+            <p className="text-muted-foreground text-sm mb-8 text-center max-w-md">
+              Use the search bar above to find any card on eBay, or jump into a lab for guided searching.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+              <Link
+                to="/tcg"
+                className="group rounded-xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-md transition-all"
+              >
+                <FlaskConical className="h-6 w-6 text-primary mb-3" />
+                <h3 className="font-semibold mb-1">TCG Lab</h3>
+                <p className="text-xs text-muted-foreground mb-3">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                <span className="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+                  Go to TCG Lab <ArrowRight className="h-3 w-3" />
+                </span>
+              </Link>
+              <Link
+                to="/sports"
+                className="group rounded-xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-md transition-all"
+              >
+                <Trophy className="h-6 w-6 text-primary mb-3" />
+                <h3 className="font-semibold mb-1">Sports Lab</h3>
+                <p className="text-xs text-muted-foreground mb-3">Search sports cards by player, brand, and traits.</p>
+                <span className="text-xs font-medium text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+                  Go to Sports Lab <ArrowRight className="h-3 w-3" />
+                </span>
+              </Link>
+            </div>
+          </div>
         )}
       </main>
     </div>

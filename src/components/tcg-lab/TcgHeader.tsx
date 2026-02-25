@@ -1,14 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Star, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { QueryHeaderDropdown } from '@/components/sports-lab/QueryHeaderDropdown';
 import { QuerySummaryBar } from '@/components/sports-lab/QuerySummaryBar';
 import { CanonicalSetSelector } from '@/components/tcg-lab/CanonicalSetSelector';
 import { SearchModeToggle } from '@/components/sports-lab/SearchModeToggle';
 import { QuickSearchInput } from '@/components/sports-lab/QuickSearchInput';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 import { useTargets } from '@/hooks/useTcgData';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Game, TcgTarget, TcgSet } from '@/types/tcg';
@@ -53,7 +50,6 @@ export function TcgHeader({
   totalCount,
   isSearchLoading,
 }: TcgHeaderProps) {
-  const { count: watchlistCount } = useSharedWatchlist();
   const { data: targets = [] } = useTargets(selectedGame);
   const isMobile = useIsMobile();
 
@@ -133,25 +129,10 @@ export function TcgHeader({
     </div>
   );
 
-  const watchlistButton = (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
-    >
-      <Star className="h-3.5 w-3.5" />
-      {watchlistCount > 0 && (
-        <Badge variant="outline" className="h-4 min-w-4 justify-center px-1 text-[9px] font-mono">
-          {watchlistCount}
-        </Badge>
-      )}
-    </Button>
-  );
-
   if (isMobile) {
     return (
       <div className="sticky top-0 z-40">
-        <div className="bg-card/80 backdrop-blur-md border-b border-border mx-2 mt-2 rounded-xl">
+        <div className="bg-card/80 backdrop-blur-md border-b border-border">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -167,7 +148,6 @@ export function TcgHeader({
               )}
             </div>
             <div className="flex items-center gap-2">
-              {watchlistButton}
               {mode === 'guided' && (
                 <Sheet>
                   <SheetTrigger asChild>
@@ -191,7 +171,7 @@ export function TcgHeader({
 
   return (
     <div className="sticky top-0 z-40">
-      <div className="bg-card/80 backdrop-blur-md border-b border-border mx-2 mt-2 rounded-xl">
+      <div className="bg-card/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-wrap items-center justify-between py-4 gap-x-4 gap-y-2">
             <div className="flex items-center gap-4 flex-shrink-0">
@@ -208,7 +188,6 @@ export function TcgHeader({
               ) : (
                 guidedFilters
               )}
-              {watchlistButton}
             </div>
           </div>
         </div>
