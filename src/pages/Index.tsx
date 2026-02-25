@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
@@ -16,6 +17,65 @@ function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE
   if (sort === 'auction_only') return 'AUCTION';
   if (sort === 'buy_now_only') return 'FIXED_PRICE';
   return 'ALL';
+}
+
+/* ── Recent-searches helpers ── */
+const RECENT_SEARCHES_KEY = "omni_recent_searches_v1";
+
+function pushRecentSearch(term: string) {
+  const t = (term || "").trim();
+  if (!t) return;
+  try {
+    const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
+    const next = [t, ...existing.filter((x) => x !== t)].slice(0, 12);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+  } catch {}
+}
+
+function getTrendingLabels() {
+  const curated = [
+    "Wembanyama Chrome — Moving",
+    "Ja'Marr Chase RC — Hot",
+    "Pikachu SIR — Trending",
+    "One Piece OP-05 — Up",
+    "Prizm Rookie QBs — Active",
+    "PSA 10 spreads — Watch",
+  ];
+  try {
+    const recent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
+    const recentPills = recent.slice(0, 6).map((t) => `${t} — Recent`);
+    return [...recentPills, ...curated].slice(0, 10);
+  } catch {
+    return curated;
+  }
+}
+
+/* ── Hub cache helpers ── */
+type HubPulse = { tcgTotal: number; sportsTotal: number; updatedAt: number };
+const HUB_CACHE_KEY = "omni_hub_cache_v1";
+const HUB_CACHE_TTL_MS = 60_000;
+
+function readHubCache() {
+  try {
+    const raw = localStorage.getItem(HUB_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.ts || Date.now() - parsed.ts > HUB_CACHE_TTL_MS) return null;
+    return parsed as { ts: number; pulse: HubPulse; featured: EbayItem[] };
+  } catch {
+    return null;
+  }
+}
+
+function writeHubCache(pulse: HubPulse, featured: EbayItem[]) {
+  try {
+    localStorage.setItem(HUB_CACHE_KEY, JSON.stringify({ ts: Date.now(), pulse, featured }));
+  } catch {}
+}
+
+function minutesAgo(ts: number) {
+  const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  return m <= 1 ? "Just now" : `${m}m ago`;
 }
 
 export default function Index() {
@@ -32,6 +92,12 @@ export default function Index() {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastSearchedRef = useRef<string>('');
+
+  /* ── Hub state ── */
+  const [hubPulse, setHubPulse] = useState<HubPulse | null>(null);
+  const [hubFeatured, setHubFeatured] = useState<EbayItem[]>([]);
+  const [hubLoading, setHubLoading] = useState(false);
+  const [hubError, setHubError] = useState<string | null>(null);
 
   // Search when URL query changes (handles both mount and header-nav)
   useEffect(() => {
@@ -54,6 +120,8 @@ export default function Index() {
     overrideSort?: SortOption
   ) => {
     if (!searchQuery.trim()) return;
+
+    pushRecentSearch(searchQuery);
 
     // Abort previous in-flight request
     if (abortRef.current) abortRef.current.abort();
@@ -90,7 +158,6 @@ export default function Index() {
         setItems(response.items);
       }
       
-      // Only show total from items we actually have, not eBay's pre-filter total
       setTotal(response.total);
       setNextPage(response.items.length > 0 ? response.nextPage : null);
       setHasSearched(true);
@@ -145,6 +212,58 @@ export default function Index() {
       performSearch(query, 1, false);
     }
   };
+
+  /* ── Hub data loader ── */
+  const loadHubData = useCallback(async () => {
+    setHubLoading(true);
+    setHubError(null);
+    try {
+      const [tcgRes, sportsRes, featuredRes] = await Promise.all([
+        searchEbay({ query: 'pokemon OR "one piece"', limit: 1 }),
+        searchEbay({ query: 'panini OR topps', limit: 1 }),
+        searchEbay({ query: 'rookie OR chrome OR holo', limit: 6 }),
+      ]);
+
+      const pulse: HubPulse = {
+        tcgTotal: tcgRes.total ?? 0,
+        sportsTotal: sportsRes.total ?? 0,
+        updatedAt: Date.now(),
+      };
+      const featured = featuredRes.items ?? [];
+
+      setHubPulse(pulse);
+      setHubFeatured(featured);
+      writeHubCache(pulse, featured);
+    } catch {
+      setHubError("Live preview unavailable.");
+      setHubFeatured([]);
+    } finally {
+      setHubLoading(false);
+    }
+  }, []);
+
+  /* ── Trigger hub load only when idle ── */
+  useEffect(() => {
+    const isIdleHub = !isLoading && !error && items.length === 0 && !query;
+    if (!isIdleHub) return;
+
+    const cached = readHubCache();
+    if (cached?.pulse && cached?.featured) {
+      setHubPulse(cached.pulse);
+      setHubFeatured(cached.featured);
+      return;
+    }
+
+    loadHubData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, error, items.length, query]);
+
+  const formatPrice = (value: string, currency: string) => {
+    const num = parseFloat(value);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(num);
+  };
+
+  const trending = getTrendingLabels();
 
   return (
     <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
@@ -237,13 +356,41 @@ export default function Index() {
                 <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Clean Results</div>
               </div>
 
+              {/* ── A) Live Market Pulse ── */}
+              <div className="mt-8">
+                <div className="mb-3 text-xs font-semibold tracking-[0.28em] uppercase text-slate-500">
+                  Live Market Pulse
+                </div>
+                {hubLoading ? (
+                  <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+                    <Skeleton className="h-20 rounded-2xl" />
+                    <Skeleton className="h-20 rounded-2xl" />
+                  </div>
+                ) : hubError ? (
+                  <p className="text-xs italic text-muted-foreground text-center">{hubError}</p>
+                ) : hubPulse ? (
+                  <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+                    <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm p-4 text-center">
+                      <p className="text-lg font-bold text-slate-900 tabular-nums">{hubPulse.tcgTotal.toLocaleString()}</p>
+                      <p className="text-[11px] text-slate-500">TCG Listings</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm p-4 text-center">
+                      <p className="text-lg font-bold text-slate-900 tabular-nums">{hubPulse.sportsTotal.toLocaleString()}</p>
+                      <p className="text-[11px] text-slate-500">Sports Listings</p>
+                    </div>
+                    <p className="col-span-2 text-center text-[10px] text-slate-400 mt-1">
+                      Updated {minutesAgo(hubPulse.updatedAt)}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+
               {/* Market tiles */}
               <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mx-auto">
                 <Link
                   to="/tcg"
                   className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
                 >
-                  
                   <h3 className="font-semibold text-slate-900 mb-1">TCG Market</h3>
                   <p className="text-xs text-slate-500 mb-4">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
                   <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
@@ -254,7 +401,6 @@ export default function Index() {
                   to="/sports"
                   className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
                 >
-                  
                   <h3 className="font-semibold text-slate-900 mb-1">Sports Market</h3>
                   <p className="text-xs text-slate-500 mb-4">Search sports cards by player, brand, and traits.</p>
                   <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
@@ -263,20 +409,71 @@ export default function Index() {
                 </Link>
               </div>
 
+              {/* ── B) Featured Live Listings ── */}
+              <div className="mt-10">
+                <div className="mb-3 text-xs font-semibold tracking-[0.28em] uppercase text-slate-500">
+                  Featured Live Listings
+                </div>
+                {hubLoading ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="rounded-2xl border border-slate-200 bg-white/70 overflow-hidden">
+                        <Skeleton className="aspect-square w-full rounded-none" />
+                        <div className="p-2.5 space-y-2">
+                          <Skeleton className="h-3 w-3/4" />
+                          <Skeleton className="h-4 w-12" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : hubFeatured.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {hubFeatured.map((item) => (
+                      <a
+                        key={item.itemId}
+                        href={item.itemUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group/card rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                      >
+                        <div className="aspect-square bg-slate-100 overflow-hidden">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title}
+                              className="w-full h-full object-contain group-hover/card:scale-[1.03] transition-transform duration-300"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px]">
+                              No Image
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2.5 space-y-1">
+                          <p className="text-[11px] leading-tight line-clamp-2 text-slate-700">{item.title}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-slate-900 tabular-nums">
+                              {formatPrice(item.price.value, item.price.currency)}
+                            </span>
+                            <ExternalLink className="h-3 w-3 text-slate-400" />
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs italic text-muted-foreground text-center">No featured listings available.</p>
+                )}
+              </div>
+
               {/* Trending Now */}
               <div className="mt-10">
                 <div className="mb-3 text-xs font-semibold tracking-[0.28em] uppercase text-slate-500">
                   Trending Now
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {[
-                    "Wembanyama Chrome — Moving",
-                    "Ja'Marr Chase RC — Hot",
-                    "Pikachu SIR — Trending",
-                    "One Piece OP-05 — Up",
-                    "Prizm Rookie QBs — Active",
-                    "PSA 10 spreads — Watch",
-                  ].map((t) => (
+                  {trending.map((t) => (
                     <div
                       key={t}
                       className="whitespace-nowrap rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs text-slate-700 hover:bg-white transition"
