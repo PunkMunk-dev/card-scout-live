@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, FlaskConical, Trophy, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
@@ -243,7 +243,7 @@ export default function Index() {
                   to="/tcg"
                   className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
                 >
-                  <FlaskConical className="h-6 w-6 text-slate-900 mb-3" />
+                  
                   <h3 className="font-semibold text-slate-900 mb-1">TCG Market</h3>
                   <p className="text-xs text-slate-500 mb-4">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
                   <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
@@ -254,7 +254,7 @@ export default function Index() {
                   to="/sports"
                   className="group rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 p-6 md:p-7 flex flex-col"
                 >
-                  <Trophy className="h-6 w-6 text-slate-900 mb-3" />
+                  
                   <h3 className="font-semibold text-slate-900 mb-1">Sports Market</h3>
                   <p className="text-xs text-slate-500 mb-4">Search sports cards by player, brand, and traits.</p>
                   <span className="mt-auto inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition">
