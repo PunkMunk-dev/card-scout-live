@@ -390,7 +390,7 @@ serve(async (req) => {
     const clampedLimit = Math.min(Math.max(limit, 1), 50);
     
     // Request more items to compensate for client-side filtering
-    const requestLimit = Math.min(clampedLimit * 3, 50);
+    const requestLimit = Math.min(clampedLimit * 3, 150);
     
     // IMPORTANT: eBay requires offset to be a multiple of limit
     // So we must calculate offset using requestLimit, not clampedLimit
