@@ -239,6 +239,8 @@ export default function Index() {
           <EmptyState query={query} />
         ) : (
           <div className="relative overflow-hidden bg-om-bg-0 bg-gradient-to-b from-om-bg-0 via-om-bg-1 to-om-bg-0 text-om-text-0">
+            {/* Hero spotlight ambient pulse */}
+            <div className="omni-hero-spotlight" />
             {/* Grid texture */}
             <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
             {/* PSA mosaic blurred texture */}
@@ -272,14 +274,14 @@ export default function Index() {
                 <div className="mt-6 flex items-center gap-3">
                   <button
                     onClick={handleStartSearching}
-                    className="inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px hover:shadow-lg active:scale-[0.98] transition-all duration-200"
+                    className="inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-11 px-6 text-sm font-medium shadow-[0_10px_30px_rgba(255,255,255,0.08),0_0_60px_rgba(0,185,255,0.12)] hover:-translate-y-px hover:shadow-[0_14px_40px_rgba(255,255,255,0.12),0_0_80px_rgba(0,185,255,0.16)] active:scale-[0.98] transition-all duration-200"
                     style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                   >
                     Start Searching
                   </button>
                   <button
                     onClick={handleExploreMarkets}
-                    className="inline-flex items-center justify-center bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.10)] text-om-text-0 rounded-xl h-11 px-6 text-sm font-medium hover:bg-[rgba(255,255,255,0.10)] hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                    className="inline-flex items-center justify-center bg-[rgba(255,255,255,0.05)] border border-white/[0.12] text-om-text-0 rounded-xl h-11 px-6 text-sm font-medium hover:bg-white/10 hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
                     style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                   >
                     Explore Markets <ChevronRight className="ml-1 h-3.5 w-3.5" />
@@ -291,23 +293,23 @@ export default function Index() {
               <div ref={marketTilesRef} className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
                 <Link
                   to="/tcg"
-                  className="group rounded-3xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] p-10 hover:bg-[rgba(255,255,255,0.10)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+                  className="group rounded-3xl bg-white/5 border border-white/10 p-10 shadow-[0_20px_60px_rgba(0,0,0,0.45)] hover:bg-white/[0.08] hover:-translate-y-[3px] hover:border-white/[0.15] hover:shadow-[0_25px_70px_rgba(0,0,0,0.55)] transition-all duration-200 flex flex-col"
                   style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                 >
                   <h3 className="text-[16px] font-semibold text-om-text-0">TCG Market</h3>
                   <p className="mt-1 text-[14px] text-om-text-2">Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
-                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
+                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit shadow-[0_6px_20px_rgba(255,255,255,0.06),0_0_40px_rgba(0,185,255,0.08)] hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
                     Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
                 <Link
                   to="/sports"
-                  className="group rounded-3xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] p-10 hover:bg-[rgba(255,255,255,0.10)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+                  className="group rounded-3xl bg-white/5 border border-white/10 p-10 shadow-[0_20px_60px_rgba(0,0,0,0.45)] hover:bg-white/[0.08] hover:-translate-y-[3px] hover:border-white/[0.15] hover:shadow-[0_25px_70px_rgba(0,0,0,0.55)] transition-all duration-200 flex flex-col"
                   style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                 >
                   <h3 className="text-[16px] font-semibold text-om-text-0">Sports Market</h3>
                   <p className="mt-1 text-[14px] text-om-text-2">Search sports cards by player, brand, and traits.</p>
-                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
+                  <span className="mt-4 inline-flex items-center justify-center bg-white text-om-bg-0 rounded-xl h-10 px-5 text-sm font-medium w-fit shadow-[0_6px_20px_rgba(255,255,255,0.06),0_0_40px_rgba(0,185,255,0.08)] hover:-translate-y-px active:scale-[0.98] transition-all duration-200">
                     Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
                   </span>
                 </Link>
