@@ -1,36 +1,44 @@
 
 
-# Add Visual Indicator for Cleaned Search Query
+# Faster Search Transition on Card Finder
 
-## Overview
-When a user searches from the watchlist, the raw eBay title gets cleaned and truncated by `extractSearchQuery()`. Currently there's no visual feedback showing what was actually searched. We'll add a small indicator in the results toolbar so users understand the query transformation.
+## Problem
+When you search from the header bar, the current code clears all existing results (`setItems([])`) before the API call starts. This causes the entire page to flash to a skeleton loading grid, making it feel like a full page reload even though you're staying on the same page.
 
-## Changes
+## Solution
+Keep the existing results visible while the new search is loading, and overlay a subtle loading indicator. The results only swap once new data arrives -- no blank/skeleton flash.
 
-### 1. Track watchlist-origin searches (`src/pages/Index.tsx`)
-- Add a `fromWatchlist` state boolean, set to `true` when the search originates from a watchlist click (detected via a URL param like `&src=wl`)
-- Display a small badge/chip below the toolbar when `fromWatchlist` is true, showing: "Searched: [cleaned query]" with an info tooltip explaining "Query cleaned from listing title for broader results"
-- Reset `fromWatchlist` when a manual search is performed
+### Changes in `src/pages/Index.tsx`
 
-### 2. Pass source param from watchlist navigation (`src/components/TabNavigation.tsx`)
-- Update the `onSearchItem` callback to append `&src=wl` to the URL:
-  ```
-  navigate(`/?q=${encodeURIComponent(title)}&src=wl`)
-  ```
+1. **Stop clearing items on new search** -- Remove `setItems([])` from the URL-change effect (line 57) and from `handleSortChange`. The items will stay on screen until the API responds with new ones.
 
-### 3. Add the visual indicator in the toolbar area (`src/pages/Index.tsx`)
-- In the toolbar section (around line 168-180), when `fromWatchlist` is true, render a small dismissible chip:
-  ```
-  Showing results for "cleaned query" (from starred card)  [x]
-  ```
-- Styled as a subtle info bar with a Sparkles or Star icon, muted background, and a dismiss button
-- Automatically clears when user types a new manual search
+2. **Add a loading overlay instead of replacing content** -- When `isLoading` is true AND there are already items on screen, show the existing `ListingGrid` with reduced opacity and a small centered spinner overlay, rather than swapping to the full `LoadingGrid` skeleton.
 
-## Technical Details
+3. **Only show the skeleton grid on the very first search** (when there are no existing items to display).
 
-| File | Change |
-|------|--------|
-| `src/components/TabNavigation.tsx` | Append `&src=wl` to watchlist search URL |
-| `src/pages/Index.tsx` | Read `src` param, show cleaned-query indicator chip, clear on manual search |
+### Visual behavior after the change
 
-No new dependencies needed. Uses existing UI primitives (Badge, X icon).
+| Scenario | Before | After |
+|----------|--------|-------|
+| First search (from hero) | Skeleton grid | Skeleton grid (unchanged) |
+| New search while results showing | Results vanish, skeleton grid, results appear | Results dim slightly with spinner, new results fade in |
+| Sort change | Results vanish, skeleton grid | Results dim, new results replace |
+
+### Technical Detail
+
+```
+// Current (jarring):
+if (isLoading) return <LoadingGrid />
+else if (items.length > 0) return <ListingGrid />
+
+// New (smooth):
+if (isLoading && items.length === 0) return <LoadingGrid />  // first search only
+else if (hasSearched && items.length > 0) return (
+  <div className="relative">
+    {isLoading && <overlay spinner />}
+    <ListingGrid className={isLoading ? "opacity-50 pointer-events-none" : ""} />
+  </div>
+)
+```
+
+Only `src/pages/Index.tsx` needs changes. No new files or dependencies.
