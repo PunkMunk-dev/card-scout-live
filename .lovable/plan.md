@@ -1,19 +1,9 @@
 
+# Update Meta Author Tag
 
-# Replace Favicon with Black Dot
+## Change
+In `index.html`, update the `<meta name="author">` tag from `"Lovable"` to `"OmniMarket Cards"`. Also update the Twitter site meta tag which references `@Lovable`.
 
-## Approach
-Create a simple SVG favicon of a black filled circle and update `index.html` to reference it.
-
-## Changes
-
-### 1. Create `public/favicon.svg`
-A minimal SVG file containing a black circle on a transparent background.
-
-### 2. Update `index.html`
-Replace the existing favicon reference with:
-```html
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-```
-
-Two files touched, no logic changes.
+## File: `index.html`
+- Line 8: Change `content="Lovable"` to `content="OmniMarket Cards"`
+- Line 14: Change `content="@Lovable"` to `content="@OmniMarketCards"`
