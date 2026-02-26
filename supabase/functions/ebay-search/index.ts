@@ -442,11 +442,7 @@ serve(async (req) => {
 
     // Simplify query for eBay API (strip decorative terms)
     const { simplified, decorativeFound } = simplifyQuery(query);
-    const baseQuery = simplified || query;
-
-    const searchQuery = sort === 'graded'
-      ? baseQuery + ' graded PSA BGS CGC SGC'
-      : baseQuery;
+    const searchQuery = simplified || query;
 
     const { items: rawItems, total } = await searchEbay(token, searchQuery, requestLimit, offset, sortParam, apiBuyingOptions);
 
@@ -490,10 +486,12 @@ serve(async (req) => {
         
         normalizedItems = fallbackItems;
       }
-    } else {
-      // Default: filter OUT graded cards for all other modes
+    } else if (sort === 'raw') {
+      // Show only ungraded/raw cards
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title, item.condition));
-    }
+    } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
+      // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
+  }
     
     // Boost results containing decorative terms to the top
     if (decorativeFound.length > 0) {
