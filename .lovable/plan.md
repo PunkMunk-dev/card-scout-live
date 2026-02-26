@@ -1,41 +1,35 @@
 
 
-# Fix Card Finder: Empty Results with Graded Exclusions
+# Fix: Remove Query-Level Graded Exclusions (They Break eBay Results)
 
-## Problem Discovered
-Testing revealed that the graded exclusion terms added to the eBay query (`-PSA -BGS -CGC -SGC -graded -slab -slabbed`) cause **zero results** for specific card searches like "Luka Doncic Prizm". This happens because:
-
-1. The eBay Browse API already has junk exclusions (`-lot -bundle -bulk` etc.) appended on line 297
-2. Adding 7 more graded exclusions makes the query too restrictive -- eBay returns `itemSummaries: []` despite showing `total: 19968`
-3. Simpler queries like "Luka Doncic" (without "Prizm") work fine, confirming it's a query-length/complexity issue
-
-Meanwhile, the "Graded" mode works correctly and returns slabbed cards.
+## Problem
+The `-PSA -BGS -CGC -SGC` exclusions added to the eBay search query combine with the existing 12 junk exclusions (`-lot -bundle -bulk -sealed ...`) on line 297, producing 16 total negative keywords. The eBay Browse API cannot handle this many exclusions and returns only 1 item for queries like "Luka Doncic Prizm" despite reporting `total: 20032`.
 
 ## Solution
-Reduce the eBay query-level exclusions to just the most impactful terms (`-PSA -BGS -CGC -SGC`) and drop the redundant ones (`-graded -slab -slabbed`). The post-fetch `isGradedItem` filter already catches those edge cases as a safety net.
+Remove the query-level graded exclusions entirely. The post-fetch `isGradedItem` filter on line 495-497 already handles this correctly. The edge function fetches up to 150 items (`requestLimit = clampedLimit * 3`), filters out graded ones, then returns up to 48. This approach works because:
+- The over-fetch ratio (3x) provides enough headroom
+- The `isGradedItem` function catches PSA, BGS, CGC, SGC, and other grading keywords reliably
 
-## Technical Changes
+## Technical Change
 
-### `supabase/functions/ebay-search/index.ts` (line 448)
+### `supabase/functions/ebay-search/index.ts` (lines 447-451)
 
-Change the exclusion string from:
+Remove the `gradedExclusions` variable and simplify back to just using `baseQuery`. Keep the graded-mode query enhancement for the "Graded" dropdown option.
+
+**Before:**
+```typescript
+const gradedExclusions = ' -PSA -BGS -CGC -SGC';
+const searchQuery = sort === 'graded'
+  ? baseQuery + ' graded PSA BGS CGC SGC'
+  : baseQuery + gradedExclusions;
 ```
-' -PSA -BGS -CGC -SGC -graded -slab -slabbed'
-```
-To:
-```
-' -PSA -BGS -CGC -SGC'
+
+**After:**
+```typescript
+const searchQuery = sort === 'graded'
+  ? baseQuery + ' graded PSA BGS CGC SGC'
+  : baseQuery;
 ```
 
-This reduces total exclusions from ~19 terms to ~16, staying within eBay's effective query complexity limit while still excluding the vast majority of graded listings at the API level. The existing `isGradedItem` post-filter on line 497 handles any stragglers.
-
-### No other changes needed
-- The "Graded" mode query (`+ graded PSA BGS CGC SGC`) already works
-- The post-fetch `isGradedItem` filter remains as a safety net
-- Frontend code is unchanged
-
-## Expected Result
-- "Luka Doncic Prizm" in Best Match returns a full grid of raw cards
-- "Graded" mode continues to return slabbed cards
-- Auction and Buy It Now modes work with full results
+No other changes needed. The post-fetch filters on lines 472-498 handle graded vs raw filtering after results come back from eBay.
 
