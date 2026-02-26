@@ -197,53 +197,58 @@ export default function Index() {
       )}
 
       {/* Main Content */}
-      <main className="container py-6">
-        {isLoading && items.length === 0 ? (
-          <LoadingGrid />
-        ) : error && items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="rounded-lg border shadow-sm bg-card px-10 py-12 max-w-md">
-              <p className="text-sm text-destructive mb-4">{error}</p>
-              <button onClick={handleRetry} className="text-sm font-medium text-primary hover:underline">
-                Retry Search
-              </button>
-            </div>
-          </div>
-        ) : hasSearched && items.length > 0 ? (
-          <div className="relative">
-            {isLoading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/40 backdrop-blur-[1px] rounded-lg">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      {hasSearched ? (
+        <main className="container py-6">
+          {isLoading && items.length === 0 ? (
+            <LoadingGrid />
+          ) : error && items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="rounded-lg border shadow-sm bg-card px-10 py-12 max-w-md">
+                <p className="text-sm text-destructive mb-4">{error}</p>
+                <button onClick={handleRetry} className="text-sm font-medium text-primary hover:underline">
+                  Retry Search
+                </button>
               </div>
-            )}
-            <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-200" : "transition-opacity duration-200"}>
-            <ListingGrid 
-              items={items}
-              isInWatchlist={isInWatchlist}
-              onToggleWatchlist={toggleWatchlist}
-            />
-            {nextPage && (
-              <div className="flex justify-center pt-6">
-                <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
-                  {isLoadingMore ? (
-                    <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Loading…</>
-                  ) : (
-                    'Load more'
-                  )}
-                </Button>
-              </div>
-            )}
             </div>
-          </div>
-        ) : hasSearched ? (
-          <EmptyState query={query} />
-        ) : (
-          <div className="relative overflow-hidden" style={{ background: `linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 50%, var(--om-bg-0) 100%)`, color: 'var(--om-text-0)' }}>
-            {/* Hero spotlight ambient pulse */}
+          ) : items.length > 0 ? (
+            <div className="relative">
+              {isLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/40 backdrop-blur-[1px] rounded-lg">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-200" : "transition-opacity duration-200"}>
+              <ListingGrid 
+                items={items}
+                isInWatchlist={isInWatchlist}
+                onToggleWatchlist={toggleWatchlist}
+              />
+              {nextPage && (
+                <div className="flex justify-center pt-6">
+                  <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
+                    {isLoadingMore ? (
+                      <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Loading…</>
+                    ) : (
+                      'Load more'
+                    )}
+                  </Button>
+                </div>
+              )}
+              </div>
+            </div>
+          ) : (
+            <EmptyState query={query} />
+          )}
+        </main>
+      ) : (
+        <>
+          {/* ── Full-bleed Hero ── */}
+          <section
+            className="relative w-full min-h-[100vh] flex items-center overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 50%, var(--om-bg-0) 100%)', color: 'var(--om-text-0)' }}
+          >
             <div className="omni-hero-spotlight" />
-            {/* Grid texture */}
             <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-            {/* PSA mosaic blurred texture */}
             <div
               className="pointer-events-none absolute inset-0 scale-110 blur-[28px] opacity-[0.07]"
               style={{
@@ -254,23 +259,18 @@ export default function Index() {
                 WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
               }}
             />
-            {/* Cyan glow top-left */}
-            <div className="pointer-events-none absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full blur-[140px]" style={{ background: 'rgba(10,132,255,0.10)' }} />
-            {/* Blue glow bottom-right */}
-            <div className="pointer-events-none absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full blur-[140px]" style={{ background: 'rgba(10,132,255,0.08)' }} />
+            <div className="pointer-events-none absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.10)' }} />
+            <div className="pointer-events-none absolute -bottom-40 -right-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.08)' }} />
 
-            <div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">
-              {/* ── Hero — centered single column ── */}
-              <div className="flex flex-col items-center text-center min-h-[70vh] justify-center py-16 md:py-24">
+            <div className="relative z-10 mx-auto w-full max-w-[1400px] px-6 md:px-10">
+              <div className="flex flex-col items-center text-center py-16 md:py-24">
                 <span className="text-[11px] font-medium uppercase tracking-[0.30em]" style={{ color: 'var(--om-text-1)' }}>OmniMarket Cards</span>
-
                 <h1 className="mt-6 text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] max-w-[600px]" style={{ color: 'var(--om-text-0)' }}>
                   Discover the market before it moves.
                 </h1>
                 <p className="mt-4 max-w-[480px] text-[14px] leading-[1.55]" style={{ color: 'var(--om-text-2)' }}>
                   Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
                 </p>
-
                 <div className="mt-6 flex items-center gap-3">
                   <button
                     onClick={handleStartSearching}
@@ -288,36 +288,38 @@ export default function Index() {
                   </button>
                 </div>
               </div>
-
-              {/* ── Market Tiles ── */}
-              <div ref={marketTilesRef} className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
-                <Link
-                  to="/tcg"
-                  className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
-                  style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
-                >
-                  <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>TCG Market</h3>
-                  <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
-                  <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
-                    Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                  </span>
-                </Link>
-                <Link
-                  to="/sports"
-                  className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
-                  style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
-                >
-                  <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>Sports Market</h3>
-                  <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search sports cards by player, brand, and traits.</p>
-                  <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
-                    Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                  </span>
-                </Link>
-              </div>
             </div>
-          </div>
-        )}
-      </main>
+          </section>
+
+          {/* ── Market Tiles Section ── */}
+          <section className="relative w-full" style={{ background: 'var(--om-bg-0)' }}>
+            <div ref={marketTilesRef} className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Link
+                to="/tcg"
+                className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>TCG Market</h3>
+                <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
+                  Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </span>
+              </Link>
+              <Link
+                to="/sports"
+                className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>Sports Market</h3>
+                <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search sports cards by player, brand, and traits.</p>
+                <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
+                  Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </span>
+              </Link>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }
