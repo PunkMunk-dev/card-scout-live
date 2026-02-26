@@ -9,9 +9,11 @@ export function WatchlistStar({ listing }: { listing: EbayListing }) {
 
   return (
     <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWatchlist(listing); }}
-      className={cn("p-1 rounded-full transition-all duration-200 hover:scale-110 bg-black/50 backdrop-blur-sm")}
+      className={cn("w-7 h-7 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors",
+        watched ? "text-[var(--om-accent)]" : "text-white/70 hover:text-white"
+      )}
       aria-label={watched ? "Remove from watchlist" : "Add to watchlist"}>
-      <Star className={cn("h-4 w-4 transition-colors duration-200", watched ? "text-yellow-500 fill-current" : "text-white/60 hover:text-white/90")} strokeWidth={2} />
+      <Star className={cn("h-3.5 w-3.5", watched && "fill-current")} />
     </button>
   );
 }
