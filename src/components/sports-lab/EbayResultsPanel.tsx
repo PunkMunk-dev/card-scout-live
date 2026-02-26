@@ -155,7 +155,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
             Buy It Now
           </button>
           <Select value={priceRange} onValueChange={(v) => setPriceRange(v as PriceRange)}>
-            <SelectTrigger className="w-[100px] h-7 text-xs om-input rounded-full border-white/10"><SelectValue placeholder="Price" /></SelectTrigger>
+            <SelectTrigger className="w-[100px] h-7 text-xs om-input rounded-xl border-white/10"><SelectValue placeholder="Price" /></SelectTrigger>
             <SelectContent className="om-dropdown">{PRICE_RANGES.map(r => <SelectItem key={r.value} value={r.value} className="text-xs" style={{ color: 'var(--om-text-1)' }}>{r.label}</SelectItem>)}</SelectContent>
           </Select>
           {hasMore && !isLoadingAll && !error && <button onClick={() => loadAll(() => filteredCountRef.current)} className="om-btn om-pill whitespace-nowrap">Load more</button>}
@@ -163,7 +163,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
           <div className="flex items-center gap-1.5">
             <ArrowUpDown className="h-4 w-4 hidden sm:block" style={{ color: 'var(--om-text-3)' }} />
             <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-              <SelectTrigger className="w-[130px] h-7 text-xs om-input rounded-full border-white/10"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[130px] h-7 text-xs om-input rounded-xl border-white/10"><SelectValue /></SelectTrigger>
               <SelectContent className="om-dropdown">
                 {filterMode === 'auction' && <SelectItem value="ending-soon" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Ending Soonest</SelectItem>}
                 <SelectItem value="newest" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Newest</SelectItem>

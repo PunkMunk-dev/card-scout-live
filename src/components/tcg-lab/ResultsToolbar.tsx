@@ -63,7 +63,7 @@ export function ResultsToolbar({
         </button>
 
         <Select value={priceRange} onValueChange={(v) => onPriceRangeChange(v as PriceRange)}>
-          <SelectTrigger className="h-7 w-[110px] text-[11px] om-input rounded-full border-white/10">
+          <SelectTrigger className="h-7 w-[110px] text-[11px] om-input rounded-xl border-white/10">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="om-dropdown">
@@ -78,7 +78,7 @@ export function ResultsToolbar({
         <div className="flex items-center gap-1.5">
           <ArrowUpDown className="h-3 w-3" style={{ color: 'var(--om-text-3)' }} />
           <Select value={sortOption} onValueChange={(v) => onSortChange(v as SearchFilters['sort'])}>
-            <SelectTrigger className="h-7 w-[120px] text-[11px] om-input rounded-full border-white/10">
+            <SelectTrigger className="h-7 w-[120px] text-[11px] om-input rounded-xl border-white/10">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="om-dropdown">

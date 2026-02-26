@@ -130,7 +130,7 @@ export function TcgHeader({
               </div>
               <SearchModeToggle mode={mode} onModeChange={onModeChange} />
               {hasActiveQuery && (
-                <span className="om-pill om-pill-active tabular-nums">{totalCount} cards</span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium tabular-nums" style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-0)' }}>{totalCount} cards</span>
               )}
             </div>
             <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end flex-wrap">

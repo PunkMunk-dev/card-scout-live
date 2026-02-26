@@ -64,8 +64,8 @@
     /* Landing neutrals — LIGHT */
     --om-bg-0: #F5F7FA;
     --om-bg-1: #FFFFFF;
-    --om-bg-2: #F0F2F5;
-    --om-bg-3: #E5E8ED;
+    --om-bg-2: #F0F3F8;
+    --om-bg-3: #E6EAF2;
     --om-text-0: #111827;
     --om-text-1: #374151;
     --om-text-2: #6B7280;
@@ -141,10 +141,10 @@
     --sidebar-ring: 224 76% 55%;
 
     /* Landing neutrals — DARK */
-    --om-bg-0: #0F1521;
-    --om-bg-1: #131B2A;
-    --om-bg-2: #182233;
-    --om-bg-3: #1E2A3E;
+    --om-bg-0: #0B0F16;
+    --om-bg-1: #0E1420;
+    --om-bg-2: #121A28;
+    --om-bg-3: #162033;
     --om-text-0: #F5F7FF;
     --om-text-1: #B8C0D4;
     --om-text-2: #7F8AA3;
@@ -233,9 +233,9 @@
     transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   .om-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     border-color: var(--om-border-1);
-    box-shadow: 0 0 80px rgba(0,185,255,0.06);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
   }
 
   /* OmniMarket toolbar */
@@ -249,6 +249,7 @@
   .om-input {
     background: var(--om-bg-2);
     border: 1px solid var(--om-border-0);
+    border-radius: 0.75rem;
     color: var(--om-text-0);
     transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -257,8 +258,8 @@
   }
   .om-input:focus {
     outline: none;
-    box-shadow: 0 0 0 4px var(--om-focus-ring);
-    border-color: var(--om-accent);
+    box-shadow: 0 0 0 4px var(--focus-ring);
+    border-color: var(--accent-blue);
   }
 
   /* OmniMarket command bar */
@@ -266,11 +267,12 @@
     background: var(--om-bg-1);
     border: 1px solid var(--om-border-0);
     border-radius: 1rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
   }
 
   /* OmniMarket button micro-interactions */
   .om-btn {
-    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   .om-btn:hover {
     transform: translateY(-1px);
@@ -312,7 +314,8 @@
   .om-pill-active {
     background: rgba(10,132,255,0.12);
     border-color: rgba(10,132,255,0.3);
-    color: var(--om-accent);
+    color: var(--accent-blue);
+    box-shadow: 0 6px 20px rgba(10,132,255,0.35);
   }
 
   /* Skeleton shimmer on dark */

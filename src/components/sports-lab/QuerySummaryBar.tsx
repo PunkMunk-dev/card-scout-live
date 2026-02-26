@@ -23,7 +23,7 @@ export function QuerySummaryBar({ playerName, sportLabel, brandLabel, showAllBra
   const hasQuery = !!playerName && (!!brandLabel || showAllBrands);
 
   return (
-    <div className="h-8 px-4 flex items-center" style={{ background: 'rgba(14,20,32,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="h-8 px-4 flex items-center" style={{ background: 'var(--om-bg-1)', borderBottom: '1px solid var(--om-divider)' }}>
       <div className="flex items-center justify-between gap-4 text-xs w-full">
         <div className="flex items-center gap-1.5 min-w-0">
           <span style={{ color: 'var(--om-text-3)' }}>Showing:</span>
