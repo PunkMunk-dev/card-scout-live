@@ -40,7 +40,7 @@ export function TerminalCard({ listing }: TerminalCardProps) {
       <a href={listing.itemWebUrl} target="_blank" rel="noopener noreferrer" className="block h-full">
         <div className="aspect-square overflow-hidden relative" style={{ background: 'var(--om-bg-3)' }}>
           <img src={listing.image} alt={cleanTitle} className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]" loading="lazy" />
-          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
           <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-sm">eBay</span>
           <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
             <button
@@ -60,7 +60,7 @@ export function TerminalCard({ listing }: TerminalCardProps) {
                 {isAuction && listing.price.value === '0.00' ? (
                   <span className="text-sm text-white/60 italic">No bids yet</span>
                 ) : (
-                  <span className="text-lg font-bold text-white tabular-nums">${listing.price.value}</span>
+                  <span className="text-lg font-bold text-white tabular-nums drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">${listing.price.value}</span>
                 )}
                 {listing.shipping && parseFloat(listing.shipping.cost) > 0 && (
                   <span className="text-[11px] text-white/50">+${listing.shipping.cost} ship</span>
@@ -78,8 +78,8 @@ export function TerminalCard({ listing }: TerminalCardProps) {
         <div className="p-3 space-y-2.5">
           <h3 className="text-sm font-medium leading-snug line-clamp-2 min-h-[2.5rem]" style={{ color: 'var(--om-text-0)' }}>{cleanTitle}</h3>
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <a href={gradedCompsUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/80 text-white hover:bg-red-500 transition-colors">PSA 10</a>
-            <a href={gemUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[42px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-500/80 text-white hover:bg-blue-500 transition-colors">Gem</a>
+            <a href={gradedCompsUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/90 text-white hover:bg-red-500 transition-colors shadow-[0_4px_12px_rgba(255,0,0,0.25)]">PSA 10</a>
+            <a href={gemUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[42px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold text-white hover:opacity-90 transition-colors shadow-[0_4px_12px_rgba(10,132,255,0.25)]" style={{ background: 'var(--accent-blue)' }}>Gem</a>
           </div>
           <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <button

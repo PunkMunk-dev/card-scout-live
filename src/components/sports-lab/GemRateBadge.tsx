@@ -30,7 +30,8 @@ export function GemRateBadge({ searchContext, fallbackUrl }: GemRateBadgeProps) 
       <Tooltip>
         <TooltipTrigger asChild>
           <a ref={containerRef} href={displayUrl} target="_blank" rel="noopener noreferrer"
-            className={`min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide transition-colors ${isLoading ? 'bg-blue-500/50 text-white/70 cursor-wait' : 'bg-blue-500/80 text-white hover:bg-blue-500'}`}
+            className={`min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide transition-colors shadow-[0_4px_12px_rgba(10,132,255,0.25)] ${isLoading ? 'text-white/70 cursor-wait' : 'text-white hover:opacity-90'}`}
+            style={{ background: isLoading ? 'rgba(10,132,255,0.5)' : 'var(--accent-blue)' }}
             onClick={(e) => isLoading && e.preventDefault()}>
             {displayText}
           </a>
