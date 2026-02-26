@@ -444,11 +444,9 @@ serve(async (req) => {
     const { simplified, decorativeFound } = simplifyQuery(query);
     const baseQuery = simplified || query;
 
-    // Move graded filtering into the eBay query itself for full result pages
-    const gradedExclusions = ' -PSA -BGS -CGC -SGC';
     const searchQuery = sort === 'graded'
       ? baseQuery + ' graded PSA BGS CGC SGC'
-      : baseQuery + gradedExclusions;
+      : baseQuery;
 
     const { items: rawItems, total } = await searchEbay(token, searchQuery, requestLimit, offset, sortParam, apiBuyingOptions);
 
