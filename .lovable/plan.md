@@ -1,25 +1,30 @@
 
+# Unify Watchlist Icon Across All Tabs
 
-# Add More Decorative Terms to Both Edge Functions
+## Goal
+Make the watchlist icon consistent everywhere, matching the TCG Market (TerminalCard) style: a **Star** icon in a dark pill (`bg-black/50 backdrop-blur-sm`), using `var(--om-accent)` cyan color with `fill-current` when selected, and `text-white/70` when unselected.
 
-## What Changes
-Add 6 new decorative/variant terms to the `DECORATIVE_TERMS` array in both edge functions so that searches like "Charizard reverse holo" or "Luffy leader card" correctly strip those terms for the eBay API call while boosting matching results to the top.
+## Current State
+| Location | Icon | Selected Color | Container |
+|---|---|---|---|
+| TCG Market (TerminalCard) | Star | `var(--om-accent)` cyan + fill | `bg-black/50 backdrop-blur-sm` |
+| Sports Market (WatchlistStar) | Star | `text-yellow-500` + fill | `bg-black/50 backdrop-blur-sm` |
+| Card Finder / Index (ListingCard) | Heart | `text-primary` + fill | `bg-background/70 backdrop-blur-sm` |
 
-## New Terms Being Added
-- `parallel rare` -- common in One Piece and other TCGs
-- `leader card` -- One Piece TCG leader cards
-- `promo` -- promotional cards across all TCGs
-- `tournament pack` -- tournament-exclusive printings
-- `stamped` -- stamped/foil variants
-- `reverse holo` -- reverse holographic Pokemon cards
+## Target
+All three match TerminalCard: **Star icon**, `var(--om-accent)` when active, `bg-black/50 backdrop-blur-sm` container.
 
-## Files Modified
+## Changes
 
-### 1. `supabase/functions/ebay-search/index.ts` (Sports Lab search)
-Update the `DECORATIVE_TERMS` array (lines 172-178) to add the 6 new terms.
+### 1. `src/components/sports-lab/WatchlistStar.tsx`
+- Change selected color from `text-yellow-500` to `text-[var(--om-accent)]`
+- Update container to match: `w-7 h-7 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors`
+- Update unselected: `text-white/70 hover:text-white`
+- Icon size: `h-3.5 w-3.5` to match
 
-### 2. `supabase/functions/tcg-ebay-search/index.ts` (TCG Lab search)
-Update the `DECORATIVE_TERMS` array (lines 59-65) to add the same 6 new terms.
-
-Both arrays will be kept in sync. No other code changes needed -- the existing `simplifyQuery` function already iterates over the full array.
-
+### 2. `src/components/ListingCard.tsx`
+- Replace `Heart` import with `Star` from lucide-react (remove Heart import)
+- Change the button container from `bg-background/70` to `bg-black/50 backdrop-blur-sm` with `w-7 h-7 flex items-center justify-center rounded-full`
+- Selected: `text-[var(--om-accent)]` instead of `text-primary`
+- Unselected: `text-white/70 hover:text-white`
+- Replace `<Heart>` with `<Star className="h-3.5 w-3.5" />` with `fill-current` when active
