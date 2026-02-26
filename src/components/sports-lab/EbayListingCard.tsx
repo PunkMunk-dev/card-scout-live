@@ -94,7 +94,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
                 <span className={cn("font-semibold tabular-nums", expectedProfit >= 0 ? "text-green-500" : "text-red-500")}>{expectedProfit >= 0 ? '+' : ''}${expectedProfit.toFixed(0)}</span>
               </div>
             )}
-            <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid var(--om-divider)' }}>
               <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); await navigator.clipboard.writeText(cleanListingTitle(listing.title)); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 className="om-btn w-8 h-8 flex items-center justify-center rounded-md transition-all"
                 style={{ background: 'var(--om-bg-3)', color: 'var(--om-text-2)' }}>

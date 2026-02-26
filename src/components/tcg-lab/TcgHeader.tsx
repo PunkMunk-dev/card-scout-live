@@ -95,7 +95,7 @@ export function TcgHeader({
                       <Filter className="h-3.5 w-3.5" />Filters
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl om-surface-1 border-t border-white/10">
+                  <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl om-surface-1 border-t border-[var(--om-border-0)]">
                     <SheetHeader><SheetTitle className="text-[var(--om-text-0)]">TCG Filters</SheetTitle></SheetHeader>
                     <div className="py-4 space-y-4">{guidedFilters}</div>
                   </SheetContent>

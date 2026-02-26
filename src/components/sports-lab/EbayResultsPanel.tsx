@@ -104,7 +104,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
         <AlertCircle className="w-10 h-10 mb-4 mx-auto" style={{ color: 'var(--om-danger)' }} />
         <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--om-text-0)' }}>Search Error</h2>
         <p className="text-sm mb-6" style={{ color: 'var(--om-text-2)' }}>{error}</p>
-        <Button variant="outline" size="sm" onClick={retry} className="om-btn gap-2 border-white/10" style={{ color: 'var(--om-text-1)' }}>
+        <Button variant="outline" size="sm" onClick={retry} className="om-btn gap-2 border-[var(--om-border-0)]" style={{ color: 'var(--om-text-1)' }}>
           <RotateCcw className="h-3.5 w-3.5" />Retry
         </Button>
       </div>
@@ -119,7 +119,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
         </div>
         <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--om-text-0)' }}>No listings found</h2>
         <p className="text-sm mb-6" style={{ color: 'var(--om-text-2)' }}>Try adjusting filters or expanding your search.</p>
-        {onReset && <Button variant="outline" size="sm" onClick={onReset} className="om-btn gap-2 border-white/10" style={{ color: 'var(--om-text-1)' }}><RotateCcw className="h-3.5 w-3.5" />Clear filters</Button>}
+        {onReset && <Button variant="outline" size="sm" onClick={onReset} className="om-btn gap-2 border-[var(--om-border-0)]" style={{ color: 'var(--om-text-1)' }}><RotateCcw className="h-3.5 w-3.5" />Clear filters</Button>}
       </div>
     </div>
   );
@@ -129,9 +129,9 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
       {(isLoadingAll || isLoadingMore) && <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--om-bg-3)' }}><div className="h-full animate-pulse" style={{ width: '60%', background: 'var(--om-accent)' }} /></div>}
 
       {error && listings.length > 0 && (
-        <Alert variant="destructive" className="flex items-center justify-between border-white/10" style={{ background: 'rgba(255,92,122,0.1)' }}>
+        <Alert variant="destructive" className="flex items-center justify-between border-[var(--om-border-0)]" style={{ background: 'rgba(255,92,122,0.1)' }}>
           <AlertDescription className="flex-1">{error}</AlertDescription>
-          <Button variant="outline" size="sm" onClick={retry} className="ml-4 gap-1.5 shrink-0 om-btn border-white/10">
+          <Button variant="outline" size="sm" onClick={retry} className="ml-4 gap-1.5 shrink-0 om-btn border-[var(--om-border-0)]">
             <RotateCcw className="h-3 w-3" />Retry
           </Button>
         </Alert>
@@ -155,7 +155,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
             Buy It Now
           </button>
           <Select value={priceRange} onValueChange={(v) => setPriceRange(v as PriceRange)}>
-            <SelectTrigger className="w-[100px] h-7 text-xs om-input rounded-xl border-white/10"><SelectValue placeholder="Price" /></SelectTrigger>
+            <SelectTrigger className="w-[100px] h-7 text-xs om-input rounded-xl border-[var(--om-border-0)]"><SelectValue placeholder="Price" /></SelectTrigger>
             <SelectContent className="om-dropdown">{PRICE_RANGES.map(r => <SelectItem key={r.value} value={r.value} className="text-xs" style={{ color: 'var(--om-text-1)' }}>{r.label}</SelectItem>)}</SelectContent>
           </Select>
           {hasMore && !isLoadingAll && !error && <button onClick={() => loadAll(() => filteredCountRef.current)} className="om-btn om-pill whitespace-nowrap">Load more</button>}
@@ -163,7 +163,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
           <div className="flex items-center gap-1.5">
             <ArrowUpDown className="h-4 w-4 hidden sm:block" style={{ color: 'var(--om-text-3)' }} />
             <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-              <SelectTrigger className="w-[130px] h-7 text-xs om-input rounded-xl border-white/10"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[130px] h-7 text-xs om-input rounded-xl border-[var(--om-border-0)]"><SelectValue /></SelectTrigger>
               <SelectContent className="om-dropdown">
                 {filterMode === 'auction' && <SelectItem value="ending-soon" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Ending Soonest</SelectItem>}
                 <SelectItem value="newest" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Newest</SelectItem>

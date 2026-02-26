@@ -69,7 +69,7 @@ export function QueryHeader({
             </div>
             <div className="flex items-center gap-2">
               <Sheet><SheetTrigger asChild><Button variant="ghost" size="sm" className="om-btn gap-1.5" style={{ color: 'var(--om-text-2)' }}><Filter className="h-3.5 w-3.5" />Filters</Button></SheetTrigger>
-                <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl om-surface-1 border-t border-white/10"><SheetHeader><SheetTitle style={{ color: 'var(--om-text-0)' }}>Search Filters</SheetTitle></SheetHeader>
+                <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl om-surface-1 border-t border-[var(--om-border-0)]"><SheetHeader><SheetTitle style={{ color: 'var(--om-text-0)' }}>Search Filters</SheetTitle></SheetHeader>
                   <div className="py-4 space-y-4">{filterControls}</div></SheetContent></Sheet>
             </div>
           </div>
