@@ -1,29 +1,50 @@
 
 
-# Fix "Showing" Summary Bar Rounded Edges
+# Fix Landing to Full-Bleed Premium Layout
 
 ## Problem
-The `QuerySummaryBar` (Sports) and `ContextBar` (TCG) that appear below the command bar headers have flat/sharp edges with `borderBottom` lines, inconsistent with the rounded design system used everywhere else.
+The hero section is nested inside a `<main className="container">` wrapper, which constrains it to `max-w-[1400px]` with side padding. The background gradient, glows, and textures are clipped rather than spanning edge-to-edge. The hero height is `min-h-[70vh]` instead of filling the viewport.
 
 ## Solution
-Give both bars `rounded-xl` corners and remove the flat `borderBottom` line. Instead, use a subtle background fill with border all around -- matching the `.om-command-bar` aesthetic -- so they feel like a cohesive rounded element sitting beneath the header.
+Restructure the idle/hub block so the hero is a full-bleed `<section>` outside the container, with background layers at full width and content centered inside a `max-w-[1400px]` inner wrapper. Market tiles move into their own section below.
 
-## Changes
+## Changes (1 file: `src/pages/Index.tsx`, styling only)
 
-### 1. `src/components/sports-lab/QuerySummaryBar.tsx`
-- Both the idle and active states: remove `borderBottom` inline style, add `rounded-xl` class and `border` using `var(--om-border-0)` all around
-- Add small vertical margin (`mt-2`) so it visually separates from the command bar above
-- Background stays `var(--om-bg-1)` for active, slightly transparent for idle
+### A. Pull hero out of `<main className="container">`
+- The idle state (lines 240-318) currently renders inside `<main className="container py-6">`, which applies `max-width` and padding to everything including backgrounds
+- Restructure so the idle block renders as a sibling **outside** the `<main>` container, or conditionally skip the container wrapper when showing the hero
 
-### 2. `src/components/tcg-lab/ContextBar.tsx`
-- Replace `border-b border-border/20 bg-secondary/10` with `rounded-xl` + `border border-[var(--om-border-0)]` + `bg-[var(--om-bg-1)]`
-- Wrap in appropriate margin (`mt-2`) for spacing from header
+### B. Hero section -- full-bleed with proper height
+Replace the current `<div className="relative overflow-hidden" style={{...}}>` with:
+```
+<section className="relative w-full min-h-[100vh] flex items-center overflow-hidden"
+  style={{ background: 'linear-gradient(...)' }}>
+```
+- `w-full` + no `max-w` = edge-to-edge background
+- `min-h-[100vh]` + `flex items-center` = vertically centered, full viewport
+- All background layers (spotlight, grid texture, mosaic, glows) stay as absolute children of this section -- they already use `absolute inset-0` so they'll naturally fill the full width
 
-### 3. `src/components/sports-lab/QueryHeader.tsx` (lines 102-105)
-- Add padding/margin to the wrapper `div` around `QuerySummaryBar` so the rounded bar has breathing room (e.g., `pt-2`)
+### C. Content wrapper inside hero
+The existing `<div className="relative mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8">` stays as-is for the hero text content. Add `z-10` to ensure it layers above backgrounds.
 
-### 4. `src/components/tcg-lab/TcgHeader.tsx`
-- Same spacing adjustment around where `ContextBar` is rendered, adding `pt-2` if needed
+Change inner flex container from `min-h-[70vh]` to just vertical padding (`py-16 md:py-24`) since the parent section now handles the `min-h-[100vh]` + centering.
 
-All changes are styling-only. No logic or structure changes.
+### D. Market tiles -- separate section
+Move market tiles out of the hero section into their own `<section>`:
+```
+<section className="relative w-full" style={{ background: 'var(--om-bg-0)' }}>
+  <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-20">
+    {/* tiles grid */}
+  </div>
+</section>
+```
+This creates a clean section break without overlap effects.
+
+### E. Conditional container for search results
+When `hasSearched` is true, the `<main className="container py-6">` still wraps search results as before -- no change there. Only the idle/hub state breaks out of the container.
+
+### Technical Detail
+The return statement restructure:
+- Wrap the outer `<div>` to conditionally render: if idle (no search), render the full-bleed hero sections directly; if searched, render the existing `<main className="container">` with results
+- The toolbar (`hasSearched && ...`) stays at the top unchanged
 
