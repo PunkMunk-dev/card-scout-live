@@ -50,7 +50,7 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
     excludeLots: true,
     excludeSealed: true,
     rawOnly: true,
-    minPrice: showAuctionsOnly ? 0 : Math.max(10, priceRangeConfig.min),
+    minPrice: showAuctionsOnly ? 0 : priceRangeConfig.min,
     maxPrice: showAuctionsOnly ? 0 : priceRangeConfig.max,
     cardType: 'single',
     buyingOptions: showAuctionsOnly ? 'AUCTION' : undefined,
