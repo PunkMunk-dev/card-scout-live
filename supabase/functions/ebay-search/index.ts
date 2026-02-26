@@ -486,12 +486,10 @@ serve(async (req) => {
         
         normalizedItems = fallbackItems;
       }
-    } else if (sort === 'raw') {
-      // Show only ungraded/raw cards
+    } else {
+      // Default: filter OUT graded cards for all other modes
       normalizedItems = normalizedItems.filter(item => !isGradedItem(item.title, item.condition));
-    } else if (sort === 'auction_only' || sort === 'buy_now_only' || sort === 'price_asc') {
-      // Show ALL cards (both graded and raw) - filtering is done by buyingOptions only
-  }
+    }
     
     // Boost results containing decorative terms to the top
     if (decorativeFound.length > 0) {
