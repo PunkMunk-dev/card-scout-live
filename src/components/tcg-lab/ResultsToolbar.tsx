@@ -63,12 +63,12 @@ export function ResultsToolbar({
         </button>
 
         <Select value={priceRange} onValueChange={(v) => onPriceRangeChange(v as PriceRange)}>
-          <SelectTrigger className="h-7 w-[110px] text-[11px] om-input rounded-xl border-white/10">
+          <SelectTrigger className="h-7 w-[110px] text-[11px] om-input rounded-xl border-[var(--om-border-0)]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="om-dropdown">
             {PRICE_RANGES.map((range) => (
-              <SelectItem key={range.value} value={range.value} className="text-xs text-[var(--om-text-1)] hover:bg-white/5">
+              <SelectItem key={range.value} value={range.value} className="text-xs text-[var(--om-text-1)] hover:bg-[var(--om-bg-2)]">
                 {range.label}
               </SelectItem>
             ))}
@@ -78,7 +78,7 @@ export function ResultsToolbar({
         <div className="flex items-center gap-1.5">
           <ArrowUpDown className="h-3 w-3" style={{ color: 'var(--om-text-3)' }} />
           <Select value={sortOption} onValueChange={(v) => onSortChange(v as SearchFilters['sort'])}>
-            <SelectTrigger className="h-7 w-[120px] text-[11px] om-input rounded-xl border-white/10">
+            <SelectTrigger className="h-7 w-[120px] text-[11px] om-input rounded-xl border-[var(--om-border-0)]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="om-dropdown">

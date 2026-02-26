@@ -8,7 +8,7 @@ interface QuerySummaryBarProps {
 
 export function QuerySummaryBar({ playerName, sportLabel, brandLabel, showAllBrands, traitLabels = [], resultCount, isLoading, idleMessage = 'Select a player to begin searching' }: QuerySummaryBarProps) {
   if (!playerName) return (
-    <div className="px-4 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="px-4 py-2" style={{ borderBottom: '1px solid var(--om-divider)' }}>
       <p className="text-xs" style={{ color: 'var(--om-text-3)' }}>{idleMessage}</p>
     </div>
   );

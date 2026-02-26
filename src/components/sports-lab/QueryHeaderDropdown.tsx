@@ -26,7 +26,7 @@ export function QueryHeaderDropdown({ label, value, placeholder, options, select
   return (
     <div ref={containerRef} className="relative">
       <button onClick={() => setIsOpen(!isOpen)}
-        className={cn("om-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-white/10",
+        className={cn("om-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-[var(--om-border-0)]",
           isOpen && "ring-1",
           (selectedId || showAllActive) ? "" : "")}
         style={{
@@ -42,7 +42,7 @@ export function QueryHeaderDropdown({ label, value, placeholder, options, select
       {isOpen && (
         <div className="absolute top-full left-0 mt-1.5 z-50 min-w-[260px] max-w-[320px] om-dropdown overflow-hidden">
           {searchable && (
-            <div className="p-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="p-2.5" style={{ borderBottom: '1px solid var(--om-divider)' }}>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: 'var(--om-text-3)' }} />
                 <input placeholder={`Search ${label.toLowerCase() || 'options'}...`} value={search} onChange={(e) => setSearch(e.target.value)}
@@ -54,7 +54,7 @@ export function QueryHeaderDropdown({ label, value, placeholder, options, select
             {showAllMode && (
               <button onClick={() => { onShowAll?.(); setIsOpen(false); }}
                 className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-left transition-colors",
-                  showAllActive ? "" : "hover:bg-white/5")}
+                  showAllActive ? "" : "hover:bg-[var(--om-bg-2)]")}
                 style={showAllActive ? { background: 'rgba(0,185,255,0.1)', color: 'var(--om-accent)' } : { color: 'var(--om-text-1)' }}>
                 <Layers className="h-4 w-4" /><span className="font-medium">All Brands</span>
                 {showAllActive && <Check className="h-4 w-4 ml-auto" />}
@@ -66,7 +66,7 @@ export function QueryHeaderDropdown({ label, value, placeholder, options, select
                 return (
                   <button key={o.id} onClick={() => { onSelect(o.id); setIsOpen(false); setSearch(''); }}
                     className={cn("w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm text-left transition-colors",
-                      sel ? "" : "hover:bg-white/5")}
+                      sel ? "" : "hover:bg-[var(--om-bg-2)]")}
                     style={sel ? { background: 'rgba(0,185,255,0.1)', color: 'var(--om-accent)' } : { color: 'var(--om-text-1)' }}>
                     <div className="flex-1 min-w-0">
                       <span className="font-medium">{o.label}</span>
@@ -102,7 +102,7 @@ export function TraitsDropdown({ traits, selectedIds, onToggle, onClear }: Trait
   return (
     <div ref={containerRef} className="relative">
       <button onClick={() => setIsOpen(!isOpen)}
-        className={cn("om-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-white/10")}
+        className={cn("om-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border border-[var(--om-border-0)]")}
         style={{
           background: 'var(--om-bg-2)',
           color: count > 0 ? 'var(--om-text-0)' : 'var(--om-text-2)',
@@ -131,7 +131,7 @@ export function TraitsDropdown({ traits, selectedIds, onToggle, onClear }: Trait
             </div>
           </div>
           {count > 0 && (
-            <div className="px-3 py-2.5 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+            <div className="px-3 py-2.5 flex items-center justify-between" style={{ borderTop: '1px solid var(--om-divider)', background: 'var(--om-bg-2)' }}>
               <span className="text-[11px] truncate max-w-[160px]" style={{ color: 'var(--om-text-3)' }}>{labels.join(' · ')}</span>
               <button onClick={() => onClear ? onClear() : selectedIds.forEach(id => onToggle(id))} className="text-[11px]" style={{ color: 'var(--om-text-2)' }}>Clear</button>
             </div>

@@ -235,7 +235,7 @@
   .om-card:hover {
     transform: translateY(-3px);
     border-color: var(--om-border-1);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    box-shadow: 0 30px 80px var(--glass-shadow);
   }
 
   /* OmniMarket toolbar */
@@ -267,7 +267,7 @@
     background: var(--om-bg-1);
     border: 1px solid var(--om-border-0);
     border-radius: 1rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    box-shadow: 0 20px 60px var(--glass-shadow);
   }
 
   /* OmniMarket button micro-interactions */

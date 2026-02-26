@@ -81,7 +81,7 @@ export function TerminalCard({ listing }: TerminalCardProps) {
             <a href={gradedCompsUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/90 text-white hover:bg-red-500 transition-colors shadow-[0_4px_12px_rgba(255,0,0,0.25)]">PSA 10</a>
             <a href={gemUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[42px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold text-white hover:opacity-90 transition-colors shadow-[0_4px_12px_rgba(10,132,255,0.25)]" style={{ background: 'var(--accent-blue)' }}>Gem</a>
           </div>
-          <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid var(--om-divider)' }}>
             <button
               onClick={async (e) => {
                 e.preventDefault();
