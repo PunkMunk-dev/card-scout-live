@@ -97,7 +97,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
             />
             <input
               autoFocus
-              type="text"
+              type="password"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={handleKeyDown}
