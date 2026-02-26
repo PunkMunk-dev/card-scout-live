@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Search, Sun, Moon } from 'lucide-react';
+import { Search, Sun, Moon, Lock } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WatchlistDropdown } from '@/components/WatchlistDropdown';
 
@@ -126,6 +127,23 @@ export function TabNavigation() {
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => {
+                  localStorage.removeItem("omni_access");
+                  localStorage.removeItem("omni_user");
+                  window.location.href = '/';
+                }}
+                className="om-btn flex items-center justify-center h-10 w-10 rounded-xl transition-colors"
+                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-1)' }}
+                aria-label="Lock"
+              >
+                <Lock className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Lock</TooltipContent>
+          </Tooltip>
           <WatchlistDropdown onSearchItem={(query) => {
             navigate(`/?q=${encodeURIComponent(query)}&src=wl`);
           }} />
