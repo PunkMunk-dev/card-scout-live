@@ -445,7 +445,7 @@ serve(async (req) => {
     const baseQuery = simplified || query;
 
     // Move graded filtering into the eBay query itself for full result pages
-    const gradedExclusions = ' -PSA -BGS -CGC -SGC -graded -slab -slabbed';
+    const gradedExclusions = ' -PSA -BGS -CGC -SGC';
     const searchQuery = sort === 'graded'
       ? baseQuery + ' graded PSA BGS CGC SGC'
       : baseQuery + gradedExclusions;
