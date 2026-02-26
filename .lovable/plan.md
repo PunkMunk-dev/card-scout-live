@@ -1,58 +1,41 @@
 
 
-# Fix Card Finder: Sparse Results Due to Post-Fetch Graded Filtering
+# Fix Card Finder: Empty Results with Graded Exclusions
 
-## Problem Found
-After testing, the graded card filter works logically but causes a severe usability issue: **only 1 card appears** in Best Match, Auction, and Buy It Now modes. This happens because:
-- The edge function fetches up to 150 items from eBay
-- For popular searches like "Luka Doncic Prizm," most eBay results are graded/slabbed cards
-- Filtering them out post-fetch leaves almost no results (1 out of 150)
+## Problem Discovered
+Testing revealed that the graded exclusion terms added to the eBay query (`-PSA -BGS -CGC -SGC -graded -slab -slabbed`) cause **zero results** for specific card searches like "Luka Doncic Prizm". This happens because:
 
-Additionally, the "Graded" mode shows some cards labeled "Ungraded," suggesting the `isGradedItem` detection has gaps.
+1. The eBay Browse API already has junk exclusions (`-lot -bundle -bulk` etc.) appended on line 297
+2. Adding 7 more graded exclusions makes the query too restrictive -- eBay returns `itemSummaries: []` despite showing `total: 19968`
+3. Simpler queries like "Luka Doncic" (without "Prizm") work fine, confirming it's a query-length/complexity issue
+
+Meanwhile, the "Graded" mode works correctly and returns slabbed cards.
 
 ## Solution
-Move the graded exclusion **into the eBay search query itself** so eBay returns raw cards from the start, yielding full result pages.
+Reduce the eBay query-level exclusions to just the most impactful terms (`-PSA -BGS -CGC -SGC`) and drop the redundant ones (`-graded -slab -slabbed`). The post-fetch `isGradedItem` filter already catches those edge cases as a safety net.
 
 ## Technical Changes
 
-### 1. `supabase/functions/ebay-search/index.ts`
+### `supabase/functions/ebay-search/index.ts` (line 448)
 
-**A. Add grading exclusion terms to the search query (around line 444-447)**
-
-For all non-graded sort modes, append exclusion terms to the eBay query:
+Change the exclusion string from:
 ```
--PSA -BGS -CGC -SGC -graded -slab -slabbed
+' -PSA -BGS -CGC -SGC -graded -slab -slabbed'
 ```
-
-This tells eBay to exclude listings with those terms, so the API returns raw cards directly.
-
-```text
-// Before building the search query:
-const gradedExclusions = ' -PSA -BGS -CGC -SGC -graded -slab -slabbed';
-const searchQuery = sort === 'graded' 
-  ? (simplified || query)
-  : (simplified || query) + gradedExclusions;
+To:
+```
+' -PSA -BGS -CGC -SGC'
 ```
 
-**B. Keep the post-fetch `isGradedItem` filter as a safety net (line 489-492)**
+This reduces total exclusions from ~19 terms to ~16, staying within eBay's effective query complexity limit while still excluding the vast majority of graded listings at the API level. The existing `isGradedItem` post-filter on line 497 handles any stragglers.
 
-Leave the existing post-fetch filter in place as a secondary cleanup, but the primary filtering now happens at the eBay API level, ensuring full result pages.
-
-**C. For "Graded" mode, add graded terms to the query (around line 466-468)**
-
-When sort is `'graded'`, append `+PSA +BGS +CGC +SGC` or similar to bias eBay toward graded results, improving the hit rate before the `isGradedItem` post-filter.
-
-```text
-const searchQuery = sort === 'graded'
-  ? (simplified || query) + ' graded PSA BGS CGC SGC'
-  : (simplified || query) + gradedExclusions;
-```
-
-### 2. No frontend changes needed
-The dropdown and type definitions are already correct from the previous change.
+### No other changes needed
+- The "Graded" mode query (`+ graded PSA BGS CGC SGC`) already works
+- The post-fetch `isGradedItem` filter remains as a safety net
+- Frontend code is unchanged
 
 ## Expected Result
-- **Best Match / Price / Auction / BIN**: Full grid of 48 raw/ungraded cards per page
-- **Graded**: Full grid of graded/slabbed cards per page
-- The `total` count from eBay will more accurately reflect the filtered result set
+- "Luka Doncic Prizm" in Best Match returns a full grid of raw cards
+- "Graded" mode continues to return slabbed cards
+- Auction and Buy It Now modes work with full results
 
