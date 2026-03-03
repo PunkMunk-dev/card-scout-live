@@ -129,7 +129,30 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   else if (cardType === 'sealed') intentSuffix = 'sealed';
   else if (cardType === 'packs') intentSuffix = 'pack';
 
-  const fullQuery = `${searchQuery} ${intentSuffix} ${exclusionString}`;
+  // Clean query for eBay: strip parentheticals, colons, extract card number
+  const cardNumberMatch = searchQuery.match(/#?([A-Z]{2,5}\d{2,4})\b/i);
+  const cardNumber = cardNumberMatch ? cardNumberMatch[1] : '';
+
+  const cleanedForEbay = searchQuery
+    .replace(/\([^)]*\)/g, '')
+    .replace(/#[A-Za-z0-9]+/g, '')
+    .replace(/:/g, '')
+    .replace(/\b(scarlet|violet|black\s+star|obsidian\s+flames|elite\s+trainer\s+box|sword|shield|sun|moon|brilliant\s+stars|astral\s+radiance|paldea\s+evolved|temporal\s+forces|surging\s+sparks|twilight\s+masquerade|shrouded\s+fable|stellar\s+crown|prismatic\s+evolutions)\b/gi, '')
+    .replace(/\b(promo|promos)\b/gi, '')
+    .replace(/\b\d{4}\b/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  let truncatedEbayQuery: string;
+  if (cardNumber && cleanedForEbay) {
+    const nameWords = cleanedForEbay.split(/\s+/).filter(w => w.length > 1).slice(0, 4);
+    truncatedEbayQuery = [...nameWords, cardNumber].join(' ');
+  } else {
+    const ebayWords = (cleanedForEbay || searchQuery).split(/\s+/).filter(w => w.length > 0);
+    truncatedEbayQuery = ebayWords.slice(0, 10).join(' ');
+  }
+
+  const fullQuery = `${truncatedEbayQuery} ${intentSuffix} ${exclusionString}`;
   
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   url.searchParams.set('q', fullQuery);

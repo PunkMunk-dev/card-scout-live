@@ -241,10 +241,10 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
     term.length <= 2 || /^\d+$/.test(term)
   );
   
-  // Relax threshold for long queries (>6 name terms)
+  // Relax threshold for long queries
   const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
   const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
-  const nameMatchThreshold = nameLikeTerms.length > 6 ? 0.40 : 0.60;
+  const nameMatchThreshold = nameLikeTerms.length > 10 ? 0.25 : nameLikeTerms.length > 6 ? 0.40 : 0.60;
   const nameTermsMatch = nameMatchRatio >= nameMatchThreshold;
   
   // At least 50% of other terms (numbers, short words) should match
@@ -450,9 +450,32 @@ serve(async (req) => {
     const { simplified, decorativeFound } = simplifyQuery(query);
     const searchQuery = simplified || query;
 
-    // Cap query at 10 words to avoid overly specific eBay searches
-    const searchWords = searchQuery.split(/\s+/).filter(w => w.length > 0);
-    const truncatedQuery = searchWords.slice(0, 10).join(' ');
+    // Clean query for eBay: strip parentheticals, colons, filler set words
+    // Extract card number (e.g. SVP044, SWSH183) before stripping # so we can keep it
+    const cardNumberMatch = searchQuery.match(/#?([A-Z]{2,5}\d{2,4})\b/i);
+    const cardNumber = cardNumberMatch ? cardNumberMatch[1] : '';
+
+    const cleanedForEbay = searchQuery
+      .replace(/\([^)]*\)/g, '')           // Remove (parenthetical content)
+      .replace(/#[A-Za-z0-9]+/g, '')       // Remove #SVP044 style refs
+      .replace(/:/g, '')                   // Remove colons
+      .replace(/\b(scarlet|violet|black\s+star|obsidian\s+flames|elite\s+trainer\s+box|sword|shield|sun|moon|brilliant\s+stars|astral\s+radiance|paldea\s+evolved|temporal\s+forces|surging\s+sparks|twilight\s+masquerade|shrouded\s+fable|stellar\s+crown|prismatic\s+evolutions)\b/gi, '') // Remove set names
+      .replace(/\b(promo|promos)\b/gi, '') // Remove generic "promo"
+      .replace(/\b\d{4}\b/g, '')           // Remove standalone years
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    // Build final query: character name + card number is most effective
+    let truncatedQuery: string;
+    if (cardNumber && cleanedForEbay) {
+      // Use cleaned name + card number for precision
+      const nameWords = cleanedForEbay.split(/\s+/).filter(w => w.length > 1).slice(0, 4);
+      truncatedQuery = [...nameWords, cardNumber].join(' ');
+    } else {
+      // Fallback: cap at 10 words
+      const searchWords = (cleanedForEbay || searchQuery).split(/\s+/).filter(w => w.length > 0);
+      truncatedQuery = searchWords.slice(0, 10).join(' ');
+    }
 
     const { items: rawItems, total } = await searchEbay(token, truncatedQuery, requestLimit, offset, sortParam, apiBuyingOptions);
 
