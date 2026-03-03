@@ -1,20 +1,44 @@
 
 
-# Add Pagination to Top ROI Page
+# Fix ROI Cards Query to Fetch All Rows
 
 ## Problem
-The Top ROI page renders all 1,879 cards at once, which is slow. Need pagination or infinite scroll for better performance.
+The Supabase JS client caps queries at 1,000 rows by default. The current query uses `.limit(2500)` but that doesn't override the PostgREST default — it only sets an upper bound. We're getting 1,000 of the 1,879 cards.
 
-## Approach
-Add client-side pagination with a "Load more" button (consistent with the pattern used in `TerminalGrid` and `EbayResultsPanel`). Show 40 cards initially, load 40 more on each click.
+## Solution
+Use range-based pagination to fetch in chunks of 1,000 and concatenate results.
 
 ## Changes
 
-**`src/pages/TopRoi.tsx`**
-- Add a `visibleCount` state (default 40), reset to 40 when sport/search/sort changes
-- Slice `filteredAndSorted` to `visibleCount` for rendering
-- Add a "Load more" button below the grid when there are more cards (reuse the existing `om-btn` style, matching `TerminalGrid` pattern)
-- Update results count to show "showing X of Y cards"
+**`src/hooks/useRoiCards.ts`** — Replace the single query with a loop that fetches in ranges:
 
-No new files, no backend changes, no new dependencies. Single file edit.
+```typescript
+queryFn: async () => {
+  const PAGE = 1000;
+  let all: RoiCard[] = [];
+  let from = 0;
+
+  while (true) {
+    let query = supabase
+      .from('roi_cards')
+      .select('*')
+      .order('psa10_profit', { ascending: false })
+      .range(from, from + PAGE - 1);
+
+    if (sport && sport !== 'All') {
+      query = query.eq('sport', sport);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    all = all.concat((data || []) as unknown as RoiCard[]);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+
+  return all;
+},
+```
+
+Single file change, no backend or migration needed.
 
