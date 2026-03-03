@@ -12,7 +12,6 @@ import { ResultsHeader } from "@/components/ResultsHeader";
 import { searchEbay } from "@/lib/ebay-api";
 import { useSharedWatchlist } from "@/contexts/WatchlistContext";
 import type { EbayItem, SortOption } from "@/types/ebay";
-import omniLogo from "@/assets/omnimarket-logo.png";
 
 function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
   if (sort === 'auction_only') return 'AUCTION';
@@ -265,7 +264,6 @@ export default function Index() {
 
             <div className="relative z-10 mx-auto w-full max-w-[1400px] px-6 md:px-10">
               <div className="flex flex-col items-center text-center py-16 md:py-24">
-                <img src={omniLogo} alt="OmniMarket Cards" className="h-14 w-14 object-contain mb-2" />
                 <span className="text-[11px] font-medium uppercase tracking-[0.30em]" style={{ color: 'var(--om-text-1)' }}>OmniMarket Cards</span>
                 <h1 className="mt-6 text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] max-w-[600px]" style={{ color: 'var(--om-text-0)' }}>
                   Discover the market before it moves.
