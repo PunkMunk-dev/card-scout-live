@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Search, ArrowUpDown, X } from 'lucide-react';
-import { useRoiCards } from '@/hooks/useRoiCards';
+import { useRoiCards, usePrefetchRoiEbayListings } from '@/hooks/useRoiCards';
 import { RoiCard } from '@/components/roi/RoiCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -43,6 +43,9 @@ export default function TopRoi() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const { data: cards, isLoading, error } = useRoiCards(selectedSport);
+
+  // Background prefetch top 10 cards' eBay listings
+  usePrefetchRoiEbayListings(cards, 10);
 
   // Reset visible count when filters change
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [selectedSport, searchQuery, sortKey]);

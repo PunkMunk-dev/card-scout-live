@@ -100,21 +100,36 @@ export type Database = {
       roi_ebay_cache: {
         Row: {
           card_name: string
+          expires_at: string
           fetched_at: string | null
           id: string
           listings: Json
+          query_hash: string | null
+          query_text: string
+          query_version: number
+          refreshing_until: string | null
         }
         Insert: {
           card_name: string
+          expires_at?: string
           fetched_at?: string | null
           id?: string
           listings?: Json
+          query_hash?: string | null
+          query_text?: string
+          query_version?: number
+          refreshing_until?: string | null
         }
         Update: {
           card_name?: string
+          expires_at?: string
           fetched_at?: string | null
           id?: string
           listings?: Json
+          query_hash?: string | null
+          query_text?: string
+          query_version?: number
+          refreshing_until?: string | null
         }
         Relationships: []
       }
