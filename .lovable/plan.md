@@ -1,43 +1,53 @@
 
 
-# Fix Card Finder Search for Long/Specific Queries
+# Fix Long TCG Query Search in Card Finder
 
 ## Problem
-The query "Charmander 2023 Scarlet & Violet: Black Star Promo #SVP044 Obsidian Flames Elite Trainer Box (Pokemon Center Stamp)" returns zero results because:
+The query "Charmander 2023 Scarlet & Violet: Black Star Promo #SVP044 Obsidian Flames Elite Trainer Box (Pokemon Center Stamp)" still returns 0 results because:
 
-1. **Query too long for eBay**: The full query plus junk exclusions creates an enormous search string that eBay can't match
-2. **Over-aggressive title matching**: `titleMatchesQuery` requires 60% of many extracted terms to match, which fails when the query has 15+ terms
-3. **Junk filter false positive**: "Box" in "Elite Trainer Box" triggers the `isJunkTitle` filter on results that *do* come back
+1. **Truncation keeps noise**: The first 10 words include `Violet:`, `#SVP044`, and `Obsidian Flames` which over-constrain the eBay search
+2. **No pre-cleaning**: Card numbers (`#SVP044`), parenthetical info (`(Pokemon Center Stamp)`), colons, and set identifiers are kept as-is before truncation
 
-## Changes
+The eBay API query ends up as: `Charmander 2023 Scarlet & Violet: Black Star #SVP044 Obsidian Flames` -- too specific to match anything.
 
-### 1. `supabase/functions/ebay-search/index.ts` — Truncate long queries before sending to eBay
+## Solution
 
-Add a query truncation step after `simplifyQuery` that caps the search query at ~10 words. This mirrors the `extractSearchQuery` pattern already used in the watchlist flow. The full original query is still used for title matching/boosting.
+Add a query pre-cleaning step in `supabase/functions/ebay-search/index.ts` **before** the 10-word truncation that:
 
-```
-// Before sending to eBay, cap at 10 words to avoid overly specific queries
-const searchWords = searchQuery.split(/\s+/).filter(w => w.length > 0);
+1. Strips parenthetical content: `(Pokemon Center Stamp)` -> removed
+2. Strips card number patterns: `#SVP044`, `#123`, `#SWSH183` -> removed  
+3. Strips colons -> removed
+4. Then truncate to 10 words
+
+This transforms the query to something like: `Charmander 2023 Scarlet Violet Black Star Promo Obsidian Flames Elite` which is much more likely to return results from eBay, while the existing `titleMatchesQuery` still filters for relevance.
+
+### Changes
+
+**`supabase/functions/ebay-search/index.ts`** (lines 453-455):
+
+Add a cleaning function before truncation:
+```typescript
+// Clean query for eBay: strip parentheticals, card numbers, colons
+const cleanedForEbay = searchQuery
+  .replace(/\([^)]*\)/g, '')     // Remove (parenthetical content)
+  .replace(/#[A-Za-z0-9]+/g, '') // Remove card numbers like #SVP044
+  .replace(/:/g, '')             // Remove colons
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+// Cap at 10 words
+const searchWords = (cleanedForEbay || searchQuery).split(/\s+/).filter(w => w.length > 0);
 const truncatedQuery = searchWords.slice(0, 10).join(' ');
 ```
 
-Use `truncatedQuery` in the `searchEbay()` call instead of `searchQuery`.
+This would produce: `Charmander 2023 Scarlet Violet Black Star Promo Obsidian Flames Elite` -- a clean 10-word query that should return Charmander promo results.
 
-### 2. `supabase/functions/ebay-search/index.ts` — Relax title matching for long queries
+### Also needs the same fix in `tcg-ebay-search`
 
-When the original query has many terms (e.g. >6), reduce the required match ratio from 60% to 40% so relevant results aren't discarded:
+The TCG Lab search (`supabase/functions/tcg-ebay-search/index.ts`) also returned 0 results for this query. The same pre-cleaning and truncation logic should be applied there in the `searchActiveListings` function before sending the query to eBay.
 
-```
-const nameMatchThreshold = nameLikeTerms.length > 6 ? 0.40 : 0.60;
-const nameTermsMatch = nameMatchRatio >= nameMatchThreshold;
-```
-
-### 3. `supabase/functions/ebay-search/index.ts` — Exclude "Elite Trainer Box" from junk filter
-
-"Elite Trainer Box" is a legitimate product name in the Pokémon TCG. Add a guard so "box" only triggers junk filtering when it isn't preceded by "trainer":
-
-Update `isJunkTitle` to not match "box" when it appears as part of "trainer box" or "elite trainer box".
-
-## Files Changed
-- `supabase/functions/ebay-search/index.ts` (3 targeted edits, then redeploy)
+### Files changed
+- `supabase/functions/ebay-search/index.ts` -- add query pre-cleaning before truncation
+- `supabase/functions/tcg-ebay-search/index.ts` -- add same query pre-cleaning and 10-word truncation
+- Redeploy both edge functions
 
