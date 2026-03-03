@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, ArrowUpDown, X } from 'lucide-react';
 import { useRoiCards } from '@/hooks/useRoiCards';
 import { RoiCard } from '@/components/roi/RoiCard';
@@ -39,19 +39,23 @@ export default function TopRoi() {
   const [sortKey, setSortKey] = useState<SortKey>('psa10_profit');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const PAGE_SIZE = 40;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
   const { data: cards, isLoading, error } = useRoiCards(selectedSport);
+
+  // Reset visible count when filters change
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [selectedSport, searchQuery, sortKey]);
 
   const filteredAndSorted = useMemo(() => {
     if (!cards) return [];
     let result = cards;
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(c => c.card_name.toLowerCase().includes(q));
     }
 
-    // Sort
     result = [...result].sort((a, b) => {
       const aVal = a[sortKey] ?? -Infinity;
       const bVal = b[sortKey] ?? -Infinity;
@@ -60,6 +64,9 @@ export default function TopRoi() {
 
     return result;
   }, [cards, searchQuery, sortKey]);
+
+  const visibleCards = useMemo(() => filteredAndSorted.slice(0, visibleCount), [filteredAndSorted, visibleCount]);
+  const hasMore = visibleCount < filteredAndSorted.length;
 
   return (
     <div className="om-page-bg pb-24 md:pb-8">
@@ -121,7 +128,7 @@ export default function TopRoi() {
         {/* Results count */}
         {!isLoading && (
           <p className="text-xs mb-3" style={{ color: 'var(--om-text-3)' }}>
-            {filteredAndSorted.length} card{filteredAndSorted.length !== 1 ? 's' : ''}
+            {hasMore ? `Showing ${visibleCards.length} of ` : ''}{filteredAndSorted.length} card{filteredAndSorted.length !== 1 ? 's' : ''}
           </p>
         )}
 
@@ -139,11 +146,23 @@ export default function TopRoi() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {filteredAndSorted.map((card) => (
-              <RoiCard key={card.id} card={card} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {visibleCards.map((card) => (
+                <RoiCard key={card.id} card={card} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="flex justify-center pt-6">
+                <button
+                  onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                  className="om-btn om-pill px-6 py-2 text-xs"
+                >
+                  Load more
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
