@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WatchlistDropdown } from '@/components/WatchlistDropdown';
+import omniLogo from '@/assets/omnimarket-logo.png';
 
 const tabs = [
   { to: '/tcg', label: 'TCG Market', shortLabel: 'TCG' },
@@ -101,9 +102,12 @@ export function TabNavigation() {
     <header className="sticky top-0 z-50 border-b shadow-sm" style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}>
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
-          <Link to="/" className="flex flex-col leading-none select-none shrink-0">
-            <span className="text-[14px] md:text-[15px] font-semibold tracking-tight" style={{ color: 'var(--om-text-0)' }}>OmniMarket</span>
-            <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase" style={{ color: 'var(--om-text-2)' }}>Cards</span>
+          <Link to="/" className="flex items-center gap-2.5 select-none shrink-0">
+            <img src={omniLogo} alt="OmniMarket" className="h-7 w-7 object-contain" />
+            <div className="flex flex-col leading-none">
+              <span className="text-[14px] md:text-[15px] font-semibold tracking-tight" style={{ color: 'var(--om-text-0)' }}>OmniMarket</span>
+              <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase" style={{ color: 'var(--om-text-2)' }}>Cards</span>
+            </div>
           </Link>
           <nav className="flex items-center gap-1">{navItems}</nav>
         </div>
