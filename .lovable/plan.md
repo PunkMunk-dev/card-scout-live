@@ -1,15 +1,17 @@
 
 
-## Plan: Match ROI Grid to TCG/Sports Grid Layout
+## Plan: Larger Hover Stats on ROI Cards
 
-The TCG and Sports tabs use `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4`, while ROI uses `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3`.
+### Change (`src/components/roi/RoiCard.tsx`)
 
-### Changes (`src/pages/TopRoi.tsx`)
+Scale up the hover overlay text and badges so they're more readable and prominent:
 
-Update both the main grid and the skeleton grid to match the TCG/Sports column counts and gap:
+- **Labels** (PSA 9, PSA 10, Raw, Multiplier): `text-[10px]` → `text-xs` (12px)
+- **Values** (dollar amounts, multiplier): `text-[10px]` → `text-sm` (14px), keep `font-semibold`
+- **GainBadge**: `text-[10px]` → `text-xs` with slightly larger padding (`px-2 py-1`)
+- **Grid gap**: `gap-x-3 gap-y-1.5` → `gap-x-4 gap-y-2.5` for breathing room
+- **Overlay padding**: `p-3` → `p-4`
+- **Overlay gradient**: extend the dark area higher so larger text remains readable (`rgba(0,0,0,0.4) 60%` → `rgba(0,0,0,0.6) 70%`)
 
-- **Before**: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3`
-- **After**: `grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4`
-
-Two lines change (the skeleton grid at ~line 18 and the results grid at ~line 143). No other files need changes — the `RoiCard` component is already responsive and will adapt to the narrower column widths.
+Single file, ~10 lines changed. No structural changes.
 
