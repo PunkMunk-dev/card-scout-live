@@ -18,19 +18,29 @@ export function useRoiCards(sport?: string) {
   return useQuery({
     queryKey: ['roi-cards', sport],
     queryFn: async () => {
-      let query = supabase
-        .from('roi_cards')
-        .select('*')
-        .order('psa10_profit', { ascending: false });
+      const PAGE = 1000;
+      let all: RoiCard[] = [];
+      let from = 0;
 
-      if (sport && sport !== 'All') {
-        query = query.eq('sport', sport);
+      while (true) {
+        let query = supabase
+          .from('roi_cards')
+          .select('*')
+          .order('psa10_profit', { ascending: false })
+          .range(from, from + PAGE - 1);
+
+        if (sport && sport !== 'All') {
+          query = query.eq('sport', sport);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        all = all.concat((data || []) as unknown as RoiCard[]);
+        if (!data || data.length < PAGE) break;
+        from += PAGE;
       }
 
-      // Fetch all rows (may be >1000)
-      const { data, error } = await query.limit(2500);
-      if (error) throw error;
-      return (data || []) as unknown as RoiCard[];
+      return all;
     },
   });
 }
