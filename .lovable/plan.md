@@ -1,29 +1,36 @@
 
 
-## Plan: Compact Stock-Terminal Sort Bar for Top ROI
+## Plan: Minimal ROI Cards with Hover Detail + eBay Image
 
-Consolidate the search + sort toolbar into a single tight horizontal row styled like a terminal/stock ticker bar.
+**Goal**: Show only Raw Price and Profit on each card face, reveal all other stats on hover, and use the first eBay listing image as the card's visual placeholder.
 
-### Changes (single file: `src/pages/TopRoi.tsx`)
+### Changes (single file: `src/components/roi/RoiCard.tsx`)
 
-**Toolbar redesign** — Replace the current `flex-col sm:flex-row` layout with a single always-horizontal bar:
+**1. Always fetch eBay listings** — Remove the `expanded` gate so listings are always fetched (they're already prefetched for top 10). Use the first listing's `imageUrl` as the card thumbnail.
 
-- Compact inline row: search input on the left (narrower, max-w-[200px]), sort pills on the right, all in one line
-- Sort pills: smaller `text-[10px]` mono-font buttons with minimal padding (`px-2 py-1`), separated by a thin divider or `|` character
-- Remove the `ArrowUpDown` icon — the pills are self-explanatory
-- Active pill gets a subtle highlight (`om-pill-active`) with no size change
-- Wrap it all in a single-height bar (`h-9`) with `items-center` so everything aligns
-
+**2. Card face — minimal layout:**
 ```
-┌──────────────────────────────────────────────────────────┐
-│ 🔍 Search cards...    │  Profit↑  Profit↓  Raw↓  Raw↑  Mult │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────┐
+│ [eBay image]             │
+│                          │
+│ Card Name                │
+│ Raw $12     Profit +$108 │
+└──────────────────────────┘
 ```
+- Top: eBay listing image (first result) as `aspect-[4/3]` cover image, with a subtle loading skeleton
+- Below: card name (1-2 lines), then a single row with Raw Avg on the left and PSA 10 Profit badge on the right
 
-- Toolbar class: `om-toolbar flex items-center gap-3 px-3 h-10 mb-4` (single row, no wrapping)
-- Search input: `max-w-[200px] h-7 text-xs font-mono`
-- Sort pills: `font-mono text-[10px] px-2 py-0.5 whitespace-nowrap` with `gap-1` between them
-- A thin vertical separator (`border-l h-5`) between search and sort section
+**3. Hover overlay — full stats:** On hover (CSS `group-hover`), show a semi-transparent overlay with PSA 9, PSA 10, Multiplier, and PSA 9 Gain. No click needed — pure CSS hover reveal.
 
-No other files change. Grid, cards, pagination, skeleton all stay the same.
+**4. Remove expand/collapse** — No more "View Listings" button or expanded listings panel. The card links directly to eBay search or the first listing on click.
+
+**5. ListingMini component** — Remove it (no longer used).
+
+### Technical details
+
+- `useRoiEbayListings` called with `card.card_name` always (not gated by `expanded`)
+- First listing image: `listings?.[0]?.imageUrl` — fallback to a placeholder gradient if no image
+- Hover overlay: `opacity-0 group-hover:opacity-100 transition-opacity` positioned absolute over the card
+- Card becomes an `<a>` linking to first listing's `itemUrl` or eBay search
+- GainBadge and fmt helpers stay, just used in the hover overlay now
 
