@@ -161,6 +161,11 @@ function isGradedItem(title: string, condition?: string): boolean {
 function isJunkTitle(title: string): boolean {
   const lowerTitle = title.toLowerCase();
   return JUNK_KEYWORDS.some(keyword => {
+    // "box" is legitimate when preceded by "trainer" (e.g. "Elite Trainer Box")
+    if (keyword === 'box' || keyword === 'boxes') {
+      const boxRegex = new RegExp(`(?<!trainer\\s)\\b${keyword}\\b`, 'i');
+      return boxRegex.test(lowerTitle);
+    }
     const regex = new RegExp(`\\b${keyword}\\b`, 'i');
     return regex.test(lowerTitle);
   });
@@ -236,10 +241,11 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
     term.length <= 2 || /^\d+$/.test(term)
   );
   
-  // Require at least 60% of name-like terms to match
+  // Relax threshold for long queries (>6 name terms)
   const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
   const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
-  const nameTermsMatch = nameMatchRatio >= 0.60;
+  const nameMatchThreshold = nameLikeTerms.length > 6 ? 0.40 : 0.60;
+  const nameTermsMatch = nameMatchRatio >= nameMatchThreshold;
   
   // At least 50% of other terms (numbers, short words) should match
   const otherMatchCount = otherTerms.filter(term => lowerTitle.includes(term)).length;
@@ -444,7 +450,11 @@ serve(async (req) => {
     const { simplified, decorativeFound } = simplifyQuery(query);
     const searchQuery = simplified || query;
 
-    const { items: rawItems, total } = await searchEbay(token, searchQuery, requestLimit, offset, sortParam, apiBuyingOptions);
+    // Cap query at 10 words to avoid overly specific eBay searches
+    const searchWords = searchQuery.split(/\s+/).filter(w => w.length > 0);
+    const truncatedQuery = searchWords.slice(0, 10).join(' ');
+
+    const { items: rawItems, total } = await searchEbay(token, truncatedQuery, requestLimit, offset, sortParam, apiBuyingOptions);
 
     let normalizedItems = rawItems.map(normalizeItem);
 
