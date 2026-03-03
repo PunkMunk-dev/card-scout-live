@@ -10,6 +10,7 @@ import { WatchlistDropdown } from '@/components/WatchlistDropdown';
 const tabs = [
   { to: '/tcg', label: 'TCG Market', shortLabel: 'TCG' },
   { to: '/sports', label: 'Sports Market', shortLabel: 'Sports' },
+  { to: '/roi', label: 'Top ROI', shortLabel: 'ROI' },
 ];
 
 export function TabNavigation() {
