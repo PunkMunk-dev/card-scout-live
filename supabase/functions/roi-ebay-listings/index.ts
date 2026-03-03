@@ -5,8 +5,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-const QUERY_VERSION = 1;
+const QUERY_VERSION = 2;
 const CACHE_TTL_MINUTES = 20;
+const EMPTY_CACHE_TTL_MINUTES = 2;
 const LOCK_SECONDS = 30;
 const MIN_STRICT_RESULTS = 6;
 const RESULT_LIMIT = 8;
@@ -53,6 +54,7 @@ interface ParsedCard {
   setCore: string;
   cardNumber: string;
   variant: string;
+  baseBrand: string; // brand without insert/variant keywords
 }
 
 const RARITY_KEYWORDS = [
@@ -62,24 +64,40 @@ const RARITY_KEYWORDS = [
   'alternate full art', 'trainer gallery', 'galarian gallery',
 ];
 
+// Insert/subset names that should be stripped for broad queries
+const INSERT_KEYWORDS = [
+  'kaboom', 'downtown', 'helix', 'all kings', 'rookie autographs',
+  'negative refractor', 'mojo refractor', 'cracked ice', 'gold vinyl',
+  'shimmer', 'wave', 'scope', 'hyper', 'lazer', 'laser',
+  'astro', 'cosmic', 'galactic', 'nebula', 'nova',
+  'rated rookie', 'opti-chrome', 'pink velocity', 'red wave',
+  'blue velocity', 'green velocity', 'gold wave', 'silver wave',
+  'no huddle', 'press proof', 'disco', 'asia', 'genesis',
+  'photon', 'concourse', 'velocity', 'fractal', 'mojo',
+  'prizm', 'silver prizm', 'green prizm', 'blue prizm', 'red prizm',
+  'gold prizm', 'black prizm', 'camo prizm', 'pink prizm',
+  'snakeskin prizm', 'tiger prizm', 'leopard prizm',
+  'fast break', 'neon green', 'neon orange', 'neon pink',
+];
+
 function parseCardName(cardName: string): ParsedCard {
   let remaining = cardName.trim();
 
-  // Extract parenthetical content (set info or variant like "(Horizontal)")
+  // Extract parenthetical content
   const parens: string[] = [];
   remaining = remaining.replace(/\(([^)]+)\)/g, (_m, p1) => {
     parens.push(p1.trim());
     return '';
   });
 
-  // Extract card number (#xxx or #xxx/yyy)
+  // Extract card number
   let cardNumber = '';
   remaining = remaining.replace(/#([A-Za-z0-9\-/]+)/g, (_m, p1) => {
     if (!cardNumber) cardNumber = p1;
     return '';
   });
 
-  // Remove rarity keywords from remaining (case-insensitive)
+  // Remove rarity keywords
   let variant = '';
   const lowerRemaining = remaining.toLowerCase();
   for (const kw of RARITY_KEYWORDS) {
@@ -91,12 +109,9 @@ function parseCardName(cardName: string): ParsedCard {
     }
   }
 
-  // Clean up whitespace
   remaining = remaining.replace(/\s{2,}/g, ' ').trim();
 
-  // Try to split into nameCore and setCore
-  // Pattern: "Name YYYY Product Line" e.g. "Cooper Flagg 2025 Topps Chrome"
-  // or "Name YYYY Series: SubSeries" e.g. "Umbreon ex 2025 Scarlet & Violet: Prismatic Evolutions"
+  // Split into nameCore and setCore
   const yearMatch = remaining.match(/^(.+?)\s+((?:19|20)\d{2})\s+(.+)$/);
   let nameCore: string;
   let setCore: string;
@@ -107,18 +122,13 @@ function parseCardName(cardName: string): ParsedCard {
     const productLine = yearMatch[3].trim();
     setCore = `${year} ${productLine}`;
   } else {
-    // No year pattern — use parenthetical as setCore if available
     nameCore = remaining;
     setCore = parens.length > 0 ? parens[0] : '';
   }
 
-  // Clean up nameCore — remove trailing colons, extra spaces
   nameCore = nameCore.replace(/:$/, '').replace(/\s{2,}/g, ' ').trim();
-  // Clean up setCore — remove trailing noise
   setCore = setCore.replace(/\s{2,}/g, ' ').trim();
 
-  // If there's remaining variant info after card number extraction
-  // check parens for variant-like info (e.g. "Horizontal")
   if (!variant && parens.length > 0) {
     const nonSetParens = yearMatch ? parens : parens.slice(1);
     if (nonSetParens.length > 0) {
@@ -126,39 +136,59 @@ function parseCardName(cardName: string): ParsedCard {
     }
   }
 
-  return { nameCore, setCore, cardNumber, variant };
+  // Build baseBrand by stripping insert keywords from setCore
+  let baseBrand = setCore;
+  const lowerSet = setCore.toLowerCase();
+  for (const kw of INSERT_KEYWORDS) {
+    const idx = lowerSet.indexOf(kw);
+    if (idx !== -1) {
+      // Capture the insert name into variant if not already set
+      if (!variant) {
+        variant = setCore.substring(idx, idx + kw.length).trim();
+      }
+      baseBrand = (setCore.substring(0, idx) + setCore.substring(idx + kw.length)).trim();
+      break;
+    }
+  }
+  baseBrand = baseBrand.replace(/[!?]/g, '').replace(/\s{2,}/g, ' ').replace(/[:\-]$/, '').trim();
+
+  return { nameCore, setCore, cardNumber, variant, baseBrand };
 }
 
-function buildEbayQueries(cardName: string): { strictQueryText: string; fallbackQueryText: string; parsed: ParsedCard } {
+function buildEbayQueries(cardName: string): {
+  strictQueryText: string;
+  fallbackQueryText: string;
+  broadQueryText: string;
+  parsed: ParsedCard;
+} {
   const parsed = parseCardName(cardName);
-  const { nameCore, setCore, cardNumber } = parsed;
+  const { nameCore, setCore, cardNumber, baseBrand } = parsed;
 
-  // Strict: nameCore + setCore + cardNumber (most specific)
+  // Strict: nameCore + setCore + cardNumber
   const strictParts = [nameCore, setCore, cardNumber].filter(Boolean);
   const strictQueryText = strictParts.join(' ').replace(/\s{2,}/g, ' ').trim();
 
-  // Fallback: nameCore + setCore only
+  // Fallback: nameCore + setCore
   const fallbackParts = [nameCore, setCore].filter(Boolean);
   const fallbackQueryText = fallbackParts.join(' ').replace(/\s{2,}/g, ' ').trim();
 
-  return { strictQueryText, fallbackQueryText, parsed };
+  // Broad: nameCore + baseBrand (no insert/variant keywords)
+  const broadParts = [nameCore, baseBrand].filter(Boolean);
+  const broadQueryText = broadParts.join(' ').replace(/\s{2,}/g, ' ').trim();
+
+  return { strictQueryText, fallbackQueryText, broadQueryText, parsed };
 }
 
 // ── Post-filtering ────────────────────────────────────────────────────
 const REJECT_PATTERNS = new RegExp(
   '\\b(' +
-  // Graded
   'psa|bgs|sgc|cgc|graded|slab' +
-  // Sealed/product
   '|pack|packs|booster|elite trainer box|etb|case|tin|sealed' +
-  // Junk
   '|lot|lots|bundle|break|random' +
-  // Fake
   '|proxy|reprint|custom' +
   ')\\b', 'i'
 );
 
-// "box" as standalone word but not inside card names like "Trainer Box"
 const REJECT_BOX = /\bbox\b/i;
 
 interface EbayListing {
@@ -176,7 +206,6 @@ function filterListings(items: EbayListing[]): EbayListing[] {
     if (!item.price || !item.itemUrl || parseFloat(item.price) <= 0) return false;
     const title = item.title;
     if (REJECT_PATTERNS.test(title)) return false;
-    // Reject standalone "box" but not if it's part of a card name context
     if (REJECT_BOX.test(title) && !/\b(pokemon center)\b/i.test(title)) return false;
     return true;
   });
@@ -189,9 +218,7 @@ function scoreItem(item: EbayListing, parsed: ParsedCard): number {
   if (parsed.nameCore && lower.includes(parsed.nameCore.toLowerCase())) score += 10;
   if (parsed.setCore && lower.includes(parsed.setCore.toLowerCase())) score += 5;
   if (parsed.cardNumber) {
-    // Try exact card number match
     if (lower.includes(parsed.cardNumber.toLowerCase())) score += 8;
-    // Try numeric-only match (strip leading zeros)
     const numOnly = parsed.cardNumber.replace(/^0+/, '').split('/')[0];
     if (numOnly && lower.includes(`#${numOnly}`)) score += 3;
   }
@@ -214,7 +241,7 @@ async function searchEbay(queryText: string, token: string): Promise<EbayListing
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   url.searchParams.set('q', queryText);
   url.searchParams.set('limit', String(EBAY_FETCH_LIMIT));
-  url.searchParams.set('category_ids', '183050');
+  // No category filter — roi_cards span sports and TCG
   url.searchParams.set('filter', 'conditionIds:{1000|1500|2000|2500|3000|4000|5000}');
 
   const resp = await fetch(url.toString(), {
@@ -231,6 +258,19 @@ async function searchEbay(queryText: string, token: string): Promise<EbayListing
     itemUrl: item.itemWebUrl || '',
     condition: item.condition || '',
   }));
+}
+
+// ── Dedup helper ──────────────────────────────────────────────────────
+function mergeDedup(existing: EbayListing[], newItems: EbayListing[]): EbayListing[] {
+  const seenIds = new Set(existing.map(r => r.itemId));
+  const merged = [...existing];
+  for (const item of newItems) {
+    if (!seenIds.has(item.itemId)) {
+      merged.push(item);
+      seenIds.add(item.itemId);
+    }
+  }
+  return merged;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────
@@ -253,9 +293,9 @@ Deno.serve(async (req) => {
     );
 
     // Build queries
-    const { strictQueryText, fallbackQueryText, parsed } = buildEbayQueries(cardName);
+    const { strictQueryText, fallbackQueryText, broadQueryText, parsed } = buildEbayQueries(cardName);
     const queryText = strictQueryText;
-    const hashInput = `${QUERY_VERSION}|${queryText}|category=183050|limit=${EBAY_FETCH_LIMIT}|conditionIds:1000-5000`;
+    const hashInput = `${QUERY_VERSION}|${queryText}|limit=${EBAY_FETCH_LIMIT}|conditionIds:1000-5000`;
     const queryHash = await sha256(hashInput);
 
     // Check cache
@@ -275,14 +315,12 @@ Deno.serve(async (req) => {
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      // Expired — check thundering herd lock
       if (cached.refreshing_until && new Date(cached.refreshing_until) > now) {
         return new Response(JSON.stringify({
           listings: cached.listings, cached: true, stale: true, queryText, queryHash,
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      // Set lock
       await supabase
         .from('roi_ebay_cache')
         .update({ refreshing_until: new Date(now.getTime() + LOCK_SECONDS * 1000).toISOString() })
@@ -292,28 +330,29 @@ Deno.serve(async (req) => {
     // Fetch from eBay
     const token = await getEbayToken();
 
-    // Strict search
+    // 1. Strict search
     let rawItems = await searchEbay(strictQueryText, token);
     let filtered = filterListings(rawItems);
     let ranked = rankAndTake(filtered, parsed, RESULT_LIMIT);
 
-    // Fallback if strict < MIN_STRICT_RESULTS
+    // 2. Fallback if strict < MIN_STRICT_RESULTS
     if (ranked.length < MIN_STRICT_RESULTS && fallbackQueryText !== strictQueryText) {
       const fallbackRaw = await searchEbay(fallbackQueryText, token);
       const fallbackFiltered = filterListings(fallbackRaw);
-      // Merge, dedupe by itemId
-      const seenIds = new Set(ranked.map(r => r.itemId));
-      for (const item of fallbackFiltered) {
-        if (!seenIds.has(item.itemId)) {
-          ranked.push(item);
-          seenIds.add(item.itemId);
-        }
-      }
-      ranked = rankAndTake(ranked, parsed, RESULT_LIMIT);
+      ranked = rankAndTake(mergeDedup(ranked, fallbackFiltered), parsed, RESULT_LIMIT);
     }
 
-    // Upsert cache
-    const expiresAt = new Date(now.getTime() + CACHE_TTL_MINUTES * 60 * 1000).toISOString();
+    // 3. Broad fallback if still < MIN_STRICT_RESULTS
+    if (ranked.length < MIN_STRICT_RESULTS && broadQueryText !== fallbackQueryText) {
+      const broadRaw = await searchEbay(broadQueryText, token);
+      const broadFiltered = filterListings(broadRaw);
+      ranked = rankAndTake(mergeDedup(ranked, broadFiltered), parsed, RESULT_LIMIT);
+    }
+
+    // Use shorter TTL for empty results to avoid cache poisoning
+    const ttlMinutes = ranked.length === 0 ? EMPTY_CACHE_TTL_MINUTES : CACHE_TTL_MINUTES;
+    const expiresAt = new Date(now.getTime() + ttlMinutes * 60 * 1000).toISOString();
+
     await supabase
       .from('roi_ebay_cache')
       .upsert({
