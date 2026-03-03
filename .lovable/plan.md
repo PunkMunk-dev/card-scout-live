@@ -1,26 +1,29 @@
 
 
-## Plan: Update Top ROI Sorting (TopRoi.tsx only)
+## Plan: Compact Stock-Terminal Sort Bar for Top ROI
 
-### Changes
+Consolidate the search + sort toolbar into a single tight horizontal row styled like a terminal/stock ticker bar.
 
-**Single file: `src/pages/TopRoi.tsx`**
+### Changes (single file: `src/pages/TopRoi.tsx`)
 
-1. **Remove sport filter pills** — delete `SPORTS` array, `selectedSport` state, and the pills JSX block. Always pass `'All'` to `useRoiCards`.
+**Toolbar redesign** — Replace the current `flex-col sm:flex-row` layout with a single always-horizontal bar:
 
-2. **Replace sort options** with directional variants:
+- Compact inline row: search input on the left (narrower, max-w-[200px]), sort pills on the right, all in one line
+- Sort pills: smaller `text-[10px]` mono-font buttons with minimal padding (`px-2 py-1`), separated by a thin divider or `|` character
+- Remove the `ArrowUpDown` icon — the pills are self-explanatory
+- Active pill gets a subtle highlight (`om-pill-active`) with no size change
+- Wrap it all in a single-height bar (`h-9`) with `items-center` so everything aligns
 
-| Pill Label | Field | Direction |
-|---|---|---|
-| Profit ↑ | `psa10_profit` | desc (default) |
-| Profit ↓ | `psa10_profit` | asc |
-| Raw ↓ | `raw_avg` | asc (low→high) |
-| Raw ↑ | `raw_avg` | desc (high→low) |
-| Multiplier | `multiplier` | desc |
+```
+┌──────────────────────────────────────────────────────────┐
+│ 🔍 Search cards...    │  Profit↑  Profit↓  Raw↓  Raw↑  Mult │
+└──────────────────────────────────────────────────────────┘
+```
 
-3. **Update sort logic** — the `filteredAndSorted` memo reads `dir` from the active option to sort ascending or descending.
+- Toolbar class: `om-toolbar flex items-center gap-3 px-3 h-10 mb-4` (single row, no wrapping)
+- Search input: `max-w-[200px] h-7 text-xs font-mono`
+- Sort pills: `font-mono text-[10px] px-2 py-0.5 whitespace-nowrap` with `gap-1` between them
+- A thin vertical separator (`border-l h-5`) between search and sort section
 
-4. **Remove `selectedSport` from the `useEffect` reset** dependency — only `searchQuery` and sort key remain.
-
-No other files change. Existing search bar, skeleton, pagination, card component, and styling are untouched.
+No other files change. Grid, cards, pagination, skeleton all stay the same.
 
