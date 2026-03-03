@@ -1,23 +1,25 @@
 
 
-## Plan: Implement New OmniMarket Logo & Icon
+## Plan: Remove Background from OmniMarket Logo
 
-### What changes
+Use the Lovable AI image editing model (Gemini) to remove the background from the current logo, then save the transparent PNG back to both asset locations.
 
-1. **Copy the uploaded image** to `src/assets/omnimarket-logo.png` for use in React components, and to `public/omnimarket-logo.png` for the favicon/meta tags.
+### Approach
 
-2. **Update favicon** in `index.html` — change the `<link rel="icon">` from the SVG black dot to the new logo PNG. Also update the OG image meta tags to use the new logo.
+Create a one-shot backend function that:
+1. Takes the current `omnimarket-logo.png` as input
+2. Sends it to `google/gemini-2.5-flash-image` with the prompt "Remove the background from this logo, make it fully transparent, keep the logo crisp"
+3. Returns the resulting transparent PNG
 
-3. **Update `public/favicon.svg`** — remove or keep as fallback; primary icon becomes the PNG.
+### Changes
 
-4. **Add logo image to `TabNavigation.tsx`** — place a small `<img>` (e.g. `h-7 w-7`) of the logo next to the "OmniMarket / Cards" text in the nav bar.
+**New edge function: `supabase/functions/remove-bg/index.ts`**
+- Accepts the logo image, calls the Gemini image edit API, returns the cleaned image
+- One-time utility — can be deleted after use
 
-5. **Add logo image to `Index.tsx` landing page** — display the logo above the "OmniMarket Cards" subtitle in the hero section.
+**After generation:**
+- Save the transparent PNG to `src/assets/omnimarket-logo.png` and `public/omnimarket-logo.png`, replacing the current files
+- Delete the edge function since it's no longer needed
 
-### Files changed
-- `src/assets/omnimarket-logo.png` (new — copy from upload)
-- `public/omnimarket-logo.png` (new — copy from upload for favicon)
-- `index.html` — update favicon href and OG image
-- `src/components/TabNavigation.tsx` — add logo image next to brand text
-- `src/pages/Index.tsx` — add logo in hero section
+Single visual change: the logo will render with a transparent background everywhere it appears (nav bar, hero, favicon).
 
