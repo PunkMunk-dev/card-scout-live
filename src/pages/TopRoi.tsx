@@ -4,14 +4,13 @@ import { useRoiCards, usePrefetchRoiEbayListings } from '@/hooks/useRoiCards';
 import { RoiCard } from '@/components/roi/RoiCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const SPORTS = ['All', 'Basketball', 'Football', 'Baseball', 'Hockey', 'Soccer', 'Pokemon'] as const;
-
-type SortKey = 'psa10_profit' | 'psa9_gain' | 'multiplier' | 'raw_avg';
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: 'psa10_profit', label: 'PSA 10 Profit' },
-  { key: 'psa9_gain', label: 'PSA 9 Gain' },
-  { key: 'multiplier', label: 'Multiplier' },
-  { key: 'raw_avg', label: 'Raw Price' },
+type SortOption = { key: string; field: 'psa10_profit' | 'raw_avg' | 'multiplier'; dir: 'asc' | 'desc'; label: string };
+const SORT_OPTIONS: SortOption[] = [
+  { key: 'profit-desc', field: 'psa10_profit', dir: 'desc', label: 'Profit ↑' },
+  { key: 'profit-asc', field: 'psa10_profit', dir: 'asc', label: 'Profit ↓' },
+  { key: 'raw-asc', field: 'raw_avg', dir: 'asc', label: 'Raw ↓' },
+  { key: 'raw-desc', field: 'raw_avg', dir: 'desc', label: 'Raw ↑' },
+  { key: 'multiplier-desc', field: 'multiplier', dir: 'desc', label: 'Multiplier' },
 ];
 
 function SkeletonGrid() {
@@ -35,20 +34,21 @@ function SkeletonGrid() {
 }
 
 export default function TopRoi() {
-  const [selectedSport, setSelectedSport] = useState<string>('All');
-  const [sortKey, setSortKey] = useState<SortKey>('psa10_profit');
+  const [sortKey, setSortKey] = useState('profit-desc');
   const [searchQuery, setSearchQuery] = useState('');
 
   const PAGE_SIZE = 40;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const { data: cards, isLoading, error } = useRoiCards(selectedSport);
+  const { data: cards, isLoading, error } = useRoiCards('All');
 
   // Background prefetch top 10 cards' eBay listings
   usePrefetchRoiEbayListings(cards, 10);
 
+  const activeSort = SORT_OPTIONS.find(o => o.key === sortKey) ?? SORT_OPTIONS[0];
+
   // Reset visible count when filters change
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [selectedSport, searchQuery, sortKey]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [searchQuery, sortKey]);
 
   const filteredAndSorted = useMemo(() => {
     if (!cards) return [];
@@ -60,9 +60,11 @@ export default function TopRoi() {
     }
 
     result = [...result].sort((a, b) => {
-      const aVal = a[sortKey] ?? -Infinity;
-      const bVal = b[sortKey] ?? -Infinity;
-      return (bVal as number) - (aVal as number);
+      const aVal = a[activeSort.field] ?? -Infinity;
+      const bVal = b[activeSort.field] ?? -Infinity;
+      return activeSort.dir === 'asc'
+        ? (aVal as number) - (bVal as number)
+        : (bVal as number) - (aVal as number);
     });
 
     return result;
@@ -84,18 +86,6 @@ export default function TopRoi() {
           </p>
         </div>
 
-        {/* Sport filter pills */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {SPORTS.map((sport) => (
-            <button
-              key={sport}
-              onClick={() => setSelectedSport(sport)}
-              className={`om-pill ${selectedSport === sport ? 'om-pill-active' : ''}`}
-            >
-              {sport}
-            </button>
-          ))}
-        </div>
 
         {/* Search + sort toolbar */}
         <div className="om-toolbar flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2 mb-4">
