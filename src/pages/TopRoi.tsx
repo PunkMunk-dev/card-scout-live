@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, ArrowUpDown, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useRoiCards, usePrefetchRoiEbayListings } from '@/hooks/useRoiCards';
 import { RoiCard } from '@/components/roi/RoiCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -88,29 +88,29 @@ export default function TopRoi() {
 
 
         {/* Search + sort toolbar */}
-        <div className="om-toolbar flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: 'var(--om-text-3)' }} />
+        <div className="om-toolbar flex items-center gap-3 px-3 h-10 mb-4 overflow-x-auto">
+          <div className="relative shrink-0" style={{ maxWidth: '200px', width: '100%' }}>
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none" style={{ color: 'var(--om-text-3)' }} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search cards..."
-              className="om-input w-full h-9 pl-9 pr-8 text-sm"
+              placeholder="Search..."
+              className="om-input w-full h-7 pl-8 pr-7 text-xs font-mono"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="h-4 w-4" style={{ color: 'var(--om-text-3)' }} />
+                <X className="h-3 w-3" style={{ color: 'var(--om-text-3)' }} />
               </button>
             )}
           </div>
-          <div className="flex items-center gap-1">
-            <ArrowUpDown className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--om-text-3)' }} />
+          <div className="border-l h-5 shrink-0" style={{ borderColor: 'var(--om-border)' }} />
+          <div className="flex items-center gap-1 shrink-0">
             {SORT_OPTIONS.map(opt => (
               <button
                 key={opt.key}
                 onClick={() => setSortKey(opt.key)}
-                className={`om-pill text-[10px] sm:text-[11px] ${sortKey === opt.key ? 'om-pill-active' : ''}`}
+                className={`om-pill font-mono text-[10px] px-2 py-0.5 whitespace-nowrap ${sortKey === opt.key ? 'om-pill-active' : ''}`}
               >
                 {opt.label}
               </button>
