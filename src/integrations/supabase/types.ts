@@ -58,6 +58,66 @@ export type Database = {
           },
         ]
       }
+      roi_cards: {
+        Row: {
+          card_name: string
+          created_at: string | null
+          id: string
+          multiplier: number | null
+          psa10_avg: number | null
+          psa10_profit: number | null
+          psa9_avg: number | null
+          psa9_gain: number | null
+          raw_avg: number | null
+          sport: string
+        }
+        Insert: {
+          card_name: string
+          created_at?: string | null
+          id?: string
+          multiplier?: number | null
+          psa10_avg?: number | null
+          psa10_profit?: number | null
+          psa9_avg?: number | null
+          psa9_gain?: number | null
+          raw_avg?: number | null
+          sport: string
+        }
+        Update: {
+          card_name?: string
+          created_at?: string | null
+          id?: string
+          multiplier?: number | null
+          psa10_avg?: number | null
+          psa10_profit?: number | null
+          psa9_avg?: number | null
+          psa9_gain?: number | null
+          raw_avg?: number | null
+          sport?: string
+        }
+        Relationships: []
+      }
+      roi_ebay_cache: {
+        Row: {
+          card_name: string
+          fetched_at: string | null
+          id: string
+          listings: Json
+        }
+        Insert: {
+          card_name: string
+          fetched_at?: string | null
+          id?: string
+          listings?: Json
+        }
+        Update: {
+          card_name?: string
+          fetched_at?: string | null
+          id?: string
+          listings?: Json
+        }
+        Relationships: []
+      }
       rule_items: {
         Row: {
           compatible_brand_ids: string[]

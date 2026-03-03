@@ -14,6 +14,7 @@ import Index from "./pages/Index";
 
 const TcgLab = lazy(() => import("./pages/TcgLab"));
 const SportsLab = lazy(() => import("./pages/SportsLab"));
+const TopRoi = lazy(() => import("./pages/TopRoi"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
                 <Route path="/tcg" element={<ErrorBoundary><TcgLab /></ErrorBoundary>} />
                 <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
+                <Route path="/roi" element={<ErrorBoundary><TopRoi /></ErrorBoundary>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
