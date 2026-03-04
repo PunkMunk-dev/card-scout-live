@@ -71,7 +71,7 @@ export default function TopRoi() {
     pagination: { totalLive: enriched.length },
     loadingFlags: { isLoading },
     errorState: error ? { message: String(error) } : null,
-    resultsSchema: { count: enriched.length },
+    resultsSchema: { itemKeys: ['id', 'roi_card_id', 'item_id', 'current_bid', 'end_time'], count: enriched.length },
     layoutMode: {},
   }), [minProfit, endingSoon, enriched.length, isLoading, error]);
 
