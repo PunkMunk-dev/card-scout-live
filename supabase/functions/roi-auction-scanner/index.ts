@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const BATCH_SIZE = 10;
 const BATCH_DELAY_MS = 500;
-const EBAY_FETCH_LIMIT = 5;
+const EBAY_FETCH_LIMIT = 20;
 const FRESH_MINUTES = 15;
 const MIN_PROFIT = 20;
 
@@ -39,7 +39,7 @@ async function getEbayToken(): Promise<string> {
   return data.access_token;
 }
 
-// ── Card name parsing (copied from roi-ebay-listings) ─────────────────
+// ── Card name parsing ─────────────────────────────────────────────────
 interface ParsedCard {
   nameCore: string;
   setCore: string;
@@ -177,6 +177,19 @@ function filterAndMapAuctions(items: any[]): AuctionItem[] {
     }));
 }
 
+// ── Title-match validation ────────────────────────────────────────────
+function titleMatchesCard(title: string, parsed: ParsedCard): boolean {
+  const lowerTitle = title.toLowerCase();
+  // Must contain the player/character name (all words from nameCore)
+  const nameWords = parsed.nameCore.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  const nameMatched = nameWords.length > 0 && nameWords.every(w => lowerTitle.includes(w));
+  if (!nameMatched) return false;
+
+  // Bonus: check for at least one brand/set token match (relaxed — not required)
+  // This is enough — the name match ensures it's the right card
+  return true;
+}
+
 // ── eBay auction search ───────────────────────────────────────────────
 async function searchEbayAuctions(queryText: string, token: string): Promise<AuctionItem[]> {
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
@@ -188,7 +201,11 @@ async function searchEbayAuctions(queryText: string, token: string): Promise<Auc
     headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
   });
 
-  if (!resp.ok) return [];
+  if (!resp.ok) {
+    const errText = await resp.text();
+    console.error(`[EBAY] ${resp.status} for query="${queryText}": ${errText.slice(0, 200)}`);
+    return [];
+  }
   const data = await resp.json();
   return filterAndMapAuctions(data.itemSummaries || []);
 }
@@ -241,6 +258,8 @@ Deno.serve(async (req) => {
     const cardsToScan = allCards.filter(c => !freshCardIds.has(c.id));
     const toProcess = limit > 0 ? cardsToScan.slice(0, limit) : cardsToScan;
 
+    console.log(`[SCANNER] total_eligible=${allCards.length} fresh_skip=${freshCardIds.size} to_scan=${toProcess.length}`);
+
     // 3. Get eBay token
     const token = await getEbayToken();
 
@@ -248,16 +267,24 @@ Deno.serve(async (req) => {
     let scanned = 0;
     let found = 0;
     let upserted = 0;
+    let matched = 0;
 
     for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
       const batch = toProcess.slice(i, i + BATCH_SIZE);
 
       const results = await Promise.allSettled(
         batch.map(async (card) => {
+          const parsed = parseCardName(card.card_name);
           const query = buildBroadQuery(card.card_name);
-          if (!query) return { cardId: card.id, auctions: [] };
-          const auctions = await searchEbayAuctions(query, token);
-          return { cardId: card.id, auctions };
+          if (!query) {
+            console.log(`[SCAN] "${card.card_name}" → SKIP (empty query)`);
+            return { cardId: card.id, auctions: [] };
+          }
+          const rawAuctions = await searchEbayAuctions(query, token);
+          // Title-match validation: only keep auctions that match the card
+          const matchedAuctions = rawAuctions.filter(a => titleMatchesCard(a.title, parsed));
+          console.log(`[SCAN] "${card.card_name}" → q="${query}" → raw=${rawAuctions.length} matched=${matchedAuctions.length}`);
+          return { cardId: card.id, auctions: matchedAuctions };
         })
       );
 
@@ -266,6 +293,7 @@ Deno.serve(async (req) => {
         if (result.status !== 'fulfilled') continue;
         const { cardId, auctions } = result.value;
         found += auctions.length;
+        matched += auctions.length;
 
         for (const auction of auctions) {
           const { error } = await supabase
@@ -291,11 +319,14 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log(`[SCANNER] DONE scanned=${scanned} found=${found} matched=${matched} upserted=${upserted}`);
+
     return new Response(JSON.stringify({
       total_cards: allCards.length,
       skipped_fresh: freshCardIds.size,
       scanned,
       found,
+      matched,
       upserted,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
