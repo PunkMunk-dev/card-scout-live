@@ -67,7 +67,7 @@ export default function TopRoi() {
     }
 
     return rows;
-  }, [liveRows, cards, cardMap, minProfit, endingSoon]);
+  }, [liveRows, cards, cardMap, minProfit, endingSoon, sportFilter]);
 
   const isLoading = isLoadingRoi || isLoadingLive;
   const error = roiError || liveError;
