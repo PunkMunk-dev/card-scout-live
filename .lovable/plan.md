@@ -1,24 +1,16 @@
 
 
-## Issue Found: Inverted `dark` Prop Logic
+## Replace OmniIcon with Uploaded Monogram
 
-The `OmniLogo` component's color logic is backwards:
+### Approach
+1. Copy the uploaded image to `src/assets/omni-icon.png`
+2. Update `OmniIcon` component to render an `<img>` tag instead of inline SVG
+3. Use CSS `filter: invert(1) brightness(2)` when `dark={true}` to make the black monogram appear white
+4. The original image has a white background — but since the user wants transparency, I'll set the background to transparent on the wrapper and use `mix-blend-mode: multiply` in light mode (hides white bg) and `mix-blend-mode: screen` in dark mode with invert
 
-- **Caller** (`TabNavigation.tsx` line 106): `dark={theme === 'dark'}` — passes `true` when the app is in dark mode
-- **Component** (`OmniLogo.tsx` line 15-16): `dark ? 'text-gray-900' : 'text-white'` — renders **black** text when `dark=true`
+**Simpler approach**: Since the image is black-on-white, use `filter: invert(1)` for dark mode and `mix-blend-mode: multiply` to make the white background disappear against any surface.
 
-This means dark mode gets black text (invisible on dark bg) and light mode gets white text (invisible on light bg).
-
-### Fix
-
-**`src/components/branding/OmniLogo.tsx`** — Swap the conditional:
-
-| Line | Current | Fixed |
-|------|---------|-------|
-| 15-16 | `dark ? 'text-gray-900' : 'text-white'` | `dark ? 'text-white' : 'text-gray-900'` |
-| 15-16 | Shadow when `!dark` | Shadow when `dark` (white text needs it) |
-
-Also fix line 10: `<OmniIcon size={34} dark={!dark} />` — the `!dark` inversion here is suspect too; needs to pass `dark` directly so the icon matches the theme.
-
-One file, three lines.
+### Files Changed
+- **Copy** `user-uploads://image-11.png` → `src/assets/omni-icon.png`
+- **`src/components/branding/OmniIcon.tsx`** — Replace SVG with `<img>` using the imported asset, apply `mix-blend-mode: multiply` (light) / `mix-blend-mode: screen` + `filter: invert(1)` (dark) to handle transparency and theme switching
 
