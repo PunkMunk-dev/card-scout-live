@@ -32,6 +32,7 @@ function SkeletonGrid() {
 export default function TopRoi() {
   const [minProfit, setMinProfit] = useState(50);
   const [endingSoon, setEndingSoon] = useState(false);
+  const [sportFilter, setSportFilter] = useState<'All' | 'Sports' | 'TCG'>('All');
 
   const { data: cards, isLoading: isLoadingRoi, error: roiError } = useRoiCards('All');
   const { data: liveRows, isLoading: isLoadingLive, error: liveError, isFetching } = useLiveRoiAuctions();
