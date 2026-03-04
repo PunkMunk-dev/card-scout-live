@@ -52,6 +52,12 @@ export default function TopRoi() {
       rows = rows.filter(r => (r.card.psa10_profit ?? 0) >= minProfit);
     }
 
+    if (sportFilter === 'Sports') {
+      rows = rows.filter(r => r.card.sport !== 'Pokemon');
+    } else if (sportFilter === 'TCG') {
+      rows = rows.filter(r => r.card.sport === 'Pokemon');
+    }
+
     if (endingSoon) {
       rows.sort((a, b) => {
         const aEnd = a.auction.end_time ? new Date(a.auction.end_time).getTime() : Infinity;
