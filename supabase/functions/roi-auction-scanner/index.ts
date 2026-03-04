@@ -155,6 +155,7 @@ interface AuctionItem {
   shipping: number;
   endTime: string | null;
   itemUrl: string;
+  imageUrl: string;
 }
 
 function filterAndMapAuctions(items: any[]): AuctionItem[] {
@@ -172,6 +173,7 @@ function filterAndMapAuctions(items: any[]): AuctionItem[] {
       shipping: parseFloat(item.shippingOptions?.[0]?.shippingCost?.value || '0'),
       endTime: item.itemEndDate || null,
       itemUrl: item.itemWebUrl || '',
+      imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || '',
     }));
 }
 
@@ -271,6 +273,7 @@ Deno.serve(async (req) => {
               current_bid: auction.currentBid,
               shipping: auction.shipping,
               end_time: auction.endTime,
+              image_url: auction.imageUrl || null,
               last_seen_at: new Date().toISOString(),
             }, { onConflict: 'item_id' });
 

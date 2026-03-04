@@ -9,6 +9,7 @@ export interface LiveRoiAuction {
   current_bid: number | null;
   shipping: number | null;
   end_time: string | null;
+  image_url: string | null;
   last_seen_at: string;
 }
 
