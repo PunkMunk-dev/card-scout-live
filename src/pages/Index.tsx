@@ -69,15 +69,6 @@ export default function Index() {
   const abortRef = useRef<AbortController | null>(null);
   const lastSearchedRef = useRef<string>('');
 
-  // Register global search handler
-  const { register } = useGlobalSearch();
-  useEffect(() => {
-    return register({
-      onSubmit: (q: string) => {
-        navigate(`/?q=${encodeURIComponent(q)}`);
-      },
-    });
-  }, [register, navigate]);
 
   useEffect(() => {
     if (urlQuery && urlQuery !== lastSearchedRef.current) {
