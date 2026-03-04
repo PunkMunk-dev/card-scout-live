@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { ExternalLink, RefreshCw, Clock } from 'lucide-react';
+import { ExternalLink, RefreshCw, Clock, ImageOff } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
@@ -139,9 +139,32 @@ export default function TopRoi() {
                     href={auction.listing_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="om-card p-4 space-y-2 hover:-translate-y-px transition-all duration-200 group"
+                    className="om-card overflow-hidden hover:-translate-y-px transition-all duration-200 group"
                     style={{ border: '1px solid var(--om-border-0)' }}
                   >
+                    {/* Thumbnail */}
+                    <div className="aspect-[4/3] w-full overflow-hidden" style={{ background: 'var(--om-surface-1)' }}>
+                      {auction.image_url ? (
+                        <img
+                          src={auction.image_url}
+                          alt={card.card_name}
+                          className="h-full w-full object-contain"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
+                            const icon = document.createElement('div');
+                            icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--om-text-3);opacity:0.4"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                            e.currentTarget.parentElement?.appendChild(icon);
+                          }}
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <ImageOff className="h-6 w-6 opacity-30" style={{ color: 'var(--om-text-3)' }} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 space-y-2">
                     <div className="flex items-start justify-between gap-1">
                       <h3 className="text-xs font-semibold line-clamp-2" style={{ color: 'var(--om-text-0)' }}>
                         {card.card_name}
@@ -173,6 +196,7 @@ export default function TopRoi() {
                         Ends {new Date(auction.end_time).toLocaleDateString()} {new Date(auction.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
+                    </div>
                   </a>
                 ))}
               </div>
