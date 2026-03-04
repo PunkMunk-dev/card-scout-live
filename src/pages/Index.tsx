@@ -163,6 +163,13 @@ export default function Index() {
     { icon: Search, title: "Live eBay Search", desc: "Search any card across eBay in real time.", action: () => { const input = document.querySelector<HTMLInputElement>('header input[type="text"]'); if (input) { input.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => input.focus(), 300); } } },
     { icon: Layers, title: "TCG Market", desc: "Pokémon & One Piece card explorer.", to: "/tcg" },
     { icon: Trophy, title: "Sports Market", desc: "Sports cards by player, brand & trait.", to: "/sports" },
+    { icon: TrendingUp, title: "Top ROI Cards", desc: "See the best grading value plays.", to: "/roi" },
+  ];
+
+  // Merge recent + suggested into one list, recents first
+  const searchIdeas = [
+    ...recentSearches.slice(0, 6).map(t => ({ term: t, isRecent: true })),
+    ...SUGGESTED_SEARCHES.filter(t => !recentSearches.includes(t)).map(t => ({ term: t, isRecent: false })),
   ];
 
   return (
