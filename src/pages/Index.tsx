@@ -224,102 +224,55 @@ export default function Index() {
         </main>
       ) : (
         /* ── App Dashboard ── */
-        <div className="max-w-[1320px] mx-auto px-4 md:px-8 py-6 md:py-10">
+        <div className="max-w-[1320px] mx-auto px-4 md:px-8 py-4 md:py-6">
           <PageHeader
             title="OmniMarket Cards"
             subtitle="Find underpriced listings fast."
             rightSlot={<CaptureSnapshotButton appId="search" getState={getSearchSnapshotState} />}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* ── Left column (8/12) ── */}
-            <div className="md:col-span-8 space-y-8">
-              {/* Quick Start cards */}
-              <section>
-                <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] mb-3" style={{ color: 'var(--om-text-3)' }}>Quick Start</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {quickStartCards.map((card) => {
-                    const inner = (
-                      <div
-                        key={card.title}
-                        className="om-card rounded-2xl p-5 flex flex-col gap-2 cursor-pointer hover:-translate-y-px transition-all duration-200"
-                        style={{ border: '1px solid var(--om-border-0)' }}
-                      >
-                        <card.icon className="h-5 w-5" style={{ color: 'var(--om-accent)' }} />
-                        <span className="text-sm font-semibold" style={{ color: 'var(--om-text-0)' }}>{card.title}</span>
-                        <span className="text-[12px] leading-relaxed" style={{ color: 'var(--om-text-2)' }}>{card.desc}</span>
-                      </div>
-                    );
-                    if (card.to) return <Link key={card.title} to={card.to}>{inner}</Link>;
-                    return <div key={card.title} onClick={card.action}>{inner}</div>;
-                  })}
-                </div>
-              </section>
-
-              {/* Recent Searches */}
-              <section>
-                <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] mb-3 flex items-center gap-1.5" style={{ color: 'var(--om-text-3)' }}>
-                  <Clock className="h-3.5 w-3.5" /> Recent Searches
-                </h2>
-                {recentSearches.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {recentSearches.slice(0, 8).map((term) => (
-                      <button
-                        key={term}
-                        onClick={() => navigate(`/?q=${encodeURIComponent(term)}`)}
-                        className="om-pill rounded-xl px-3 py-1.5 text-xs font-medium hover:-translate-y-px transition-all duration-150 cursor-pointer"
-                        style={{ background: 'var(--om-bg-2)', color: 'var(--om-text-1)', border: '1px solid var(--om-border-0)' }}
-                      >
-                        {term}
-                      </button>
-                    ))}
+          <div className="space-y-6">
+            {/* Quick Start cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {quickStartCards.map((card) => {
+                const inner = (
+                  <div
+                    key={card.title}
+                    className="om-card rounded-2xl p-4 flex flex-col gap-1.5 cursor-pointer hover:-translate-y-px transition-all duration-200"
+                    style={{ border: '1px solid var(--om-border-0)' }}
+                  >
+                    <card.icon className="h-5 w-5" style={{ color: 'var(--om-accent)' }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--om-text-0)' }}>{card.title}</span>
+                    <span className="text-[12px] leading-relaxed" style={{ color: 'var(--om-text-2)' }}>{card.desc}</span>
                   </div>
-                ) : (
-                  <p className="text-xs" style={{ color: 'var(--om-text-3)' }}>No recent searches yet. Try searching for a card above.</p>
-                )}
-              </section>
-
-              {/* Suggested Searches */}
-              <section>
-                <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] mb-3 flex items-center gap-1.5" style={{ color: 'var(--om-text-3)' }}>
-                  <Sparkles className="h-3.5 w-3.5" /> Suggested Searches
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {SUGGESTED_SEARCHES.map((term) => (
-                    <button
-                      key={term}
-                      onClick={() => navigate(`/?q=${encodeURIComponent(term)}`)}
-                      className="rounded-xl px-3 py-1.5 text-xs font-medium hover:-translate-y-px transition-all duration-150 cursor-pointer"
-                      style={{ background: 'var(--om-accent)', color: '#fff', opacity: 0.85 }}
-                    >
-                      {term}
-                    </button>
-                  ))}
-                </div>
-              </section>
+                );
+                if (card.to) return <Link key={card.title} to={card.to}>{inner}</Link>;
+                return <div key={card.title} onClick={card.action}>{inner}</div>;
+              })}
             </div>
 
-            {/* ── Right column (4/12) ── */}
-            <div className="md:col-span-4 space-y-4">
-              {/* Top ROI card */}
-              <Link to="/roi" className="block">
-                <div className="om-card rounded-2xl p-5 hover:-translate-y-px transition-all duration-200 cursor-pointer" style={{ border: '1px solid var(--om-border-0)' }}>
-                  <div className="flex items-center gap-2.5">
-                    <TrendingUp className="h-5 w-5" style={{ color: 'var(--om-accent)' }} />
-                    <div>
-                      <span className="text-sm font-semibold" style={{ color: 'var(--om-text-0)' }}>Top ROI Cards</span>
-                      <p className="text-[12px]" style={{ color: 'var(--om-text-2)' }}>See the best grading value plays.</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
+            {/* Search Ideas — merged recent + suggested */}
+            <section>
+              <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] mb-3 flex items-center gap-1.5" style={{ color: 'var(--om-text-3)' }}>
+                <Sparkles className="h-3.5 w-3.5" /> Search Ideas
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {searchIdeas.map(({ term, isRecent }) => (
+                  <button
+                    key={term}
+                    onClick={() => navigate(`/?q=${encodeURIComponent(term)}`)}
+                    className="rounded-xl px-3 py-1.5 text-xs font-medium hover:-translate-y-px transition-all duration-150 cursor-pointer"
+                    style={isRecent
+                      ? { background: 'var(--om-bg-2)', color: 'var(--om-text-1)', border: '1px solid var(--om-border-0)' }
+                      : { background: 'var(--om-accent)', color: '#fff', opacity: 0.85 }
+                    }
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
-
-          {/* Search hint */}
-          <p className="mt-8 text-center text-[12px]" style={{ color: 'var(--om-text-3)' }}>
-            Tip: Try searching "<button onClick={() => navigate('/?q=Wembanyama+Prizm+Silver')} className="underline hover:opacity-80 cursor-pointer" style={{ color: 'var(--om-accent)' }}>Wembanyama Prizm Silver</button>"
-          </p>
         </div>
       )}
     </div>
