@@ -32,7 +32,7 @@ function SkeletonGrid() {
 export default function TopRoi() {
   const [minProfit, setMinProfit] = useState(50);
   const [endingSoon, setEndingSoon] = useState(false);
-  const [sportFilter, setSportFilter] = useState<'All' | 'Sports' | 'TCG'>('All');
+  const [sportFilter, setSportFilter] = useState('All');
 
   const { data: cards, isLoading: isLoadingRoi, error: roiError } = useRoiCards('All');
   const { data: liveRows, isLoading: isLoadingLive, error: liveError, isFetching } = useLiveRoiAuctions();
@@ -52,10 +52,8 @@ export default function TopRoi() {
       rows = rows.filter(r => (r.card.psa10_profit ?? 0) >= minProfit);
     }
 
-    if (sportFilter === 'Sports') {
-      rows = rows.filter(r => r.card.sport !== 'Pokemon');
-    } else if (sportFilter === 'TCG') {
-      rows = rows.filter(r => r.card.sport === 'Pokemon');
+    if (sportFilter !== 'All') {
+      rows = rows.filter(r => r.card.sport === sportFilter);
     }
 
     if (endingSoon) {
@@ -99,7 +97,7 @@ export default function TopRoi() {
             <div className="om-toolbar flex items-center gap-3 px-3 h-10 mb-4 overflow-x-auto">
               {/* Sport filter pills */}
               <div className="flex items-center gap-1 shrink-0">
-                {(['All', 'Sports', 'TCG'] as const).map((opt) => (
+                {(['All', 'Baseball', 'Basketball', 'Football', 'Hockey', 'Soccer', 'Pokemon'] as const).map((opt) => (
                   <button
                     key={opt}
                     onClick={() => setSportFilter(opt)}
