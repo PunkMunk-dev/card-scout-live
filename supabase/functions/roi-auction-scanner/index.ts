@@ -238,6 +238,7 @@ Deno.serve(async (req) => {
       .gte('last_seen_at', cutoff);
 
     const freshCardIds = new Set((freshRows || []).map((r: any) => r.roi_card_id));
+    const cardsToScan = allCards.filter(c => !freshCardIds.has(c.id));
     const toProcess = limit > 0 ? cardsToScan.slice(0, limit) : cardsToScan;
 
     // 3. Get eBay token
