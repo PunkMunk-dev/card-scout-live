@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -29,6 +29,17 @@ function ShellInner({ children }: AppShellProps) {
   const location = useLocation();
   const { submitSearch } = useGlobalSearch();
   const [headerQuery, setHeaderQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onFocusSearch = () => {
+      if (searchInputRef.current) { searchInputRef.current.focus(); return; }
+      const el = document.querySelector<HTMLInputElement>('[data-omni-global-search="true"]');
+      el?.focus();
+    };
+    window.addEventListener('omni:focus-search', onFocusSearch);
+    return () => window.removeEventListener('omni:focus-search', onFocusSearch);
+  }, []);
 
   const sectionLabel = ROUTE_LABELS[location.pathname] ?? '';
 
@@ -56,6 +67,8 @@ function ShellInner({ children }: AppShellProps) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: 'var(--om-text-3)' }} />
               <input
+                ref={searchInputRef}
+                data-omni-global-search="true"
                 type="text"
                 value={headerQuery}
                 onChange={(e) => setHeaderQuery(e.target.value)}
@@ -104,6 +117,8 @@ function ShellInner({ children }: AppShellProps) {
                 <div className="relative flex">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none z-10" style={{ color: 'var(--om-text-3)' }} />
                   <input
+                    ref={searchInputRef}
+                    data-omni-global-search="true"
                     type="text"
                     value={headerQuery}
                     onChange={(e) => setHeaderQuery(e.target.value)}
