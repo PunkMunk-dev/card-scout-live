@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useSearchParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, Star, X, Search, Layers, Trophy, TrendingUp, Sun, Moon, Camera, Clock, Sparkles } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Loader2, Star, X, Search, Layers, Trophy, TrendingUp, Clock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
@@ -11,8 +10,11 @@ import { LoadingGrid } from "@/components/LoadingGrid";
 import { UnifiedEmptyState } from "@/components/shared/UnifiedEmptyState";
 import { UnifiedErrorState } from "@/components/shared/UnifiedErrorState";
 import { ResultsHeader } from "@/components/ResultsHeader";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { searchEbay } from "@/lib/ebay-api";
 import { useSharedWatchlist } from "@/contexts/WatchlistContext";
+import { useGlobalSearch } from "@/contexts/GlobalSearchContext";
+import { getSession, setSession, pushRecentSearch } from "@/lib/sessionStore";
 import type { EbayItem, SortOption } from "@/types/ebay";
 
 function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
@@ -21,22 +23,16 @@ function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE
   return 'ALL';
 }
 
-/* ── Recent-searches helpers ── */
+/* ── Recent-searches helpers (localStorage backward compat) ── */
 const RECENT_SEARCHES_KEY = "omni_recent_searches_v1";
 
-function pushRecentSearch(term: string) {
-  const t = (term || "").trim();
-  if (!t) return;
-  try {
-    const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
-    const next = [t, ...existing.filter((x) => x !== t)].slice(0, 12);
-    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
-  } catch {}
-}
-
 function getRecentSearches(): string[] {
+  // Merge sessionStore + localStorage for backward compat
   try {
-    return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
+    const session = getSession();
+    const local = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
+    const merged = [...session.recentSearches.map(s => s.term), ...local];
+    return [...new Set(merged)].slice(0, 12);
   } catch {
     return [];
   }
@@ -54,10 +50,14 @@ const SUGGESTED_SEARCHES = [
 ];
 
 export default function Index() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const urlQuery = searchParams.get('q') || '';
   const urlSrc = searchParams.get('src') || '';
+
+  // Restore sort from session
+  const sessionSort = getSession().indexSortKey as SortOption;
   const [query, setQuery] = useState(urlQuery);
   const [items, setItems] = useState<EbayItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -65,12 +65,21 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(!!urlQuery);
-  const [sort, setSort] = useState<SortOption>("best");
+  const [sort, setSort] = useState<SortOption>(sessionSort || "best");
   const [error, setError] = useState<string | null>(null);
   const [fromWatchlist, setFromWatchlist] = useState(urlSrc === 'wl');
   const abortRef = useRef<AbortController | null>(null);
   const lastSearchedRef = useRef<string>('');
-  const { theme, setTheme } = useTheme();
+
+  // Register global search handler
+  const { register } = useGlobalSearch();
+  useEffect(() => {
+    return register({
+      onSubmit: (q: string) => {
+        navigate(`/?q=${encodeURIComponent(q)}`);
+      },
+    });
+  }, [register, navigate]);
 
   useEffect(() => {
     if (urlQuery && urlQuery !== lastSearchedRef.current) {
@@ -83,16 +92,23 @@ export default function Index() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlQuery, urlSrc]);
 
-  const { watchlist, isInWatchlist, toggleWatchlist } = useSharedWatchlist();
+  const { isInWatchlist, toggleWatchlist } = useSharedWatchlist();
 
   const performSearch = useCallback(async (
-    searchQuery: string, 
-    page: number = 1, 
+    searchQuery: string,
+    page: number = 1,
     append: boolean = false,
     overrideSort?: SortOption
   ) => {
     if (!searchQuery.trim()) return;
-    pushRecentSearch(searchQuery);
+    // Persist to both localStorage and sessionStore
+    try {
+      const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
+      const next = [searchQuery.trim(), ...existing.filter((x) => x !== searchQuery.trim())].slice(0, 12);
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+    } catch {}
+    pushRecentSearch(searchQuery, '/');
+
     if (abortRef.current) abortRef.current.abort();
     const ac = new AbortController();
     abortRef.current = ac;
@@ -124,7 +140,11 @@ export default function Index() {
   }, [sort]);
 
   const handleLoadMore = () => { if (nextPage && query && !isLoadingMore) performSearch(query, nextPage, true); };
-  const handleSortChange = (newSort: SortOption) => { setSort(newSort); if (query && hasSearched) { setError(null); performSearch(query, 1, false, newSort); } };
+  const handleSortChange = (newSort: SortOption) => {
+    setSort(newSort);
+    setSession({ indexSortKey: newSort });
+    if (query && hasSearched) { setError(null); performSearch(query, 1, false, newSort); }
+  };
   const handleRetry = () => { if (query) { setError(null); performSearch(query, 1, false); } };
 
   const getSearchSnapshotState = useCallback(() => ({
@@ -198,15 +218,11 @@ export default function Index() {
       ) : (
         /* ── App Dashboard ── */
         <div className="max-w-[1320px] mx-auto px-4 md:px-8 py-6 md:py-10">
-          {/* Compact header */}
-          <div className="mb-8">
-            <h1 className="text-[28px] md:text-[36px] font-semibold tracking-tight" style={{ color: 'var(--om-text-0)' }}>
-              OmniMarket Cards
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--om-text-2)' }}>
-              Find underpriced listings fast.
-            </p>
-          </div>
+          <PageHeader
+            title="OmniMarket Cards"
+            subtitle="Find underpriced listings fast."
+            rightSlot={<CaptureSnapshotButton appId="search" getState={getSearchSnapshotState} />}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* ── Left column (8/12) ── */}
@@ -278,30 +294,6 @@ export default function Index() {
 
             {/* ── Right column (4/12) ── */}
             <div className="md:col-span-4 space-y-4">
-              {/* System card */}
-              <div className="om-card rounded-2xl p-5 space-y-4" style={{ border: '1px solid var(--om-border-0)' }}>
-                <h3 className="text-[12px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--om-text-3)' }}>System</h3>
-                <div className="flex flex-col gap-3">
-                  <button
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:opacity-80"
-                    style={{ background: 'var(--om-bg-2)', color: 'var(--om-text-1)', border: '1px solid var(--om-border-0)' }}
-                  >
-                    {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                  </button>
-                  <CaptureSnapshotButton appId="search" getState={getSearchSnapshotState} />
-                  <Link
-                    to="/ui-audit"
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:opacity-80"
-                    style={{ background: 'var(--om-bg-2)', color: 'var(--om-text-1)', border: '1px solid var(--om-border-0)' }}
-                  >
-                    <Camera className="h-3.5 w-3.5" />
-                    UI Audit
-                  </Link>
-                </div>
-              </div>
-
               {/* Top ROI card */}
               <Link to="/roi" className="block">
                 <div className="om-card rounded-2xl p-5 hover:-translate-y-px transition-all duration-200 cursor-pointer" style={{ border: '1px solid var(--om-border-0)' }}>

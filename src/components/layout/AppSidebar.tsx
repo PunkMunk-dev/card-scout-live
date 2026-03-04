@@ -1,5 +1,7 @@
 import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Home, Layers, Trophy, TrendingUp, Star } from 'lucide-react';
+import { setSession } from '@/lib/sessionStore';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,

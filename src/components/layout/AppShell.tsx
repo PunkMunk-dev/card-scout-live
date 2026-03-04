@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -8,22 +8,35 @@ import { OmniLogo } from '@/components/branding/OmniLogo';
 import { WatchlistDropdown } from '@/components/WatchlistDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTabBar } from '@/components/layout/MobileTabBar';
+import { GlobalSearchProvider, useGlobalSearch } from '@/contexts/GlobalSearchContext';
 
 interface AppShellProps {
   children: React.ReactNode;
 }
 
-export function AppShell({ children }: AppShellProps) {
+const ROUTE_LABELS: Record<string, string> = {
+  '/': 'Dashboard',
+  '/tcg': 'TCG Market',
+  '/sports': 'Sports Market',
+  '/roi': 'Top ROI',
+  '/ui-audit': 'UI Audit',
+};
+
+function ShellInner({ children }: AppShellProps) {
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { submitSearch } = useGlobalSearch();
   const [headerQuery, setHeaderQuery] = useState('');
+
+  const sectionLabel = ROUTE_LABELS[location.pathname] ?? '';
 
   const handleHeaderSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = headerQuery.trim();
     if (!q) return;
-    navigate(`/?q=${encodeURIComponent(q)}`);
+    submitSearch(q);
     setHeaderQuery('');
   };
 
@@ -32,7 +45,6 @@ export function AppShell({ children }: AppShellProps) {
   if (isMobile) {
     return (
       <div className="flex flex-col min-h-screen w-full">
-        {/* Mobile top bar */}
         <header
           className="sticky top-0 z-50 border-b shadow-sm flex items-center h-14 px-4 gap-3"
           style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}
@@ -74,7 +86,6 @@ export function AppShell({ children }: AppShellProps) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Desktop top bar */}
           <header
             className="sticky top-0 z-50 border-b shadow-sm"
             style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}
@@ -84,9 +95,14 @@ export function AppShell({ children }: AppShellProps) {
               <Link to="/" className="shrink-0 select-none">
                 <OmniLogo dark={theme === 'dark'} />
               </Link>
+              {sectionLabel && location.pathname !== '/' && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-md" style={{ color: 'var(--om-text-2)', background: 'var(--om-bg-2)' }}>
+                  {sectionLabel}
+                </span>
+              )}
               <form onSubmit={handleHeaderSearch} className="flex-1 max-w-[480px] ml-auto">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: 'var(--om-text-3)' }} />
+                <div className="relative flex">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none z-10" style={{ color: 'var(--om-text-3)' }} />
                   <input
                     type="text"
                     value={headerQuery}
@@ -124,5 +140,13 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+export function AppShell({ children }: AppShellProps) {
+  return (
+    <GlobalSearchProvider>
+      <ShellInner>{children}</ShellInner>
+    </GlobalSearchProvider>
   );
 }

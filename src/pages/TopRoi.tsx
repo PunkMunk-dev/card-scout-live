@@ -1,11 +1,14 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Search, X } from 'lucide-react';
 import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
 import { UnifiedErrorState } from '@/components/shared/UnifiedErrorState';
 import { useRoiCards, usePrefetchRoiEbayListings } from '@/hooks/useRoiCards';
 import { RoiCard } from '@/components/roi/RoiCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useGlobalSearch } from '@/contexts/GlobalSearchContext';
+import { getSession, setSession } from '@/lib/sessionStore';
 
 type SortOption = { key: string; field: 'psa10_profit' | 'raw_avg' | 'multiplier'; dir: 'asc' | 'desc'; label: string };
 const SORT_OPTIONS: SortOption[] = [
@@ -37,39 +40,49 @@ function SkeletonGrid() {
 }
 
 export default function TopRoi() {
-  const [sortKey, setSortKey] = useState('profit-desc');
+  const sessionSortKey = getSession().roiSortKey;
+  const [sortKey, setSortKey] = useState(sessionSortKey || 'profit-desc');
   const [searchQuery, setSearchQuery] = useState('');
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const PAGE_SIZE = 40;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const { data: cards, isLoading, error } = useRoiCards('All');
-
-  // Background prefetch top 10 cards' eBay listings
   usePrefetchRoiEbayListings(cards, 10);
+
+  // Register global search handler
+  const { register } = useGlobalSearch();
+  useEffect(() => {
+    return register({
+      onSubmit: (q: string) => {
+        setSearchQuery(q);
+        gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
+    });
+  }, [register]);
+
+  const handleSortChange = (key: string) => {
+    setSortKey(key);
+    setSession({ roiSortKey: key });
+  };
 
   const activeSort = SORT_OPTIONS.find(o => o.key === sortKey) ?? SORT_OPTIONS[0];
 
-  // Reset visible count when filters change
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [searchQuery, sortKey]);
 
   const filteredAndSorted = useMemo(() => {
     if (!cards) return [];
     let result = cards;
-
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(c => c.card_name.toLowerCase().includes(q));
     }
-
     result = [...result].sort((a, b) => {
       const aVal = a[activeSort.field] ?? -Infinity;
       const bVal = b[activeSort.field] ?? -Infinity;
-      return activeSort.dir === 'asc'
-        ? (aVal as number) - (bVal as number)
-        : (bVal as number) - (aVal as number);
+      return activeSort.dir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
-
     return result;
   }, [cards, searchQuery, sortKey]);
 
@@ -88,20 +101,12 @@ export default function TopRoi() {
 
   return (
     <div className="om-page-bg pb-24 md:pb-8 relative">
-      <div className="absolute top-3 right-4 z-20">
-        <CaptureSnapshotButton appId="roi" getState={getRoiSnapshotState} />
-      </div>
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 pt-6 md:pt-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: 'var(--om-text-0)' }}>
-            Top ROI Cards
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--om-text-2)' }}>
-            PSA grading profit analysis across {cards?.length ?? '...'} cards
-          </p>
-        </div>
-
+        <PageHeader
+          title="Top ROI Cards"
+          subtitle={`PSA grading profit analysis across ${cards?.length ?? '...'} cards`}
+          rightSlot={<CaptureSnapshotButton appId="roi" getState={getRoiSnapshotState} />}
+        />
 
         {/* Search + sort toolbar */}
         <div className="om-toolbar flex items-center gap-3 px-3 h-10 mb-4 overflow-x-auto">
@@ -125,7 +130,7 @@ export default function TopRoi() {
             {SORT_OPTIONS.map(opt => (
               <button
                 key={opt.key}
-                onClick={() => setSortKey(opt.key)}
+                onClick={() => handleSortChange(opt.key)}
                 className={`om-pill font-mono text-[10px] px-2 py-0.5 whitespace-nowrap ${sortKey === opt.key ? 'om-pill-active' : ''}`}
               >
                 {opt.label}
@@ -142,35 +147,37 @@ export default function TopRoi() {
         )}
 
         {/* Grid */}
-        {isLoading ? (
-          <SkeletonGrid />
-        ) : error ? (
-          <UnifiedErrorState message="Failed to load cards" />
-        ) : filteredAndSorted.length === 0 ? (
-          <UnifiedEmptyState
-            variant="no-results"
-            title={searchQuery ? 'No cards match' : 'No cards found'}
-            message={searchQuery ? `No cards matching "${searchQuery}"` : 'No ROI data available.'}
-          />
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {visibleCards.map((card) => (
-                <RoiCard key={card.id} card={card} />
-              ))}
-            </div>
-            {hasMore && (
-              <div className="flex justify-center pt-6">
-                <button
-                  onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-                  className="om-btn om-pill px-6 py-2 text-xs"
-                >
-                  Load more
-                </button>
+        <div ref={gridRef}>
+          {isLoading ? (
+            <SkeletonGrid />
+          ) : error ? (
+            <UnifiedErrorState message="Failed to load cards" />
+          ) : filteredAndSorted.length === 0 ? (
+            <UnifiedEmptyState
+              variant="no-results"
+              title={searchQuery ? 'No cards match' : 'No cards found'}
+              message={searchQuery ? `No cards matching "${searchQuery}"` : 'No ROI data available.'}
+            />
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {visibleCards.map((card) => (
+                  <RoiCard key={card.id} card={card} />
+                ))}
               </div>
-            )}
-          </>
-        )}
+              {hasMore && (
+                <div className="flex justify-center pt-6">
+                  <button
+                    onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                    className="om-btn om-pill px-6 py-2 text-xs"
+                  >
+                    Load more
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
