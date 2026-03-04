@@ -1,39 +1,31 @@
 
 
-## Plan: Replace Logo with SVG "M." Brand Mark
+## Plan: Refine M. Icon — Fuller Geometry
 
-### Overview
-Create a new SVG-based `OmniIcon` component with the chart+slab concept, an `OmniLogo` component (icon + wordmark), replace the current PNG logos in the header, and update the favicon.
+### Problem
+The current M path uses coordinates that push close to the edges of the 512×512 viewBox, causing clipping at the rounded corners (rx=140). The period (circle r=18) is too small relative to the M.
 
 ### Changes
 
-**1. Create `src/components/branding/OmniIcon.tsx`**
-- SVG component: rounded square container (`rx="140"`) with a chart-style "M" path and a data-point circle
-- Accepts `size` (default 36) and `dark` (boolean) props
-- Dark mode: black bg, white M. | Light mode: white bg, black M.
-- Refine the M path geometry so the middle peak is taller (chart spike feel)
+**Update `src/components/branding/OmniIcon.tsx`** — Adjust the SVG path and circle:
 
-**2. Create `src/components/branding/OmniLogo.tsx`**
-- Combines `OmniIcon` + "OmniMarket" wordmark text
-- Uses Inter font, weight 700, -0.02em letter-spacing
-- Theme-aware via `dark` prop
+- **Center and inset the M** within the safe area of the rounded square (~150–362 horizontal, ~140–380 vertical)
+- **Widen the M strokes** so the letterform feels bolder and fuller
+- **Enlarge the period** from r=18 to r=24 and reposition it closer to the M's right leg
+- **Keep the chart-spike concept** (middle peak slightly taller)
 
-**3. Update `src/components/TabNavigation.tsx`**
-- Remove PNG logo imports (`omnimarket-logo.png`, `omnimarket-logo-light.png`)
-- Import `OmniLogo` from branding
-- Replace the `<img>` tag with `<OmniLogo dark={theme === 'dark'} />`
+New path (approximate):
+```
+d="M120 380 L120 140 L180 140 L256 260 L332 120 L392 120 L392 380 L332 380 L332 230 L256 330 L180 230 L180 380 Z"
+```
+- Legs span x=120→392 (centered in 512)
+- Top range 120→380 (more vertical room)
+- Middle peak at y=120 (chart spike)
+- Stroke width ~60px per leg
 
-**4. Create `public/favicon.svg`**
-- Static SVG version of the icon (black bg, white M.) to replace the current favicon
-- Update `index.html` favicon link to point to `/favicon.svg` (already does)
+Circle: `cx="405" cy="370" r="24"` — bigger dot, tucked closer to M.
 
-### Files
-| File | Action |
-|------|--------|
-| `src/components/branding/OmniIcon.tsx` | Create |
-| `src/components/branding/OmniLogo.tsx` | Create |
-| `src/components/TabNavigation.tsx` | Edit (swap PNG for SVG component) |
-| `public/favicon.svg` | Overwrite with new M. icon |
+**Update `public/favicon.svg`** — Same path changes for consistency.
 
-No layout or functionality changes. Only branding swap.
+Two files edited, path + circle coordinates only.
 
