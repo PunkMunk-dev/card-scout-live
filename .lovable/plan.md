@@ -1,54 +1,118 @@
 
 
-## UI Polish Pass: Header, Sidebar, and Brand Cleanup
+## Plan: UI Audit Export Page + Snapshot System
 
-Pure visual-only changes. No API/search logic changes.
+This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
 
-### A) Create `src/components/branding/BrandLockup.tsx`
+### New Files
 
-New component that replaces `OmniLogo` usage in headers:
-- Renders `OmniIcon` at **22px** + "OmniMarket" wordmark at **17px** `font-display font-semibold tracking-tight`
-- `gap-2` spacing
-- Wordmark uses `var(--om-text-0)` in both themes (no more hardcoded white/gray-900 with text-shadow)
-- Wrapped in `<Link to="/">`
-- Keeps the same `dark` prop for icon filter logic
+**1. `src/lib/uiAuditData.ts`** — Static audit data module
+- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
+  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
+  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
+  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
+  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
+  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
+- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
+- All secrets/tokens replaced with `***REDACTED***`
 
-### B) AppShell header cleanup
+**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
+- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
+- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
+- `exportSnapshotsJSON()` — serializes to downloadable JSON
 
-**Desktop header (`h-14` stays):**
-- Replace `<OmniLogo>` with `<BrandLockup />`
-- Section label pill: change from `rounded-md text-xs px-2 py-0.5` → `rounded-full text-[11px] px-2 py-0.5` with shortened labels: "TCG" / "Sports" / "ROI" / "Audit" (drop "Market"/"Top"/"UI")
-- Search input: reduce to `h-9` (from `h-10`), submit button also `h-9`
-- Theme toggle: standardize to `h-9 w-9 rounded-xl`, icon color `var(--om-text-2)` (was `--om-text-1`)
-- WatchlistDropdown button: reduce from `h-11 w-11` to `h-9 w-9` in WatchlistDropdown.tsx
-- Right-side cluster: consistent `gap-1.5`
+**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
+- Props: `appId: string`, `getState: () => SnapshotPayload`
+- Renders a small pill button ("📸 Snapshot") in top-right area
+- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
 
-**Mobile header:**
-- Replace `<OmniLogo>` with `<BrandLockup />`
-- Theme toggle already `h-9 w-9` — just update icon color to `var(--om-text-2)`
+**4. `src/pages/UIAudit.tsx`** — The audit page
+- "How to Use" card at top (4-step instructions)
+- Sections A–E rendered from `uiAuditData.ts` with code blocks
+- "Snapshots" section: lists snapshots grouped by app, with timestamps
+- Sticky footer bar with:
+  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
+  - "Download .md" — downloads as `ui-audit-report.md`
+  - "Copy Snapshots JSON" — copies just snapshots
+  - "Download snapshots.json"
+  - "Clear Snapshots" — with confirm dialog
 
-### C) Sidebar icon rail cleanup
+### Modified Files
 
-In `AppSidebar.tsx`:
-- Icon size: `h-[18px] w-[18px]` (from `h-4 w-4` = 16px)
-- Default icon color via style: `color: var(--om-text-3)`
-- Hover style: update `hover:bg-sidebar-accent/50` to include `hover:text-[var(--om-text-1)]`
-- Active state: replace `bg-sidebar-accent text-sidebar-primary` with a custom style using `var(--om-bg-2)` background + a `2px` left accent bar via `border-l-2` with `var(--om-accent)` — gives that Linear/premium feel
-- Labels: reduce to `text-xs` and color `var(--om-text-2)` when not active
-- Watchlist star: icon stays same size, badge styling unchanged
+**5. `src/App.tsx`** — Add route
+- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
+- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
+- No nav entry added (dev-only URL)
 
-### D) WatchlistDropdown button sizing
+**6. `src/pages/TcgLab.tsx`** — Add snapshot button
+- Import `CaptureSnapshotButton`
+- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
 
-In `WatchlistDropdown.tsx`: reduce trigger button from `h-11 w-11` to `h-9 w-9`, icon from `h-5 w-5` to `h-4 w-4`, badge position adjusted.
+**7. `src/pages/SportsLab.tsx`** — Add snapshot button
+- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
 
-### E) Files touched
+**8. `src/pages/TopRoi.tsx`** — Add snapshot button
+- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
 
-| File | Change |
-|------|--------|
-| `src/components/branding/BrandLockup.tsx` | **Create** — compact logo+wordmark component |
-| `src/components/layout/AppShell.tsx` | Use `BrandLockup`, shrink search/buttons, update pill labels |
-| `src/components/layout/AppSidebar.tsx` | Icon sizing, muted colors, accent left-bar active state |
-| `src/components/WatchlistDropdown.tsx` | Shrink trigger button to match header sizing |
+**9. `src/pages/Index.tsx`** — Add snapshot button
+- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
 
-No changes to: `index.css`, `PageHeader.tsx`, search logic, API calls, routing, or any page components.
+### Snapshot Payload Shape
+
+```text
+{
+  appId: "tcg" | "sports" | "roi" | "search",
+  timestamp: ISO string,
+  route: window.location.pathname + search,
+  searchInputs: { ... },
+  filters: { ... },
+  pagination: { ... },
+  loadingFlags: { ... },
+  errorState: null | { message },
+  resultsSchema: { itemKeys: string[], count: number },
+  layoutMode: { ... }
+}
+```
+
+### Export Format
+
+The "Copy All" output is a single markdown document:
+
+```text
+# UI Audit Report — OmniMarket
+Generated: {date}
+
+## A) Routing + Shell
+### Detected Components
+- ...
+### Code Excerpts
+\`\`\`tsx
+// App.tsx route definitions (redacted)
+...
+\`\`\`
+
+## B) App Entry Pages
+...
+
+## C) Global State + Data Plumbing
+...
+
+## D) Auth / Gating
+(Not implemented — skipped)
+
+## E) Styling / Design Tokens
+...
+
+## Snapshots
+\`\`\`json
+[...]
+\`\`\`
+```
+
+### What This Does NOT Change
+- No API behavior, search logic, or data schemas
+- No UI styling changes
+- No business logic modifications
+- No new database tables or edge functions
+- Snapshot buttons are small, unobtrusive, and easily removable
 
