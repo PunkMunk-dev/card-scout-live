@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2, ArrowRight, ChevronRight, Star, X } from "lucide-react";
@@ -163,8 +164,21 @@ export default function Index() {
 
   const handleExploreMarkets = () => marketTilesRef.current?.scrollIntoView({ behavior: 'smooth' });
 
+  const getSearchSnapshotState = useCallback(() => ({
+    searchInputs: { query },
+    filters: { sort },
+    pagination: { nextPage, total },
+    loadingFlags: { isLoading, isLoadingMore },
+    errorState: error ? { message: error } : null,
+    resultsSchema: { itemKeys: items[0] ? Object.keys(items[0]) : [], count: items.length },
+    layoutMode: { hasSearched, fromWatchlist },
+  }), [query, sort, nextPage, total, isLoading, isLoadingMore, error, items, hasSearched, fromWatchlist]);
+
   return (
-    <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
+    <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0 relative">
+      <div className="absolute top-3 right-4 z-20">
+        <CaptureSnapshotButton appId="search" getState={getSearchSnapshotState} />
+      </div>
       {/* Toolbar: sort + results count */}
       {hasSearched && (
         <div className="border-b border-border bg-card/50">

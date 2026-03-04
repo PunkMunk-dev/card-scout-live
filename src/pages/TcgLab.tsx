@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { TcgHeader } from '@/components/tcg-lab/TcgHeader';
+import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { TerminalView } from '@/components/tcg-lab/TerminalView';
 import { GuidedSearchEmptyState } from '@/components/shared/GuidedSearchEmptyState';
 import { useSets } from '@/hooks/useTcgData';
@@ -26,6 +27,16 @@ export default function TcgLab() {
 
   const selectedSet = sets.find(s => s.id === selectedSetId);
 
+  const getTcgSnapshotState = useCallback(() => ({
+    searchInputs: { selectedGame, selectedTarget: selectedTarget?.name ?? null, quickQuery, mode },
+    filters: { selectedSetId },
+    pagination: {},
+    loadingFlags: { isSearchLoading },
+    errorState: null,
+    resultsSchema: { itemKeys: [], count: totalCount },
+    layoutMode: { mode },
+  }), [selectedGame, selectedTarget, quickQuery, mode, selectedSetId, isSearchLoading, totalCount]);
+
   return (
     <div className="om-page-bg relative pb-16 sm:pb-0 min-h-screen">
       {/* PSA mosaic texture behind header */}
@@ -41,6 +52,9 @@ export default function TcgLab() {
       />
 
       <div className="relative z-10">
+        <div className="absolute top-3 right-4 z-20">
+          <CaptureSnapshotButton appId="tcg" getState={getTcgSnapshotState} />
+        </div>
         <TcgHeader
           selectedGame={selectedGame}
           onGameChange={handleGameChange}

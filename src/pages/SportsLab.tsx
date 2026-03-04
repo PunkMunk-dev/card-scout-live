@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
+import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -54,6 +55,16 @@ export default function SportsLab() {
   const handleLoadingChange = useCallback((loading: boolean) => setIsSearching(loading), []);
   const handleSearchModeChange = useCallback((mode: SearchMode) => { setSearchMode(mode); setResultCount(undefined); }, []);
 
+  const getSportsSnapshotState = useCallback(() => ({
+    searchInputs: { sportKey: state.sport_key, playerIds: state.selected_player_ids, quickSearchQuery, searchMode },
+    filters: { brandId: selectedBrand?.id ?? null, showAllBrands: state.show_all_brands, traitIds: selectedTraitIds },
+    pagination: {},
+    loadingFlags: { isSearching },
+    errorState: null,
+    resultsSchema: { itemKeys: [], count: resultCount ?? 0 },
+    layoutMode: { searchMode, watchlistOpen },
+  }), [state, quickSearchQuery, searchMode, selectedBrand, selectedTraitIds, isSearching, resultCount, watchlistOpen]);
+
   if (isLoading) return (
     <div className="om-page-bg">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pt-4">
@@ -82,7 +93,10 @@ export default function SportsLab() {
   );
 
   return (
-    <div className="om-page-bg flex flex-col pb-16 sm:pb-0">
+    <div className="om-page-bg flex flex-col pb-16 sm:pb-0 relative">
+      <div className="absolute top-3 right-4 z-20">
+        <CaptureSnapshotButton appId="sports" getState={getSportsSnapshotState} />
+      </div>
       <QueryHeader
         sports={snapshot.sports} players={filteredPlayers} ruleItems={filteredRuleItems}
         sportKey={state.sport_key} selectedPlayerId={state.selected_player_ids[0] ?? null}
