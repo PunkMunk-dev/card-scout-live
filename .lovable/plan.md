@@ -1,16 +1,24 @@
 
 
-## Plan: Theme-aware OmniMarket Wordmark Color
+## Issue Found: Inverted `dark` Prop Logic
 
-**`src/components/branding/OmniLogo.tsx`** — Make the wordmark color respond to the `dark` prop:
+The `OmniLogo` component's color logic is backwards:
 
-- **Dark mode**: White text with existing shadow
-- **Light mode**: Black text (`#111827`), no shadow needed
+- **Caller** (`TabNavigation.tsx` line 106): `dark={theme === 'dark'}` — passes `true` when the app is in dark mode
+- **Component** (`OmniLogo.tsx` line 15-16): `dark ? 'text-gray-900' : 'text-white'` — renders **black** text when `dark=true`
 
-| Prop | Dark | Light |
-|------|------|-------|
-| Color | `text-white` | `text-gray-900` |
-| Shadow | `0 1px 6px rgba(0,0,0,0.35)` | none |
+This means dark mode gets black text (invisible on dark bg) and light mode gets white text (invisible on light bg).
 
-Uses the existing `dark` prop already passed into the component. One file, minimal changes.
+### Fix
+
+**`src/components/branding/OmniLogo.tsx`** — Swap the conditional:
+
+| Line | Current | Fixed |
+|------|---------|-------|
+| 15-16 | `dark ? 'text-gray-900' : 'text-white'` | `dark ? 'text-white' : 'text-gray-900'` |
+| 15-16 | Shadow when `!dark` | Shadow when `dark` (white text needs it) |
+
+Also fix line 10: `<OmniIcon size={34} dark={!dark} />` — the `!dark` inversion here is suspect too; needs to pass `dark` directly so the icon matches the theme.
+
+One file, three lines.
 
