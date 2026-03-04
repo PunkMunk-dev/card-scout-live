@@ -62,7 +62,7 @@ export default function Index() {
   const [nextPage, setNextPage] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasSearched, setHasSearched] = useState(!!urlQuery);
+  const hasSearched = useMemo(() => !!urlQuery, [urlQuery]);
   const [sort, setSort] = useState<SortOption>(sessionSort || "best");
   const [error, setError] = useState<string | null>(null);
   const [fromWatchlist, setFromWatchlist] = useState(urlSrc === 'wl');
@@ -114,7 +114,6 @@ export default function Index() {
       } else { setItems(response.items); }
       setTotal(response.total);
       setNextPage(response.items.length > 0 ? response.nextPage : null);
-      setHasSearched(true);
       setError(null);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
@@ -149,7 +148,6 @@ export default function Index() {
   const recentSearches = getRecentSearches();
 
   const quickStartCards = [
-    { icon: Search, title: "Live eBay Search", desc: "Search any card across eBay in real time.", action: () => window.dispatchEvent(new Event("omni:focus-search")) },
     { icon: Layers, title: "TCG Market", desc: "Pokémon & One Piece card explorer.", to: "/tcg" },
     { icon: Trophy, title: "Sports Market", desc: "Sports cards by player, brand & trait.", to: "/sports" },
     { icon: TrendingUp, title: "Top ROI Cards", desc: "See the best grading value plays.", to: "/roi" },
@@ -222,11 +220,20 @@ export default function Index() {
 
           <div className="space-y-6">
             {/* Quick Start cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {quickStartCards.map((card) => {
-                const inner = (
+            {/* Search CTA */}
+            <button
+              onClick={() => window.dispatchEvent(new Event("omni:focus-search"))}
+              className="om-card rounded-2xl px-4 py-2.5 flex items-center gap-2 cursor-pointer hover:-translate-y-px transition-all duration-200 w-full sm:w-auto"
+              style={{ border: '1px solid var(--om-border-0)' }}
+            >
+              <Search className="h-4 w-4" style={{ color: 'var(--om-accent)' }} />
+              <span className="text-xs font-medium" style={{ color: 'var(--om-text-1)' }}>Search any card on eBay</span>
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {quickStartCards.map((card) => (
+                <Link key={card.title} to={card.to}>
                   <div
-                    key={card.title}
                     className="om-card rounded-2xl p-4 flex flex-col gap-1.5 cursor-pointer hover:-translate-y-px transition-all duration-200"
                     style={{ border: '1px solid var(--om-border-0)' }}
                   >
@@ -234,16 +241,14 @@ export default function Index() {
                     <span className="text-sm font-semibold" style={{ color: 'var(--om-text-0)' }}>{card.title}</span>
                     <span className="text-[12px] leading-relaxed" style={{ color: 'var(--om-text-2)' }}>{card.desc}</span>
                   </div>
-                );
-                if (card.to) return <Link key={card.title} to={card.to}>{inner}</Link>;
-                return <div key={card.title} onClick={card.action}>{inner}</div>;
-              })}
+                </Link>
+              ))}
             </div>
 
             {/* Search Ideas — merged recent + suggested */}
             <section>
               <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] mb-3 flex items-center gap-1.5" style={{ color: 'var(--om-text-3)' }}>
-                <Sparkles className="h-3.5 w-3.5" /> Search Ideas
+                <Sparkles className="h-3.5 w-3.5" /> Trending
               </h2>
               <div className="flex flex-wrap gap-2">
                 {searchIdeas.map(({ term, isRecent }) => (
