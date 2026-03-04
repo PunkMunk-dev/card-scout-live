@@ -13,7 +13,6 @@ import { ResultsHeader } from "@/components/ResultsHeader";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { searchEbay } from "@/lib/ebay-api";
 import { useSharedWatchlist } from "@/contexts/WatchlistContext";
-import { useGlobalSearch } from "@/contexts/GlobalSearchContext";
 import { getSession, setSession, pushRecentSearch } from "@/lib/sessionStore";
 import type { EbayItem, SortOption } from "@/types/ebay";
 
@@ -159,7 +158,7 @@ export default function Index() {
   const recentSearches = getRecentSearches();
 
   const quickStartCards = [
-    { icon: Search, title: "Live eBay Search", desc: "Search any card across eBay in real time.", action: () => { const input = document.querySelector<HTMLInputElement>('header input[type="text"]'); if (input) { input.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => input.focus(), 300); } } },
+    { icon: Search, title: "Live eBay Search", desc: "Search any card across eBay in real time.", action: () => window.dispatchEvent(new Event("omni:focus-search")) },
     { icon: Layers, title: "TCG Market", desc: "Pokémon & One Piece card explorer.", to: "/tcg" },
     { icon: Trophy, title: "Sports Market", desc: "Sports cards by player, brand & trait.", to: "/sports" },
     { icon: TrendingUp, title: "Top ROI Cards", desc: "See the best grading value plays.", to: "/roi" },
@@ -260,12 +259,10 @@ export default function Index() {
                   <button
                     key={term}
                     onClick={() => navigate(`/?q=${encodeURIComponent(term)}`)}
-                    className="rounded-xl px-3 py-1.5 text-xs font-medium hover:-translate-y-px transition-all duration-150 cursor-pointer"
-                    style={isRecent
-                      ? { background: 'var(--om-bg-2)', color: 'var(--om-text-1)', border: '1px solid var(--om-border-0)' }
-                      : { background: 'var(--om-accent)', color: '#fff', opacity: 0.85 }
-                    }
+                    className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium hover:-translate-y-px transition-all duration-150 cursor-pointer"
+                    style={{ background: 'var(--om-bg-2)', color: 'var(--om-text-1)', border: '1px solid var(--om-border-0)' }}
                   >
+                    {isRecent && <span className="opacity-50">↺</span>}
                     {term}
                   </button>
                 ))}
