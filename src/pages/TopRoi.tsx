@@ -97,6 +97,23 @@ export default function TopRoi() {
           <>
             {/* Toolbar */}
             <div className="om-toolbar flex items-center gap-3 px-3 h-10 mb-4 overflow-x-auto">
+              {/* Sport filter pills */}
+              <div className="flex items-center gap-1 shrink-0">
+                {(['All', 'Sports', 'TCG'] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSportFilter(opt)}
+                    className={`px-2.5 py-1 text-[11px] font-mono rounded-full transition-colors ${
+                      sportFilter === opt
+                        ? 'om-pill-active'
+                        : 'om-pill hover:opacity-80'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              <div className="border-l h-5 shrink-0" style={{ borderColor: 'var(--om-border)' }} />
               <label className="flex items-center gap-1.5 text-xs font-mono shrink-0" style={{ color: 'var(--om-text-2)' }}>
                 Min profit
                 <input
