@@ -108,13 +108,13 @@ function sectionB(): AuditSection {
 // Both call useSportsEbaySearch → supabase.functions.invoke('sports-ebay-search')`,
       },
       {
-        label: 'TopRoi.tsx — State + structure',
-        code: `// State: sortKey, searchQuery, visibleCount (pagination), PAGE_SIZE=40
-// useRoiCards('All') — fetches roi_cards from Supabase table
-// usePrefetchRoiEbayListings(cards, 10) — background prefetch top 10
-// Sort: SORT_OPTIONS [{field:'psa10_profit',dir},{field:'raw_avg',dir},{field:'multiplier',dir}]
-// Filter: searchQuery filters by card_name.includes(q)
-// Grid: RoiCard components + "Load more" button`,
+        label: 'TopRoi.tsx — Live Auctions (state + structure)',
+        code: `// State: minProfit (default 50), endingSoon toggle
+// useRoiCards('All') — fetches roi_cards for metadata join
+// useLiveRoiAuctions() — reads roi_live_auctions table (grace window, auto-refetch 20s)
+// Enrichment: joins live rows to ROI card map, filters by psa10_profit >= minProfit
+// Sort: endingSoon → end_time asc, default → last_seen_at desc
+// Grid: inline auction cards with bid, profit badge, end countdown, eBay link`,
       },
     ],
     notes: [
@@ -144,9 +144,9 @@ function sectionC(): AuditSection {
 // src/hooks/useSportsGemRate.ts — gem rate calculation
 // src/hooks/useSportsQueryBuilderState.ts — sports filter state machine
 // src/hooks/useSportsRulesetSnapshot.ts — loads published ruleset snapshot
-// src/hooks/useRoiCards.ts — ROI card data + eBay listing prefetch
+// src/hooks/useRoiCards.ts — ROI card metadata from roi_cards table
+// src/hooks/useLiveRoiAuctions.ts — live auction rows from roi_live_auctions
 // src/hooks/useWatchlist.ts — generic watchlist CRUD
-// src/hooks/useRecommendations.ts — recommendation logic
 // src/hooks/useCountdown.ts — countdown timer utility`,
       },
       {
