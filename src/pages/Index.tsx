@@ -52,7 +52,6 @@ const SUGGESTED_SEARCHES = [
 export default function Index() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const urlQuery = searchParams.get('q') || '';
   const urlSrc = searchParams.get('src') || '';
 
