@@ -1,118 +1,31 @@
 
 
-## Plan: UI Audit Export Page + Snapshot System
+## Plan: Stable Focus Contract + Simplify GlobalSearchContext + UI Polish
 
-This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
+Five changes across 3 files. The `register` pattern stays for TCG/Sports/ROI pages (they do page-specific things like switching to quick mode), but Index stops using it since it just navigates to itself.
 
-### New Files
+### 1. `src/components/layout/AppShell.tsx`
+- Add `useEffect, useRef` to imports
+- Create `searchInputRef = useRef<HTMLInputElement>(null)`
+- Add `ref={searchInputRef}` and `data-omni-global-search="true"` to both mobile and desktop `<input>`
+- Add `useEffect` that listens for `omni:focus-search` custom event and calls `searchInputRef.current?.focus()` with a fallback `querySelector('[data-omni-global-search]')`
 
-**1. `src/lib/uiAuditData.ts`** — Static audit data module
-- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
-  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
-  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
-  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
-  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
-  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
-- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
-- All secrets/tokens replaced with `***REDACTED***`
+### 2. `src/contexts/GlobalSearchContext.tsx`
+- Keep `register` (TCG, Sports, ROI still use it for mode switching)
+- Change `submitSearch` fallback: when no handler registered, navigate to `/?q=...` (already does this — no change needed here)
+- No changes required; the context already navigates when no handler is registered
 
-**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
-- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
-- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
-- `exportSnapshotsJSON()` — serializes to downloadable JSON
+### 3. `src/pages/Index.tsx`
+- **Remove** the `useGlobalSearch` import and the `register` effect (lines 74–81) — Index doesn't need to register since the context's default behavior already navigates to `/?q=...`
+- **Replace** the brittle `document.querySelector('header input[type="text"]')` in the "Live eBay Search" card action with `window.dispatchEvent(new Event("omni:focus-search"))`
+- **Unify search pill styles**: all pills get the same neutral `om-bg-2` surface with border; recent pills get a small `↺` prefix icon instead of a different background color
 
-**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
-- Props: `appId: string`, `getState: () => SnapshotPayload`
-- Renders a small pill button ("📸 Snapshot") in top-right area
-- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
+### Files touched
 
-**4. `src/pages/UIAudit.tsx`** — The audit page
-- "How to Use" card at top (4-step instructions)
-- Sections A–E rendered from `uiAuditData.ts` with code blocks
-- "Snapshots" section: lists snapshots grouped by app, with timestamps
-- Sticky footer bar with:
-  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
-  - "Download .md" — downloads as `ui-audit-report.md`
-  - "Copy Snapshots JSON" — copies just snapshots
-  - "Download snapshots.json"
-  - "Clear Snapshots" — with confirm dialog
+| File | What changes |
+|------|-------------|
+| `src/components/layout/AppShell.tsx` | Add `searchInputRef`, `data-omni-global-search` attr, `omni:focus-search` listener |
+| `src/pages/Index.tsx` | Remove register effect, use focus event for eBay card, unify pill styles |
 
-### Modified Files
-
-**5. `src/App.tsx`** — Add route
-- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
-- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
-- No nav entry added (dev-only URL)
-
-**6. `src/pages/TcgLab.tsx`** — Add snapshot button
-- Import `CaptureSnapshotButton`
-- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
-
-**7. `src/pages/SportsLab.tsx`** — Add snapshot button
-- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
-
-**8. `src/pages/TopRoi.tsx`** — Add snapshot button
-- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
-
-**9. `src/pages/Index.tsx`** — Add snapshot button
-- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
-
-### Snapshot Payload Shape
-
-```text
-{
-  appId: "tcg" | "sports" | "roi" | "search",
-  timestamp: ISO string,
-  route: window.location.pathname + search,
-  searchInputs: { ... },
-  filters: { ... },
-  pagination: { ... },
-  loadingFlags: { ... },
-  errorState: null | { message },
-  resultsSchema: { itemKeys: string[], count: number },
-  layoutMode: { ... }
-}
-```
-
-### Export Format
-
-The "Copy All" output is a single markdown document:
-
-```text
-# UI Audit Report — OmniMarket
-Generated: {date}
-
-## A) Routing + Shell
-### Detected Components
-- ...
-### Code Excerpts
-\`\`\`tsx
-// App.tsx route definitions (redacted)
-...
-\`\`\`
-
-## B) App Entry Pages
-...
-
-## C) Global State + Data Plumbing
-...
-
-## D) Auth / Gating
-(Not implemented — skipped)
-
-## E) Styling / Design Tokens
-...
-
-## Snapshots
-\`\`\`json
-[...]
-\`\`\`
-```
-
-### What This Does NOT Change
-- No API behavior, search logic, or data schemas
-- No UI styling changes
-- No business logic modifications
-- No new database tables or edge functions
-- Snapshot buttons are small, unobtrusive, and easily removable
+`GlobalSearchContext.tsx` — no changes needed (already navigates to `/` when no handler registered).
 
