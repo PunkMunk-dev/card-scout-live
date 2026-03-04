@@ -47,7 +47,7 @@ export function AppShell({ children }: AppShellProps) {
                 type="text"
                 value={headerQuery}
                 onChange={(e) => setHeaderQuery(e.target.value)}
-                placeholder="Search any card..."
+                placeholder="Search player, set, card…"
                 className="flex h-9 w-full rounded-xl pl-9 pr-3 text-sm om-input"
               />
             </div>
@@ -91,9 +91,17 @@ export function AppShell({ children }: AppShellProps) {
                     type="text"
                     value={headerQuery}
                     onChange={(e) => setHeaderQuery(e.target.value)}
-                    placeholder="Search any card, set, or player..."
-                    className="flex h-10 w-full rounded-xl pl-10 pr-3 text-sm om-input"
+                    placeholder="Search player, set, card number…"
+                    className="flex h-10 w-full rounded-l-xl pl-10 pr-3 text-sm om-input border-r-0"
                   />
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 h-10 px-4 rounded-r-xl text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
+                    style={{ background: 'var(--om-accent)', color: '#fff' }}
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    <span className="hidden lg:inline">Search</span>
+                  </button>
                 </div>
               </form>
               <div className="flex items-center gap-2 ml-auto">

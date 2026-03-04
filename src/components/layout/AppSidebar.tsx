@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { Search, Layers, Trophy, TrendingUp, Star } from 'lucide-react';
+import { Home, Layers, Trophy, TrendingUp, Star } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -14,7 +14,7 @@ import {
 import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 
 const navItems = [
-  { to: '/', label: 'Search', icon: Search },
+  { to: '/', label: 'Dashboard', icon: Home },
   { to: '/tcg', label: 'TCG Market', icon: Layers },
   { to: '/sports', label: 'Sports Market', icon: Trophy },
   { to: '/roi', label: 'Top ROI', icon: TrendingUp },
@@ -67,29 +67,27 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Watchlist shortcut */}
-        {watchlistCount > 0 && (
-          <SidebarGroup className="mt-auto pb-4">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip={collapsed ? `Watchlist (${watchlistCount})` : undefined}
-                    className="text-sidebar-foreground/70 hover:text-sidebar-foreground"
-                  >
-                    <div className="relative">
-                      <Star className="h-4 w-4 shrink-0 fill-current" style={{ color: 'var(--om-accent)' }} />
-                      <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center leading-none">
-                        {watchlistCount > 99 ? '99+' : watchlistCount}
-                      </span>
-                    </div>
-                    {!collapsed && <span className="text-sm">Watchlist</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {/* Watchlist shortcut — always visible */}
+        <SidebarGroup className="mt-auto pb-4">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip={collapsed ? `Watchlist (${watchlistCount})` : undefined}
+                  className="text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <div className="relative">
+                    <Star className="h-4 w-4 shrink-0 fill-current" style={{ color: 'var(--om-accent)' }} />
+                    <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center leading-none">
+                      {watchlistCount > 99 ? '99+' : watchlistCount}
+                    </span>
+                  </div>
+                  {!collapsed && <span className="text-sm">Watchlist</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
