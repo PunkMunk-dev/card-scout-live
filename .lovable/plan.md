@@ -1,27 +1,39 @@
 
 
-## Plan: Theme-Aware Logo (Light/Dark Variants)
+## Plan: Replace Logo with SVG "M." Brand Mark
+
+### Overview
+Create a new SVG-based `OmniIcon` component with the chart+slab concept, an `OmniLogo` component (icon + wordmark), replace the current PNG logos in the header, and update the favicon.
 
 ### Changes
 
-**1. Copy the uploaded light-mode logo**
-- Copy `user-uploads://ChatGPT_Image_Mar_3_2026_07_36_42_PM.png` → `src/assets/omnimarket-logo-light.png`
+**1. Create `src/components/branding/OmniIcon.tsx`**
+- SVG component: rounded square container (`rx="140"`) with a chart-style "M" path and a data-point circle
+- Accepts `size` (default 36) and `dark` (boolean) props
+- Dark mode: black bg, white M. | Light mode: white bg, black M.
+- Refine the M path geometry so the middle peak is taller (chart spike feel)
 
-**2. Update `src/components/TabNavigation.tsx`**
-- Import the light logo: `import omniLogoLight from "@/assets/omnimarket-logo-light.png"`
-- Use the `theme` value (already available from `useTheme()`) to conditionally render the correct logo
-- Dark mode → existing `omnimarket-logo.png` (white/bright logo on dark bg)
-- Light mode → new `omnimarket-logo-light.png` (dark logo on light bg)
+**2. Create `src/components/branding/OmniLogo.tsx`**
+- Combines `OmniIcon` + "OmniMarket" wordmark text
+- Uses Inter font, weight 700, -0.02em letter-spacing
+- Theme-aware via `dark` prop
 
-```tsx
-<Link to="/" className="shrink-0 select-none">
-  <img
-    src={theme === 'dark' ? omniLogo : omniLogoLight}
-    alt="OmniMarket"
-    className="h-8 w-8 rounded-lg"
-  />
-</Link>
-```
+**3. Update `src/components/TabNavigation.tsx`**
+- Remove PNG logo imports (`omnimarket-logo.png`, `omnimarket-logo-light.png`)
+- Import `OmniLogo` from branding
+- Replace the `<img>` tag with `<OmniLogo dark={theme === 'dark'} />`
 
-Single file change, 2 lines added.
+**4. Create `public/favicon.svg`**
+- Static SVG version of the icon (black bg, white M.) to replace the current favicon
+- Update `index.html` favicon link to point to `/favicon.svg` (already does)
+
+### Files
+| File | Action |
+|------|--------|
+| `src/components/branding/OmniIcon.tsx` | Create |
+| `src/components/branding/OmniLogo.tsx` | Create |
+| `src/components/TabNavigation.tsx` | Edit (swap PNG for SVG component) |
+| `public/favicon.svg` | Overwrite with new M. icon |
+
+No layout or functionality changes. Only branding swap.
 
