@@ -1,5 +1,7 @@
 import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Home, Layers, Trophy, TrendingUp, Star } from 'lucide-react';
+import { setSession } from '@/lib/sessionStore';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -25,6 +27,11 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { count: watchlistCount } = useSharedWatchlist();
+
+  // Persist last route to session
+  useEffect(() => {
+    setSession({ lastRoute: location.pathname });
+  }, [location.pathname]);
 
   return (
     <Sidebar

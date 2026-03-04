@@ -1,93 +1,118 @@
 
 
-## Plan: Unified UI Cohesion Layer
+## Plan: UI Audit Export Page + Snapshot System
 
-After reviewing the current codebase, the AppShell/sidebar/mobile-tabs/dashboard already exist from prior work. The real gaps are: (1) no cross-app search, (2) no session persistence, (3) no shared page header component, (4) snapshot buttons still floating on TCG/Sports. Here's what to build.
+This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
 
 ### New Files
 
-**1. `src/lib/sessionStore.ts`** — Lightweight sessionStorage helpers
-- `getSession()` / `setSession(partial)` / `clearSession()`
-- Keys: `lastRoute`, `globalQuery`, `tcgMode`, `sportsMode`, `roiSortKey`, `indexSortKey`, `recentSearches` (array with timestamp+route, max 10)
-- On each page mount, restore relevant state; on each search submit, push to `recentSearches`
+**1. `src/lib/uiAuditData.ts`** — Static audit data module
+- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
+  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
+  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
+  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
+  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
+  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
+- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
+- All secrets/tokens replaced with `***REDACTED***`
 
-**2. `src/contexts/GlobalSearchContext.tsx`** — Cross-app search dispatch
-- Context exposes `registerSearchHandler(handler)` and `submitSearch(query)`
-- Each page registers its own handler on mount:
-  - Index: navigates to `/?q=...` (existing behavior)
-  - TCG: sets `mode='quick'`, `quickQuery=query`
-  - Sports: sets `searchMode='quick'`, `quickSearchQuery=query`
-  - ROI: sets `searchQuery=query`
-- AppShell's top bar calls `submitSearch(query)` instead of always navigating to `/`
-- Falls back to `navigate('/?q=...')` if no handler registered
+**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
+- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
+- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
+- `exportSnapshotsJSON()` — serializes to downloadable JSON
 
-**3. `src/components/shared/PageHeader.tsx`** — Consistent page header
-- Props: `title`, `subtitle?`, `rightSlot?`
-- Renders: h1 (text-xl md:text-2xl), subtitle (text-sm muted), optional right content
-- Consistent bottom border, spacing (mb-6), max-width alignment
+**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
+- Props: `appId: string`, `getState: () => SnapshotPayload`
+- Renders a small pill button ("📸 Snapshot") in top-right area
+- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
+
+**4. `src/pages/UIAudit.tsx`** — The audit page
+- "How to Use" card at top (4-step instructions)
+- Sections A–E rendered from `uiAuditData.ts` with code blocks
+- "Snapshots" section: lists snapshots grouped by app, with timestamps
+- Sticky footer bar with:
+  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
+  - "Download .md" — downloads as `ui-audit-report.md`
+  - "Copy Snapshots JSON" — copies just snapshots
+  - "Download snapshots.json"
+  - "Clear Snapshots" — with confirm dialog
 
 ### Modified Files
 
-**4. `src/components/layout/AppShell.tsx`**
-- Wrap children with `GlobalSearchProvider`
-- Top bar search calls `context.submitSearch(query)` instead of `navigate('/?q=...')`
-- Add current section label next to logo (read from `useLocation` → map pathname to label)
+**5. `src/App.tsx`** — Add route
+- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
+- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
+- No nav entry added (dev-only URL)
 
-**5. `src/pages/Index.tsx`**
-- Register search handler via `useGlobalSearch().register(...)` on mount
-- On mount, restore `sort` from `sessionStore.indexSortKey`
-- On sort change, persist to sessionStore
-- Move `recentSearches` read/write to use `sessionStore` (keep localStorage fallback for backward compat)
-- Move snapshot button from System card into the PageHeader rightSlot
+**6. `src/pages/TcgLab.tsx`** — Add snapshot button
+- Import `CaptureSnapshotButton`
+- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
 
-**6. `src/pages/TcgLab.tsx`**
-- Register search handler: sets `mode='quick'`, `quickQuery=query`
-- On mount, restore `mode` from `sessionStore.tcgMode`; persist on change
-- Replace inline header with `<PageHeader title="TCG Market" subtitle="..." rightSlot={<CaptureSnapshotButton />} />`
-- Remove floating `absolute top-3 right-4` snapshot placement
+**7. `src/pages/SportsLab.tsx`** — Add snapshot button
+- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
 
-**7. `src/pages/SportsLab.tsx`**
-- Register search handler: sets `searchMode='quick'`, `quickSearchQuery=query`
-- On mount, restore `searchMode` from `sessionStore.sportsMode`; persist on change
-- Remove floating snapshot placement; put in QueryHeader area or PageHeader rightSlot
+**8. `src/pages/TopRoi.tsx`** — Add snapshot button
+- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
 
-**8. `src/pages/TopRoi.tsx`**
-- Register search handler: sets `searchQuery=query`, scrolls to grid
-- On mount, restore `sortKey` from `sessionStore.roiSortKey`; persist on change
-- Replace inline h1/p with `<PageHeader title="Top ROI" subtitle="..." rightSlot={<CaptureSnapshotButton />} />`
-- Remove floating snapshot placement
+**9. `src/pages/Index.tsx`** — Add snapshot button
+- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
 
-**9. `src/components/layout/AppSidebar.tsx`**
-- Add route change listener: persist `lastRoute` to sessionStore
+### Snapshot Payload Shape
 
-### Session Store Shape
-
-```typescript
-interface SessionState {
-  lastRoute: string;
-  globalQuery: string;
-  tcgMode: 'guided' | 'quick';
-  sportsMode: 'guided' | 'quick';
-  roiSortKey: string;
-  indexSortKey: string;
-  recentSearches: { term: string; route: string; ts: number }[];
+```text
+{
+  appId: "tcg" | "sports" | "roi" | "search",
+  timestamp: ISO string,
+  route: window.location.pathname + search,
+  searchInputs: { ... },
+  filters: { ... },
+  pagination: { ... },
+  loadingFlags: { ... },
+  errorState: null | { message },
+  resultsSchema: { itemKeys: string[], count: number },
+  layoutMode: { ... }
 }
 ```
 
-### What Does NOT Change
-- No API/edge function changes
-- No filter algorithm or ranking changes
-- All existing hooks reused as-is
-- `/ui-audit` unaffected
-- Watchlist context/logic untouched
-- Mobile tab bar layout preserved
-- Per-app filter UIs (TcgHeader, QueryHeader, SearchFilters) stay intact
+### Export Format
 
-### Summary of Impact
-- 3 new files (~200 lines total)
-- 6 modified files (mostly adding 5-15 lines each for context registration + session restore)
-- Cross-app search works from any page
-- Mode/sort preferences survive tab switches
-- Snapshot buttons no longer float awkwardly
-- Consistent page headers across all 4 pages
+The "Copy All" output is a single markdown document:
+
+```text
+# UI Audit Report — OmniMarket
+Generated: {date}
+
+## A) Routing + Shell
+### Detected Components
+- ...
+### Code Excerpts
+\`\`\`tsx
+// App.tsx route definitions (redacted)
+...
+\`\`\`
+
+## B) App Entry Pages
+...
+
+## C) Global State + Data Plumbing
+...
+
+## D) Auth / Gating
+(Not implemented — skipped)
+
+## E) Styling / Design Tokens
+...
+
+## Snapshots
+\`\`\`json
+[...]
+\`\`\`
+```
+
+### What This Does NOT Change
+- No API behavior, search logic, or data schemas
+- No UI styling changes
+- No business logic modifications
+- No new database tables or edge functions
+- Snapshot buttons are small, unobtrusive, and easily removable
 

@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,8 @@ import { UnifiedErrorState } from '@/components/shared/UnifiedErrorState';
 import { useSportsRulesetSnapshot } from '@/hooks/useSportsRulesetSnapshot';
 import { useSportsQueryBuilderState } from '@/hooks/useSportsQueryBuilderState';
 import { useSportsWatchlist } from '@/contexts/SportsWatchlistContext';
+import { useGlobalSearch } from '@/contexts/GlobalSearchContext';
+import { getSession, setSession } from '@/lib/sessionStore';
 import type { SearchMode } from '@/components/sports-lab/SearchModeToggle';
 
 export default function SportsLab() {
@@ -24,8 +27,22 @@ export default function SportsLab() {
   const [watchlistOpen, setWatchlistOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const { count: watchlistCount } = useSportsWatchlist();
-  const [searchMode, setSearchMode] = useState<SearchMode>('guided');
+
+  const sessionMode = getSession().sportsMode as SearchMode;
+  const [searchMode, setSearchMode] = useState<SearchMode>(sessionMode || 'guided');
   const [quickSearchQuery, setQuickSearchQuery] = useState('');
+
+  // Register global search handler
+  const { register } = useGlobalSearch();
+  useEffect(() => {
+    return register({
+      onSubmit: (q: string) => {
+        setSearchMode('quick');
+        setQuickSearchQuery(q);
+        setSession({ sportsMode: 'quick' });
+      },
+    });
+  }, [register]);
 
   const quickSearchParams = useMemo(() => ({
     playerName: quickSearchQuery.trim(),
@@ -54,7 +71,11 @@ export default function SportsLab() {
 
   const handleResultCountChange = useCallback((count: number) => setResultCount(count), []);
   const handleLoadingChange = useCallback((loading: boolean) => setIsSearching(loading), []);
-  const handleSearchModeChange = useCallback((mode: SearchMode) => { setSearchMode(mode); setResultCount(undefined); }, []);
+  const handleSearchModeChange = useCallback((mode: SearchMode) => {
+    setSearchMode(mode);
+    setResultCount(undefined);
+    setSession({ sportsMode: mode });
+  }, []);
 
   const getSportsSnapshotState = useCallback(() => ({
     searchInputs: { sportKey: state.sport_key, playerIds: state.selected_player_ids, quickSearchQuery, searchMode },
@@ -91,8 +112,12 @@ export default function SportsLab() {
 
   return (
     <div className="om-page-bg flex flex-col pb-16 sm:pb-0 relative">
-      <div className="absolute top-3 right-4 z-20">
-        <CaptureSnapshotButton appId="sports" getState={getSportsSnapshotState} />
+      <div className="max-w-[1400px] mx-auto w-full px-4 md:px-6 lg:px-8 pt-6">
+        <PageHeader
+          title="Sports Market"
+          subtitle="Find targets fast"
+          rightSlot={<CaptureSnapshotButton appId="sports" getState={getSportsSnapshotState} />}
+        />
       </div>
       <QueryHeader
         sports={snapshot.sports} players={filteredPlayers} ruleItems={filteredRuleItems}
