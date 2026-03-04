@@ -74,7 +74,7 @@ export default function TopRoi() {
 
   const getSnapshotState = useCallback(() => ({
     searchInputs: {},
-    filters: { minProfit, endingSoon },
+    filters: { minProfit, endingSoon, sportFilter },
     pagination: { totalLive: enriched.length },
     loadingFlags: { isLoading },
     errorState: error ? { message: String(error) } : null,
