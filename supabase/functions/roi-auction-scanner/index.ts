@@ -249,8 +249,8 @@ Deno.serve(async (req) => {
     let found = 0;
     let upserted = 0;
 
-    for (let i = 0; i < cardsToScan.length; i += BATCH_SIZE) {
-      const batch = cardsToScan.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
+      const batch = toProcess.slice(i, i + BATCH_SIZE);
 
       const results = await Promise.allSettled(
         batch.map(async (card) => {
