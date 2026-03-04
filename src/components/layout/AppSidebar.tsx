@@ -17,9 +17,9 @@ import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: Home },
-  { to: '/tcg', label: 'TCG Market', icon: Layers },
-  { to: '/sports', label: 'Sports Market', icon: Trophy },
-  { to: '/roi', label: 'Top ROI', icon: TrendingUp },
+  { to: '/tcg', label: 'TCG', icon: Layers },
+  { to: '/sports', label: 'Sports', icon: Trophy },
+  { to: '/roi', label: 'ROI', icon: TrendingUp },
 ];
 
 export function AppSidebar() {
@@ -60,11 +60,27 @@ export function AppSidebar() {
                       <NavLink
                         to={item.to}
                         end={item.to === '/'}
-                        className="hover:bg-sidebar-accent/50"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                        className={
+                          isActive
+                            ? 'border-l-2 transition-colors'
+                            : 'border-l-2 border-transparent transition-colors'
+                        }
+                        activeClassName=""
+                        style={
+                          isActive
+                            ? { background: 'var(--om-bg-2)', borderColor: 'var(--om-accent)', color: 'var(--om-text-0)' }
+                            : { color: 'var(--om-text-3)' }
+                        }
                       >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.label}</span>}
+                        <item.icon className="h-[18px] w-[18px] shrink-0" />
+                        {!collapsed && (
+                          <span
+                            className="text-xs"
+                            style={{ color: isActive ? 'var(--om-text-0)' : 'var(--om-text-2)' }}
+                          >
+                            {item.label}
+                          </span>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -81,15 +97,19 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip={collapsed ? `Watchlist (${watchlistCount})` : undefined}
-                  className="text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                  style={{ color: 'var(--om-text-3)' }}
                 >
                   <div className="relative">
-                    <Star className="h-4 w-4 shrink-0 fill-current" style={{ color: 'var(--om-accent)' }} />
+                    <Star className="h-[18px] w-[18px] shrink-0 fill-current" style={{ color: 'var(--om-accent)' }} />
                     <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center leading-none">
                       {watchlistCount > 99 ? '99+' : watchlistCount}
                     </span>
                   </div>
-                  {!collapsed && <span className="text-sm">Watchlist</span>}
+                  {!collapsed && (
+                    <span className="text-xs" style={{ color: 'var(--om-text-2)' }}>
+                      Watchlist
+                    </span>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

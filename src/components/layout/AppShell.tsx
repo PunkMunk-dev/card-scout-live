@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
-import { OmniLogo } from '@/components/branding/OmniLogo';
+import { BrandLockup } from '@/components/branding/BrandLockup';
 import { WatchlistDropdown } from '@/components/WatchlistDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTabBar } from '@/components/layout/MobileTabBar';
@@ -14,12 +14,11 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-const ROUTE_LABELS: Record<string, string> = {
-  '/': 'Dashboard',
-  '/tcg': 'TCG Market',
-  '/sports': 'Sports Market',
-  '/roi': 'Top ROI',
-  '/ui-audit': 'UI Audit',
+const ROUTE_PILLS: Record<string, string> = {
+  '/tcg': 'TCG',
+  '/sports': 'Sports',
+  '/roi': 'ROI',
+  '/ui-audit': 'Audit',
 };
 
 function ShellInner({ children }: AppShellProps) {
@@ -41,7 +40,7 @@ function ShellInner({ children }: AppShellProps) {
     return () => window.removeEventListener('omni:focus-search', onFocusSearch);
   }, []);
 
-  const sectionLabel = ROUTE_LABELS[location.pathname] ?? '';
+  const pillLabel = ROUTE_PILLS[location.pathname] ?? '';
 
   const handleHeaderSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +51,7 @@ function ShellInner({ children }: AppShellProps) {
   };
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const isDark = theme === 'dark';
 
   if (isMobile) {
     return (
@@ -60,9 +60,7 @@ function ShellInner({ children }: AppShellProps) {
           className="sticky top-0 z-50 border-b shadow-sm flex items-center h-14 px-4 gap-3"
           style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}
         >
-          <Link to="/" className="shrink-0 select-none">
-            <OmniLogo dark={theme === 'dark'} />
-          </Link>
+          <BrandLockup dark={isDark} />
           <form onSubmit={handleHeaderSearch} className="flex-1 min-w-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" style={{ color: 'var(--om-text-3)' }} />
@@ -80,10 +78,10 @@ function ShellInner({ children }: AppShellProps) {
           <button
             onClick={toggleTheme}
             className="om-btn flex items-center justify-center h-9 w-9 rounded-xl shrink-0"
-            style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-1)' }}
+            style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-2)' }}
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </header>
 
@@ -105,12 +103,13 @@ function ShellInner({ children }: AppShellProps) {
           >
             <div className="flex h-14 items-center gap-4 px-4">
               <SidebarTrigger className="shrink-0" />
-              <Link to="/" className="shrink-0 select-none">
-                <OmniLogo dark={theme === 'dark'} />
-              </Link>
-              {sectionLabel && location.pathname !== '/' && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-md" style={{ color: 'var(--om-text-2)', background: 'var(--om-bg-2)' }}>
-                  {sectionLabel}
+              <BrandLockup dark={isDark} />
+              {pillLabel && (
+                <span
+                  className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                  style={{ color: 'var(--om-text-2)', background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)' }}
+                >
+                  {pillLabel}
                 </span>
               )}
               <form onSubmit={handleHeaderSearch} className="flex-1 max-w-[480px] ml-auto">
@@ -123,11 +122,11 @@ function ShellInner({ children }: AppShellProps) {
                     value={headerQuery}
                     onChange={(e) => setHeaderQuery(e.target.value)}
                     placeholder="Search player, set, card number…"
-                    className="flex h-10 w-full rounded-l-xl pl-10 pr-3 text-sm om-input border-r-0"
+                    className="flex h-9 w-full rounded-l-xl pl-10 pr-3 text-sm om-input border-r-0"
                   />
                   <button
                     type="submit"
-                    className="flex items-center gap-1.5 h-10 px-4 rounded-r-xl text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
+                    className="flex items-center gap-1.5 h-9 px-3 rounded-r-xl text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
                     style={{ background: 'var(--om-accent)', color: '#fff' }}
                   >
                     <Search className="h-3.5 w-3.5" />
@@ -135,14 +134,14 @@ function ShellInner({ children }: AppShellProps) {
                   </button>
                 </div>
               </form>
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-1.5 ml-auto">
                 <button
                   onClick={toggleTheme}
-                  className="om-btn flex items-center justify-center h-10 w-10 rounded-xl"
-                  style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-1)' }}
+                  className="om-btn flex items-center justify-center h-9 w-9 rounded-xl"
+                  style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-2)' }}
                   aria-label="Toggle theme"
                 >
-                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
                 <WatchlistDropdown onSearchItem={(query) => {
                   navigate(`/?q=${encodeURIComponent(query)}&src=wl`);
