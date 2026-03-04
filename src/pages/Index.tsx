@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, Star, X, Zap, Search, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, ChevronRight, Star, X } from "lucide-react";
 import psaMosaic from "@/assets/psa-mosaic.jpg";
 import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
@@ -153,15 +153,17 @@ export default function Index() {
     }
   };
 
-  const heroInputRef = useRef<HTMLInputElement>(null);
-  const [heroQuery, setHeroQuery] = useState('');
+  const marketTilesRef = useRef<HTMLDivElement>(null);
 
-  const handleHeroSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = heroQuery.trim();
-    if (!q) return;
-    setSearchParams({ q });
+  const handleStartSearching = () => {
+    const input = document.querySelector<HTMLInputElement>('header input[type="text"], header input[type="search"]');
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => input.focus(), 400);
+    }
   };
+
+  const handleExploreMarkets = () => marketTilesRef.current?.scrollIntoView({ behavior: 'smooth' });
 
   const getSearchSnapshotState = useCallback(() => ({
     searchInputs: { query },
@@ -247,64 +249,84 @@ export default function Index() {
           )}
         </main>
       ) : (
-        <section
-          className="relative w-full min-h-[calc(100vh-48px)] flex items-center justify-center overflow-hidden"
-          style={{ background: 'linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 50%, var(--om-bg-0) 100%)', color: 'var(--om-text-0)' }}
-        >
-          <div className="omni-hero-spotlight" />
-          <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-          <div
-            className="pointer-events-none absolute inset-0 scale-110 blur-[28px] opacity-[0.07]"
-            style={{
-              backgroundImage: `url(${psaMosaic})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
-              WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
-            }}
-          />
-          <div className="pointer-events-none absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.10)' }} />
-          <div className="pointer-events-none absolute -bottom-40 -right-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.08)' }} />
+        <>
+          {/* ── Full-bleed Hero ── */}
+          <section
+            className="relative w-full min-h-[100vh] flex items-center overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 50%, var(--om-bg-0) 100%)', color: 'var(--om-text-0)' }}
+          >
+            <div className="omni-hero-spotlight" />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+            <div
+              className="pointer-events-none absolute inset-0 scale-110 blur-[28px] opacity-[0.07]"
+              style={{
+                backgroundImage: `url(${psaMosaic})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+              }}
+            />
+            <div className="pointer-events-none absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.10)' }} />
+            <div className="pointer-events-none absolute -bottom-40 -right-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.08)' }} />
 
-          <div className="relative z-10 mx-auto w-full max-w-3xl px-6 flex flex-col items-center text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium mb-8" style={{ borderColor: 'rgba(10,132,255,0.3)', background: 'rgba(10,132,255,0.08)', color: 'var(--om-accent)' }}>
-              <Zap className="h-3.5 w-3.5" />
-              Universal Card Intelligence
-            </div>
-
-            <h1 className="text-[clamp(3rem,8vw,6rem)] font-bold tracking-[-0.04em] leading-none mb-4">
-              <span style={{ color: 'var(--om-text-0)' }}>Omni</span>
-              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Market</span>
-            </h1>
-
-            <p className="text-sm max-w-md mb-10" style={{ color: 'var(--om-text-2)' }}>
-              Search live eBay listings instantly—find undervalued cards before the market moves.
-            </p>
-
-            <form onSubmit={handleHeroSearch} className="flex w-full max-w-xl items-center gap-2 rounded-2xl p-2" style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)' }}>
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--om-text-2)' }} />
-                <input
-                  ref={heroInputRef}
-                  type="text"
-                  value={heroQuery}
-                  onChange={(e) => setHeroQuery(e.target.value)}
-                  placeholder="Search any card… Charizard, Jordan, Ohtani"
-                  className="w-full rounded-xl py-3 pl-10 pr-4 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
-                  style={{ color: 'var(--om-text-0)' }}
-                />
+            <div className="relative z-10 mx-auto w-full max-w-[1400px] px-6 md:px-10">
+              <div className="flex flex-col items-center text-center py-16 md:py-24">
+                <span className="text-[11px] font-medium uppercase tracking-[0.30em]" style={{ color: 'var(--om-text-1)' }}>OmniMarket Cards</span>
+                <h1 className="mt-6 text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] max-w-[600px]" style={{ color: 'var(--om-text-0)' }}>
+                  Discover the market before it moves.
+                </h1>
+                <p className="mt-4 max-w-[480px] text-[14px] leading-[1.55]" style={{ color: 'var(--om-text-2)' }}>
+                  Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
+                </p>
+                <div className="mt-6 flex items-center gap-3">
+                  <button
+                    onClick={handleStartSearching}
+                    className="inline-flex items-center justify-center rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                    style={{ background: 'var(--om-accent)', color: '#fff', boxShadow: '0 10px 30px rgba(10,132,255,0.20)' }}
+                  >
+                    Start Searching
+                  </button>
+                  <button
+                    onClick={handleExploreMarkets}
+                    className="inline-flex items-center justify-center rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                    style={{ background: 'var(--om-border-0)', border: '1px solid var(--om-border-1)', color: 'var(--om-text-0)' }}
+                  >
+                    Explore Markets <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-              <button
-                type="submit"
-                disabled={!heroQuery.trim()}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all hover:-translate-y-px active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
-                style={{ background: 'var(--om-accent)', color: '#fff', boxShadow: '0 10px 30px rgba(10,132,255,0.20)' }}
+            </div>
+          </section>
+
+          {/* ── Market Tiles Section ── */}
+          <section className="relative w-full" style={{ background: 'var(--om-bg-0)' }}>
+            <div ref={marketTilesRef} className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Link
+                to="/tcg"
+                className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
               >
-                Search <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
-          </div>
-        </section>
+                <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>TCG Market</h3>
+                <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
+                  Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </span>
+              </Link>
+              <Link
+                to="/sports"
+                className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>Sports Market</h3>
+                <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search sports cards by player, brand, and traits.</p>
+                <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
+                  Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </span>
+              </Link>
+            </div>
+          </section>
+        </>
       )}
     </div>
   );
