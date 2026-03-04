@@ -63,7 +63,7 @@ export function AppSidebar() {
                         className={
                           isActive
                             ? 'border-l-2 transition-colors'
-                            : 'border-l-2 border-transparent transition-colors'
+                            : 'border-l-2 border-transparent transition-colors hover:text-[var(--om-text-1)]'
                         }
                         activeClassName=""
                         style={

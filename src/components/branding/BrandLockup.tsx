@@ -11,7 +11,7 @@ export function BrandLockup({ dark = false }: BrandLockupProps) {
       <OmniIcon size={22} dark={dark} />
       <span
         className="font-display font-semibold text-[17px] leading-none"
-        style={{ letterSpacing: '-0.025em', color: 'var(--om-text-0)' }}
+        style={{ letterSpacing: '-0.01em', color: 'var(--om-text-0)' }}
       >
         OmniMarket
       </span>
