@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
