@@ -102,16 +102,18 @@ function ShellInner({ children }: AppShellProps) {
             style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}
           >
             <div className="mx-auto w-full max-w-[1400px] flex h-14 items-center gap-4 px-4 md:px-6 lg:px-8">
-              <SidebarTrigger className="shrink-0" />
-              <BrandLockup dark={isDark} />
-              {pillLabel && (
-              <span
-                  className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium tracking-tight border"
-                  style={{ background: 'var(--om-bg-2)', borderColor: 'var(--om-border-0)', color: 'var(--om-text-2)' }}
-                >
-                  {pillLabel}
-                </span>
-              )}
+              <div className="flex items-center gap-3 shrink-0">
+                <SidebarTrigger className="shrink-0" />
+                <BrandLockup dark={isDark} />
+                {pillLabel && (
+                  <span
+                    className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium tracking-tight border"
+                    style={{ background: 'var(--om-bg-2)', borderColor: 'var(--om-border-0)', color: 'var(--om-text-2)' }}
+                  >
+                    {pillLabel}
+                  </span>
+                )}
+              </div>
               <form onSubmit={handleHeaderSearch} className="flex-1 max-w-[480px] ml-auto">
                 <div className="relative flex">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none z-10" style={{ color: 'var(--om-text-3)' }} />
@@ -134,7 +136,7 @@ function ShellInner({ children }: AppShellProps) {
                   </button>
                 </div>
               </form>
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={toggleTheme}
                   className="flex items-center justify-center h-9 w-9 rounded-xl transition-all hover:-translate-y-[1px] hover:bg-[var(--om-bg-1)] hover:text-[var(--om-text-1)]"
