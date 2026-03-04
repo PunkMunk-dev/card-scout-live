@@ -1,30 +1,36 @@
 
 
-## Plan: Add Clickable Search Suggestions to Quick Search
+## Plan: Optimize OmniIcon M Letterform
 
-Add contextual suggestion pills below the quick search input on each tab. When the input is empty, suggestions appear as clickable chips that populate and trigger the search.
+### Current Issues
 
-### Changes
+Looking at the icon at 30px in the header, I can identify these refinements:
 
-**1. `src/components/sports-lab/QuickSearchInput.tsx`** — Add an optional `suggestions?: string[]` prop. When the input is empty and suggestions exist, render a row of clickable pill buttons beneath the input. Clicking a pill sets the value and fires `onChange`.
+1. **Asymmetric tops**: Left legs top at y=140, right at y=130. This creates an unintentional tilt rather than a clean "chart spike" effect.
+2. **Narrow V-notch**: The inner valley (y=240→340→240) is shallow relative to the overall height, making the M harder to read at favicon size (16px).
+3. **Thin inner strokes**: The negative space between the legs closes up at small sizes.
 
-**2. `src/components/sports-lab/QueryHeader.tsx`** — Pass sports-specific suggestions to `QuickSearchInput`:
+### Proposed Optimized Path
+
+Symmetric tops, wider V-notch, and slightly more open inner geometry:
+
+```text
+Current:  M110 390 L110 140 L180 140 L256 270 L332 130 L402 130 L402 390 L332 390 L332 240 L256 340 L180 240 L180 390 Z
+Proposed: M110 390 L110 132 L182 132 L256 275 L330 132 L402 132 L402 390 L338 390 L338 235 L256 345 L174 235 L174 390 Z
 ```
-["Mike Trout Bowman Chrome", "Wander Franco 1st", "Ohtani Topps Chrome Refractor", "Jeter SP", "Griffey PSA 10"]
-```
 
-**3. `src/components/tcg-lab/TcgHeader.tsx`** — Pass TCG-specific suggestions:
-```
-["Charizard VMAX", "Pikachu Gold Star", "Luffy Alternate Art", "Mewtwo GX", "Umbreon VMAX"]
-```
+Changes:
+- **Symmetric top**: both sides at y=132 — clean horizontal top edge
+- **Wider outer legs**: left 110→174 (64px), right 338→402 (64px) — consistent weight
+- **Deeper V-notch**: inner peaks at y=235, center bottom at y=345 — more open M shape, reads better at 16px
+- **Center peak at y=275**: slightly lower, creating more breathing room in the upper half
 
-**4. `src/pages/Index.tsx`** — The home page uses `SearchBar`, not `QuickSearchInput`, so no changes needed there (it has a different search pattern with a submit button).
+### Files
 
-### UI Behavior
-- Suggestions render as small styled pills in a horizontal row below the input
-- Only shown when the input is empty (no `localValue`)
-- Clicking a pill immediately sets the value and triggers the search
-- Pills use existing `om-pill` styling for consistency
+| File | Change |
+|------|--------|
+| `src/components/branding/OmniIcon.tsx` | Update `d` attribute |
+| `public/favicon.svg` | Update `d` attribute to match |
 
-Four files total: one component updated, two headers pass suggestions.
+Two files, same single-line path change in each.
 
