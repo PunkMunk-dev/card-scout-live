@@ -8,10 +8,10 @@ export function OmniIcon({ size = 36, dark = true }: OmniIconProps) {
     <svg width={size} height={size} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="512" height="512" rx="140" fill={dark ? "#000" : "#fff"} />
       <path
-        d="M130 360 L130 160 L210 160 L256 240 L302 140 L382 160 L382 360 L320 360 L320 240 L256 310 L190 240 L190 360 Z"
+        d="M120 380 L120 140 L180 140 L256 260 L332 120 L392 120 L392 380 L332 380 L332 230 L256 330 L180 230 L180 380 Z"
         fill={dark ? "#fff" : "#000"}
       />
-      <circle cx="420" cy="350" r="18" fill={dark ? "#fff" : "#000"} />
+      <circle cx="405" cy="370" r="24" fill={dark ? "#fff" : "#000"} />
     </svg>
   );
 }
