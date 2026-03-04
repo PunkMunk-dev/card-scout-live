@@ -1,17 +1,31 @@
 
 
-## Plan: Larger Hover Stats on ROI Cards
+## Plan: Replace Wordmark with Logo Icon
 
-### Change (`src/components/roi/RoiCard.tsx`)
+### Changes
 
-Scale up the hover overlay text and badges so they're more readable and prominent:
+**1. Copy the uploaded logo to the project**
+- Copy `user-uploads://image-10.png` → `src/assets/omnimarket-logo.png`
 
-- **Labels** (PSA 9, PSA 10, Raw, Multiplier): `text-[10px]` → `text-xs` (12px)
-- **Values** (dollar amounts, multiplier): `text-[10px]` → `text-sm` (14px), keep `font-semibold`
-- **GainBadge**: `text-[10px]` → `text-xs` with slightly larger padding (`px-2 py-1`)
-- **Grid gap**: `gap-x-3 gap-y-1.5` → `gap-x-4 gap-y-2.5` for breathing room
-- **Overlay padding**: `p-3` → `p-4`
-- **Overlay gradient**: extend the dark area higher so larger text remains readable (`rgba(0,0,0,0.4) 60%` → `rgba(0,0,0,0.6) 70%`)
+**2. Update `src/components/TabNavigation.tsx`**
+- Import the logo: `import omniLogo from "@/assets/omnimarket-logo.png"`
+- Replace the `<Link>` containing the two `<span>` elements ("OmniMarket" + "Cards") with a single `<img>` tag using the logo, sized at `h-8 w-8` with `rounded-lg`
+- Keep the `<Link to="/">` wrapper so clicking the logo still navigates home
 
-Single file, ~10 lines changed. No structural changes.
+Before:
+```tsx
+<Link to="/" className="flex flex-col leading-none select-none shrink-0">
+  <span className="...">OmniMarket</span>
+  <span className="...">Cards</span>
+</Link>
+```
+
+After:
+```tsx
+<Link to="/" className="shrink-0 select-none">
+  <img src={omniLogo} alt="OmniMarket" className="h-8 w-8 rounded-lg" />
+</Link>
+```
+
+Single file change, ~3 lines modified.
 
