@@ -5,7 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { TabNavigation } from "@/components/TabNavigation";
+import { AppShell } from "@/components/layout/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { WatchlistProvider } from "@/contexts/WatchlistContext";
@@ -27,17 +27,18 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <TabNavigation />
-            <Suspense fallback={<PageSkeleton />}>
-              <Routes>
-                <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
-                <Route path="/tcg" element={<ErrorBoundary><TcgLab /></ErrorBoundary>} />
-                <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
-                <Route path="/roi" element={<ErrorBoundary><TopRoi /></ErrorBoundary>} />
-                <Route path="/ui-audit" element={<UIAudit />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <AppShell>
+              <Suspense fallback={<PageSkeleton />}>
+                <Routes>
+                  <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
+                  <Route path="/tcg" element={<ErrorBoundary><TcgLab /></ErrorBoundary>} />
+                  <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
+                  <Route path="/roi" element={<ErrorBoundary><TopRoi /></ErrorBoundary>} />
+                  <Route path="/ui-audit" element={<UIAudit />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </AppShell>
           </BrowserRouter>
         </WatchlistProvider>
       </TooltipProvider>
