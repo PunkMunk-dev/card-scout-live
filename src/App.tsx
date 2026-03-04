@@ -9,7 +9,6 @@ import { TabNavigation } from "@/components/TabNavigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { WatchlistProvider } from "@/contexts/WatchlistContext";
-import { AccessGate } from "@/components/auth/AccessGate";
 import Index from "./pages/Index";
 
 const TcgLab = lazy(() => import("./pages/TcgLab"));
@@ -21,9 +20,8 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" storageKey="omni-theme">
-    <AccessGate>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
         <WatchlistProvider>
           <Toaster />
           <Sonner />
@@ -40,9 +38,8 @@ const App = () => (
             </Suspense>
           </BrowserRouter>
         </WatchlistProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </AccessGate>
+      </TooltipProvider>
+    </QueryClientProvider>
   </ThemeProvider>
 );
 
