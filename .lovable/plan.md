@@ -1,16 +1,30 @@
 
 
-## Plan: Remove Access Gate
+## Plan: Add Clickable Search Suggestions to Quick Search
 
-Remove the password-protected access gate so the app is immediately accessible without entering a username.
+Add contextual suggestion pills below the quick search input on each tab. When the input is empty, suggestions appear as clickable chips that populate and trigger the search.
 
 ### Changes
 
-**1. `src/App.tsx`** — Remove `AccessGate` wrapper and its import. The app content renders directly.
+**1. `src/components/sports-lab/QuickSearchInput.tsx`** — Add an optional `suggestions?: string[]` prop. When the input is empty and suggestions exist, render a row of clickable pill buttons beneath the input. Clicking a pill sets the value and fires `onChange`.
 
-**2. Delete `src/components/auth/AccessGate.tsx`** — No longer needed.
+**2. `src/components/sports-lab/QueryHeader.tsx`** — Pass sports-specific suggestions to `QuickSearchInput`:
+```
+["Mike Trout Bowman Chrome", "Wander Franco 1st", "Ohtani Topps Chrome Refractor", "Jeter SP", "Griffey PSA 10"]
+```
 
-**3. `src/components/TabNavigation.tsx`** — Check for and remove any "Lock" button that re-engages the gate (references to `omni_access` localStorage).
+**3. `src/components/tcg-lab/TcgHeader.tsx`** — Pass TCG-specific suggestions:
+```
+["Charizard VMAX", "Pikachu Gold Star", "Luffy Alternate Art", "Mewtwo GX", "Umbreon VMAX"]
+```
 
-Three files touched: one edited, one deleted, one checked for lock button cleanup.
+**4. `src/pages/Index.tsx`** — The home page uses `SearchBar`, not `QuickSearchInput`, so no changes needed there (it has a different search pattern with a submit button).
+
+### UI Behavior
+- Suggestions render as small styled pills in a horizontal row below the input
+- Only shown when the input is empty (no `localValue`)
+- Clicking a pill immediately sets the value and triggers the search
+- Pills use existing `om-pill` styling for consistency
+
+Four files total: one component updated, two headers pass suggestions.
 
