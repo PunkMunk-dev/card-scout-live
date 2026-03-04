@@ -28,6 +28,11 @@ export function AppSidebar() {
   const location = useLocation();
   const { count: watchlistCount } = useSharedWatchlist();
 
+  // Persist last route to session
+  useEffect(() => {
+    setSession({ lastRoute: location.pathname });
+  }, [location.pathname]);
+
   return (
     <Sidebar
       collapsible="icon"
