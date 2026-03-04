@@ -138,6 +138,7 @@ export type Database = {
           current_bid: number | null
           end_time: string | null
           id: string
+          image_url: string | null
           item_id: string
           last_seen_at: string
           listing_url: string
@@ -148,6 +149,7 @@ export type Database = {
           current_bid?: number | null
           end_time?: string | null
           id?: string
+          image_url?: string | null
           item_id: string
           last_seen_at?: string
           listing_url: string
@@ -158,6 +160,7 @@ export type Database = {
           current_bid?: number | null
           end_time?: string | null
           id?: string
+          image_url?: string | null
           item_id?: string
           last_seen_at?: string
           listing_url?: string

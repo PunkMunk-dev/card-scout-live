@@ -1,0 +1,1 @@
+ALTER TABLE public.roi_live_auctions ADD COLUMN image_url text;
