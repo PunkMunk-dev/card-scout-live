@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import { Search, Layers, Trophy, TrendingUp } from 'lucide-react';
+import { Home, Layers, Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
-  { to: '/', label: 'Search', icon: Search, end: true },
+  { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/tcg', label: 'TCG', icon: Layers },
   { to: '/sports', label: 'Sports', icon: Trophy },
   { to: '/roi', label: 'ROI', icon: TrendingUp },
