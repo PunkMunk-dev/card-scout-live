@@ -19,7 +19,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: Home },
   { to: '/tcg', label: 'TCG', icon: Layers },
   { to: '/sports', label: 'Sports', icon: Trophy },
-  { to: '/roi', label: 'ROI', icon: TrendingUp },
+  { to: '/roi', label: 'Live Auctions', icon: TrendingUp },
 ];
 
 export function AppSidebar() {

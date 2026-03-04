@@ -6,7 +6,7 @@ const tabs = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/tcg', label: 'TCG', icon: Layers },
   { to: '/sports', label: 'Sports', icon: Trophy },
-  { to: '/roi', label: 'ROI', icon: TrendingUp },
+  { to: '/roi', label: 'Live', icon: TrendingUp },
 ];
 
 export function MobileTabBar() {

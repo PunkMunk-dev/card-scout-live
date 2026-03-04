@@ -17,7 +17,7 @@ interface AppShellProps {
 const ROUTE_PILLS: Record<string, string> = {
   '/tcg': 'TCG',
   '/sports': 'Sports',
-  '/roi': 'ROI',
+  '/roi': 'Live',
   '/ui-audit': 'Audit',
 };
 
