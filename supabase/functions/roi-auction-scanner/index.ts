@@ -286,7 +286,7 @@ Deno.serve(async (req) => {
       }
 
       // Delay between batches
-      if (i + BATCH_SIZE < cardsToScan.length) {
+      if (i + BATCH_SIZE < toProcess.length) {
         await sleep(BATCH_DELAY_MS);
       }
     }
