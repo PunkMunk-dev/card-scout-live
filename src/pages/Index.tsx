@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
-import { EmptyState } from "@/components/EmptyState";
+import { UnifiedEmptyState } from "@/components/shared/UnifiedEmptyState";
+import { UnifiedErrorState } from "@/components/shared/UnifiedErrorState";
 import { ResultsHeader } from "@/components/ResultsHeader";
 import { searchEbay } from "@/lib/ebay-api";
 import { useSharedWatchlist } from "@/contexts/WatchlistContext";
@@ -216,14 +217,7 @@ export default function Index() {
           {isLoading && items.length === 0 ? (
             <LoadingGrid />
           ) : error && items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="rounded-lg border shadow-sm bg-card px-10 py-12 max-w-md">
-                <p className="text-sm text-destructive mb-4">{error}</p>
-                <button onClick={handleRetry} className="text-sm font-medium text-primary hover:underline">
-                  Retry Search
-                </button>
-              </div>
-            </div>
+            <UnifiedErrorState message={error} onRetry={handleRetry} />
           ) : items.length > 0 ? (
             <div className="relative">
               {isLoading && (
@@ -251,7 +245,7 @@ export default function Index() {
               </div>
             </div>
           ) : (
-            <EmptyState query={query} />
+            <UnifiedEmptyState variant="no-results" title="No results found" message={query ? `No listings found for "${query}". Try adjusting your search.` : 'Enter a card name to start searching.'} />
           )}
         </main>
       ) : (

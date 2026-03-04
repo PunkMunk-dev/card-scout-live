@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { Search, X } from 'lucide-react';
+import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
+import { UnifiedErrorState } from '@/components/shared/UnifiedErrorState';
 import { useRoiCards, usePrefetchRoiEbayListings } from '@/hooks/useRoiCards';
 import { RoiCard } from '@/components/roi/RoiCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -143,15 +145,13 @@ export default function TopRoi() {
         {isLoading ? (
           <SkeletonGrid />
         ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-sm" style={{ color: 'var(--om-danger)' }}>Failed to load cards</p>
-          </div>
+          <UnifiedErrorState message="Failed to load cards" />
         ) : filteredAndSorted.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-sm" style={{ color: 'var(--om-text-3)' }}>
-              {searchQuery ? 'No cards match your search' : 'No cards found'}
-            </p>
-          </div>
+          <UnifiedEmptyState
+            variant="no-results"
+            title={searchQuery ? 'No cards match' : 'No cards found'}
+            message={searchQuery ? `No cards matching "${searchQuery}"` : 'No ROI data available.'}
+          />
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
