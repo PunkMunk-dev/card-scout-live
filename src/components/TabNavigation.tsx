@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
+import omniLogo from '@/assets/omnimarket-logo.png';
 import { cn } from '@/lib/utils';
 import { Search, Sun, Moon, Lock } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -101,9 +102,8 @@ export function TabNavigation() {
     <header className="sticky top-0 z-50 border-b shadow-sm" style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}>
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 flex h-14 md:h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
-          <Link to="/" className="flex flex-col leading-none select-none shrink-0">
-            <span className="text-[14px] md:text-[15px] font-semibold tracking-tight" style={{ color: 'var(--om-text-0)' }}>OmniMarket</span>
-            <span className="mt-0.5 text-[10px] tracking-[0.32em] uppercase" style={{ color: 'var(--om-text-2)' }}>Cards</span>
+          <Link to="/" className="shrink-0 select-none">
+            <img src={omniLogo} alt="OmniMarket" className="h-8 w-8 rounded-lg" />
           </Link>
           <nav className="flex items-center gap-1">{navItems}</nav>
         </div>
