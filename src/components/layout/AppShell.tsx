@@ -77,7 +77,7 @@ function ShellInner({ children }: AppShellProps) {
           </form>
           <button
             onClick={toggleTheme}
-            className="om-btn flex items-center justify-center h-9 w-9 rounded-xl shrink-0"
+            className="flex items-center justify-center h-9 w-9 rounded-xl shrink-0 transition-all hover:-translate-y-[1px] hover:bg-[var(--om-bg-1)] hover:text-[var(--om-text-1)]"
             style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-2)' }}
             aria-label="Toggle theme"
           >
@@ -101,13 +101,13 @@ function ShellInner({ children }: AppShellProps) {
             className="sticky top-0 z-50 border-b shadow-sm"
             style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}
           >
-            <div className="flex h-14 items-center gap-4 px-4">
+            <div className="mx-auto w-full max-w-[1400px] flex h-14 items-center gap-4 px-4 md:px-6 lg:px-8">
               <SidebarTrigger className="shrink-0" />
               <BrandLockup dark={isDark} />
               {pillLabel && (
-                <span
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                  style={{ color: 'var(--om-text-2)', background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)' }}
+              <span
+                  className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium tracking-tight border"
+                  style={{ background: 'var(--om-bg-2)', borderColor: 'var(--om-border-0)', color: 'var(--om-text-2)' }}
                 >
                   {pillLabel}
                 </span>
@@ -122,11 +122,11 @@ function ShellInner({ children }: AppShellProps) {
                     value={headerQuery}
                     onChange={(e) => setHeaderQuery(e.target.value)}
                     placeholder="Search player, set, card number…"
-                    className="flex h-9 w-full rounded-l-xl pl-10 pr-3 text-sm om-input border-r-0"
+                    className="flex h-10 w-full rounded-l-xl pl-10 pr-3 text-sm om-input border-r-0"
                   />
                   <button
                     type="submit"
-                    className="flex items-center gap-1.5 h-9 px-3 rounded-r-xl text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
+                    className="flex items-center gap-1.5 h-10 px-4 rounded-r-xl text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
                     style={{ background: 'var(--om-accent)', color: '#fff' }}
                   >
                     <Search className="h-3.5 w-3.5" />
@@ -134,10 +134,10 @@ function ShellInner({ children }: AppShellProps) {
                   </button>
                 </div>
               </form>
-              <div className="flex items-center gap-1.5 ml-auto">
+              <div className="flex items-center gap-2 ml-auto">
                 <button
                   onClick={toggleTheme}
-                  className="om-btn flex items-center justify-center h-9 w-9 rounded-xl"
+                  className="flex items-center justify-center h-9 w-9 rounded-xl transition-all hover:-translate-y-[1px] hover:bg-[var(--om-bg-1)] hover:text-[var(--om-text-1)]"
                   style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-2)' }}
                   aria-label="Toggle theme"
                 >
