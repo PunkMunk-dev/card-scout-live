@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
-import { useSearchParams, Link, useNavigate, useLocation } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, Star, X, Search, Layers, Trophy, TrendingUp, Clock, Sparkles } from "lucide-react";
+import { Loader2, Star, X, Search, Layers, Trophy, TrendingUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
