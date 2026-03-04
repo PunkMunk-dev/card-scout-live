@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { Search, X } from 'lucide-react';
 import { useRoiCards, usePrefetchRoiEbayListings } from '@/hooks/useRoiCards';
 import { RoiCard } from '@/components/roi/RoiCard';
@@ -73,8 +74,21 @@ export default function TopRoi() {
   const visibleCards = useMemo(() => filteredAndSorted.slice(0, visibleCount), [filteredAndSorted, visibleCount]);
   const hasMore = visibleCount < filteredAndSorted.length;
 
+  const getRoiSnapshotState = useCallback(() => ({
+    searchInputs: { searchQuery },
+    filters: { sortKey },
+    pagination: { visibleCount, total: filteredAndSorted.length },
+    loadingFlags: { isLoading },
+    errorState: error ? { message: String(error) } : null,
+    resultsSchema: { itemKeys: cards?.[0] ? Object.keys(cards[0]) : [], count: filteredAndSorted.length },
+    layoutMode: {},
+  }), [searchQuery, sortKey, visibleCount, filteredAndSorted.length, isLoading, error, cards]);
+
   return (
-    <div className="om-page-bg pb-24 md:pb-8">
+    <div className="om-page-bg pb-24 md:pb-8 relative">
+      <div className="absolute top-3 right-4 z-20">
+        <CaptureSnapshotButton appId="roi" getState={getRoiSnapshotState} />
+      </div>
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-6 lg:px-8 pt-6 md:pt-8">
         {/* Header */}
         <div className="mb-6">
