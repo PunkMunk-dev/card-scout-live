@@ -133,6 +133,47 @@ export type Database = {
         }
         Relationships: []
       }
+      roi_live_auctions: {
+        Row: {
+          current_bid: number | null
+          end_time: string | null
+          id: string
+          item_id: string
+          last_seen_at: string
+          listing_url: string
+          roi_card_id: string
+          shipping: number | null
+        }
+        Insert: {
+          current_bid?: number | null
+          end_time?: string | null
+          id?: string
+          item_id: string
+          last_seen_at?: string
+          listing_url: string
+          roi_card_id: string
+          shipping?: number | null
+        }
+        Update: {
+          current_bid?: number | null
+          end_time?: string | null
+          id?: string
+          item_id?: string
+          last_seen_at?: string
+          listing_url?: string
+          roi_card_id?: string
+          shipping?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roi_live_auctions_roi_card_id_fkey"
+            columns: ["roi_card_id"]
+            isOneToOne: false
+            referencedRelation: "roi_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rule_items: {
         Row: {
           compatible_brand_ids: string[]

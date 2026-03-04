@@ -12,6 +12,7 @@ export interface SessionState {
   tcgMode: 'guided' | 'quick';
   sportsMode: 'guided' | 'quick';
   roiSortKey: string;
+  roiTabKey: string;
   indexSortKey: string;
   recentSearches: RecentSearch[];
 }
@@ -22,6 +23,7 @@ const DEFAULTS: SessionState = {
   tcgMode: 'guided',
   sportsMode: 'guided',
   roiSortKey: 'profit-desc',
+  roiTabKey: 'top',
   indexSortKey: 'best',
   recentSearches: [],
 };
