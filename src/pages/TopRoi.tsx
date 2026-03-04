@@ -32,6 +32,7 @@ function SkeletonGrid() {
 export default function TopRoi() {
   const [minProfit, setMinProfit] = useState(50);
   const [endingSoon, setEndingSoon] = useState(false);
+  const [sportFilter, setSportFilter] = useState<'All' | 'Sports' | 'TCG'>('All');
 
   const { data: cards, isLoading: isLoadingRoi, error: roiError } = useRoiCards('All');
   const { data: liveRows, isLoading: isLoadingLive, error: liveError, isFetching } = useLiveRoiAuctions();
@@ -51,6 +52,12 @@ export default function TopRoi() {
       rows = rows.filter(r => (r.card.psa10_profit ?? 0) >= minProfit);
     }
 
+    if (sportFilter === 'Sports') {
+      rows = rows.filter(r => r.card.sport !== 'Pokemon');
+    } else if (sportFilter === 'TCG') {
+      rows = rows.filter(r => r.card.sport === 'Pokemon');
+    }
+
     if (endingSoon) {
       rows.sort((a, b) => {
         const aEnd = a.auction.end_time ? new Date(a.auction.end_time).getTime() : Infinity;
@@ -60,14 +67,14 @@ export default function TopRoi() {
     }
 
     return rows;
-  }, [liveRows, cards, cardMap, minProfit, endingSoon]);
+  }, [liveRows, cards, cardMap, minProfit, endingSoon, sportFilter]);
 
   const isLoading = isLoadingRoi || isLoadingLive;
   const error = roiError || liveError;
 
   const getSnapshotState = useCallback(() => ({
     searchInputs: {},
-    filters: { minProfit, endingSoon },
+    filters: { minProfit, endingSoon, sportFilter },
     pagination: { totalLive: enriched.length },
     loadingFlags: { isLoading },
     errorState: error ? { message: String(error) } : null,
@@ -90,6 +97,23 @@ export default function TopRoi() {
           <>
             {/* Toolbar */}
             <div className="om-toolbar flex items-center gap-3 px-3 h-10 mb-4 overflow-x-auto">
+              {/* Sport filter pills */}
+              <div className="flex items-center gap-1 shrink-0">
+                {(['All', 'Sports', 'TCG'] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSportFilter(opt)}
+                    className={`px-2.5 py-1 text-[11px] font-mono rounded-full transition-colors ${
+                      sportFilter === opt
+                        ? 'om-pill-active'
+                        : 'om-pill hover:opacity-80'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              <div className="border-l h-5 shrink-0" style={{ borderColor: 'var(--om-border)' }} />
               <label className="flex items-center gap-1.5 text-xs font-mono shrink-0" style={{ color: 'var(--om-text-2)' }}>
                 Min profit
                 <input
