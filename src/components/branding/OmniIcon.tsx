@@ -11,7 +11,7 @@ export function OmniIcon({ size = 36, dark = true }: OmniIconProps) {
         d="M120 380 L120 140 L180 140 L256 260 L332 120 L392 120 L392 380 L332 380 L332 230 L256 330 L180 230 L180 380 Z"
         fill={dark ? "#fff" : "#000"}
       />
-      <circle cx="405" cy="370" r="24" fill={dark ? "#fff" : "#000"} />
+      
     </svg>
   );
 }
