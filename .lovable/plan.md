@@ -1,10 +1,17 @@
 
 
-## Plan: Increase OmniIcon Size in Header
+## Plan: Adjust OmniLogo Spacing and Market Color
 
-Bump the icon from 30px to 34px in `src/components/branding/OmniLogo.tsx` to better balance with the 22px wordmark.
+**`src/components/branding/OmniLogo.tsx`** — Two changes:
 
-### Change
+1. **Gap**: Increase `gap-2` (8px) to `gap-2.5` (10px) for more breathing room between the 34px icon and wordmark.
+2. **"Market" color**: Bring "Market" closer to "Omni" in luminance so it doesn't look washed out or disconnected. Change from `#7F8AA3`/`#6B7280` to `#A0AAC0` (dark) and `#4B5563` (light) — still muted but more cohesive.
 
-**`src/components/branding/OmniLogo.tsx`** — Change `<OmniIcon size={30}` to `<OmniIcon size={34}`. One line, one file.
+| Property | Current | Proposed |
+|----------|---------|----------|
+| Gap | `gap-2` (8px) | `gap-2.5` (10px) |
+| "Market" dark | `#7F8AA3` | `#A0AAC0` |
+| "Market" light | `#6B7280` | `#4B5563` |
+
+One file, two lines changed.
 
