@@ -1,36 +1,21 @@
 
 
-## Plan: Optimize OmniIcon M Letterform
+## Plan: Refine OmniLogo Wordmark
 
-### Current Issues
+Update the wordmark typography to better complement the geometric, angular M icon.
 
-Looking at the icon at 30px in the header, I can identify these refinements:
+### Current State
+The wordmark uses `font-bold text-xl` with tight letter-spacing (-0.02em) and plain black/white color. It feels generic next to the refined icon.
 
-1. **Asymmetric tops**: Left legs top at y=140, right at y=130. This creates an unintentional tilt rather than a clean "chart spike" effect.
-2. **Narrow V-notch**: The inner valley (y=240→340→240) is shallow relative to the overall height, making the M harder to read at favicon size (16px).
-3. **Thin inner strokes**: The negative space between the legs closes up at small sizes.
+### Changes
 
-### Proposed Optimized Path
+**`src/components/branding/OmniLogo.tsx`** — Single file update:
 
-Symmetric tops, wider V-notch, and slightly more open inner geometry:
+1. **Font family**: Switch to `font-display` (Space Grotesk) — geometric sans that echoes the angular M letterform
+2. **Weight**: Use `font-semibold` instead of `font-bold` — closer match to the icon's stroke weight
+3. **Two-tone split**: Render "Omni" in primary color and "Market" in muted (`--om-text-2`) to create visual hierarchy and brand recognition
+4. **Letter-spacing**: Tighten slightly to -0.03em for a more premium feel
+5. **Size**: Bump to `text-[22px]` for better optical balance with the 30px icon
 
-```text
-Current:  M110 390 L110 140 L180 140 L256 270 L332 130 L402 130 L402 390 L332 390 L332 240 L256 340 L180 240 L180 390 Z
-Proposed: M110 390 L110 132 L182 132 L256 275 L330 132 L402 132 L402 390 L338 390 L338 235 L256 345 L174 235 L174 390 Z
-```
-
-Changes:
-- **Symmetric top**: both sides at y=132 — clean horizontal top edge
-- **Wider outer legs**: left 110→174 (64px), right 338→402 (64px) — consistent weight
-- **Deeper V-notch**: inner peaks at y=235, center bottom at y=345 — more open M shape, reads better at 16px
-- **Center peak at y=275**: slightly lower, creating more breathing room in the upper half
-
-### Files
-
-| File | Change |
-|------|--------|
-| `src/components/branding/OmniIcon.tsx` | Update `d` attribute |
-| `public/favicon.svg` | Update `d` attribute to match |
-
-Two files, same single-line path change in each.
+Result: The wordmark gains the same geometric DNA as the icon while the two-tone treatment adds brand depth.
 
