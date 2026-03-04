@@ -5,9 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
 import { UnifiedErrorState } from '@/components/shared/UnifiedErrorState';
 import { useLiveRoiAuctions, type LiveRoiAuction } from '@/hooks/useLiveRoiAuctions';
-import type { Tables } from '@/integrations/supabase/types';
-
-type RoiCard = Tables<'roi_cards'>;
+import type { RoiCard } from '@/hooks/useRoiCards';
 
 interface LiveRoiAuctionsProps {
   cards: RoiCard[] | undefined;
