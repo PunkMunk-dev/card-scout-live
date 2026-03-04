@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const BATCH_SIZE = 10;
-const BATCH_DELAY_MS = 500;
+const BATCH_SIZE = 3;
+const BATCH_DELAY_MS = 1500;
 const EBAY_FETCH_LIMIT = 20;
 const FRESH_MINUTES = 15;
 const MIN_PROFIT = 20;
