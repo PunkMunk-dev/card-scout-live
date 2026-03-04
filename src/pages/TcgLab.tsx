@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { TcgHeader } from '@/components/tcg-lab/TcgHeader';
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { TerminalView } from '@/components/tcg-lab/TerminalView';
-import { GuidedSearchEmptyState } from '@/components/shared/GuidedSearchEmptyState';
+import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
 import { useSets } from '@/hooks/useTcgData';
 import type { Game, TcgTarget } from '@/types/tcg';
 import psaMosaic from '@/assets/psa-mosaic.jpg';
@@ -93,7 +93,7 @@ export default function TcgLab() {
               onLoadingChange={setIsSearchLoading}
             />
           ) : (
-            <GuidedSearchEmptyState />
+            <UnifiedEmptyState variant="idle" />
           )}
         </main>
       </div>

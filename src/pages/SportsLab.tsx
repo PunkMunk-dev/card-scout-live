@@ -10,7 +10,8 @@ import { QueryHeader } from '@/components/sports-lab/QueryHeader';
 import { ResultsGrid } from '@/components/sports-lab/ResultsGrid';
 import { WatchlistPanel } from '@/components/sports-lab/WatchlistPanel';
 import { EbayResultsPanel } from '@/components/sports-lab/EbayResultsPanel';
-import { GuidedSearchEmptyState } from '@/components/shared/GuidedSearchEmptyState';
+import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
+import { UnifiedErrorState } from '@/components/shared/UnifiedErrorState';
 import { useSportsRulesetSnapshot } from '@/hooks/useSportsRulesetSnapshot';
 import { useSportsQueryBuilderState } from '@/hooks/useSportsQueryBuilderState';
 import { useSportsWatchlist } from '@/contexts/SportsWatchlistContext';
@@ -78,17 +79,13 @@ export default function SportsLab() {
 
   if (error) return (
     <div className="om-page-bg flex items-center justify-center p-4">
-      <div className="om-card max-w-md w-full p-6">
-        <p className="text-center" style={{ color: 'var(--om-danger)' }}>Failed to load ruleset. Please try again later.</p>
-      </div>
+      <UnifiedErrorState message="Failed to load ruleset. Please try again later." />
     </div>
   );
 
   if (!snapshot?.ruleset) return (
     <div className="om-page-bg flex items-center justify-center p-4">
-      <div className="om-card max-w-md w-full p-6 text-center space-y-4">
-        <p style={{ color: 'var(--om-text-2)' }}>No published ruleset available yet. An admin needs to create and publish a ruleset first.</p>
-      </div>
+      <UnifiedEmptyState title="No ruleset available" message="No published ruleset available yet. An admin needs to create and publish a ruleset first." />
     </div>
   );
 
@@ -111,11 +108,11 @@ export default function SportsLab() {
       <main className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 lg:px-8 py-6">
         {searchMode === 'quick' ? (
           !canSearchQuick ? (
-            <GuidedSearchEmptyState />
+            <UnifiedEmptyState variant="idle" message="Type at least 3 characters to search." />
           ) : <EbayResultsPanel searchParams={quickSearchParams} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />
         ) : (
           !canSearchGuided ? (
-            <GuidedSearchEmptyState />
+            <UnifiedEmptyState variant="idle" />
           ) : <ResultsGrid playerNames={selectedPlayerNames} brandLabel={state.show_all_brands ? undefined : selectedBrand?.label} traitLabels={selectedTraitLabels} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />
         )}
       </main>

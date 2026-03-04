@@ -1,95 +1,118 @@
 
 
-## Assessment: UI Overhaul Scope
+## Plan: UI Audit Export Page + Snapshot System
 
-This request describes a **complete UI architecture rewrite** across 11 steps. After thorough analysis of the current codebase, here is an honest assessment and a realistic plan.
+This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
 
-### What Already Exists (and works well)
-- **Shared shell**: `TabNavigation` with logo, global search, app switcher, theme toggle, watchlist
-- **Design tokens**: Comprehensive `om-*` CSS variable system with light/dark parity
-- **Shared components**: `om-card`, `om-btn`, `om-input`, `om-pill`, skeleton loaders, empty states
-- **Shared watchlist**: Single `WatchlistContext` used across all 3 apps
-- **Lazy loading**: All app pages are lazy-loaded with `React.lazy`
-- **Mobile layout**: Bottom tab bar on mobile, sticky header on desktop
-- **Consistent card design**: `TerminalCard` (TCG) and `EbayListingCard` (Sports) already share near-identical visual structure (om-card, aspect-square image, price overlay, PSA/Gem badges, copy button)
+### New Files
 
-### Why a Full Sidebar Shell Rewrite is Risky
+**1. `src/lib/uiAuditData.ts`** — Static audit data module
+- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
+  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
+  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
+  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
+  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
+  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
+- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
+- All secrets/tokens replaced with `***REDACTED***`
 
-The request asks to replace the current top-bar + bottom-tab navigation with a sidebar rail layout (Bloomberg/Linear style). This is a **massive structural change** that:
+**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
+- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
+- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
+- `exportSnapshotsJSON()` — serializes to downloadable JSON
 
-1. **Breaks the mobile UX** — The current bottom tab bar is iOS/Android native convention. A sidebar rail on mobile requires a completely different interaction model.
-2. **Conflicts with existing per-app headers** — TCG and Sports both have sticky "command bar" headers with app-specific filters. A unified `AppShell` would need to accommodate these different filter structures.
-3. **The "shared components" already exist** — `ListingCard`, `TerminalCard`, and `EbayListingCard` are already very similar. Forcing them into one `ResultCard` would break the different data shapes (TCG listings vs Sports listings vs Universal search items have different fields).
-4. **Virtualization for 50+ items** requires adding a new dependency (`react-window` or `@tanstack/virtual`) and restructuring all grid layouts.
+**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
+- Props: `appId: string`, `getState: () => SnapshotPayload`
+- Renders a small pill button ("📸 Snapshot") in top-right area
+- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
 
-### Recommended Phased Approach
+**4. `src/pages/UIAudit.tsx`** — The audit page
+- "How to Use" card at top (4-step instructions)
+- Sections A–E rendered from `uiAuditData.ts` with code blocks
+- "Snapshots" section: lists snapshots grouped by app, with timestamps
+- Sticky footer bar with:
+  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
+  - "Download .md" — downloads as `ui-audit-report.md`
+  - "Copy Snapshots JSON" — copies just snapshots
+  - "Download snapshots.json"
+  - "Clear Snapshots" — with confirm dialog
 
-Rather than attempting all 11 steps at once (which would be 2000+ lines of changes with high breakage risk), I recommend **Phase 1** focused on the highest-impact, lowest-risk improvements:
+### Modified Files
 
----
+**5. `src/App.tsx`** — Add route
+- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
+- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
+- No nav entry added (dev-only URL)
 
-### Phase 1 Plan (Implementable Now)
+**6. `src/pages/TcgLab.tsx`** — Add snapshot button
+- Import `CaptureSnapshotButton`
+- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
 
-**1. Unified AppShell with Collapsible Sidebar (Desktop) + Bottom Tabs (Mobile)**
-- Create `AppShell` layout component wrapping all routes
-- Desktop: slim left rail (icon-only, ~56px) with app icons + expand on hover showing labels
-- Mobile: keep existing bottom tab bar (proven UX)
-- Move logo, theme toggle, watchlist into shell
-- Keep per-app headers (TcgHeader, QueryHeader) as-is — they contain app-specific filter logic
+**7. `src/pages/SportsLab.tsx`** — Add snapshot button
+- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
 
-**2. Persistent Search Query Across Apps**
-- Store `globalSearchQuery` in a new lightweight context
-- When switching apps, carry the search term (each app interprets it in its own way)
-- Already partially implemented via URL params (`?q=`)
+**8. `src/pages/TopRoi.tsx`** — Add snapshot button
+- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
 
-**3. Active Filter Chips**
-- Add a shared `ActiveFilterChips` component that reads current filters and displays removable chips above results
-- Each app maps its filters to chip format
-- "Clear All" button
+**9. `src/pages/Index.tsx`** — Add snapshot button
+- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
 
-**4. Standardized Empty/Error/Loading States**
-- Create `UnifiedEmptyState`, `UnifiedErrorState` using `om-*` tokens consistently
-- Replace the 3 different empty states (`EmptyState`, `GuidedSearchEmptyState`, and inline error divs)
+### Snapshot Payload Shape
 
-**5. Card Hover Elevation + Image Lazy Loading**
-- Already partially implemented (`om-card:hover` has translateY)
-- Add `loading="lazy"` consistently (already on Sports/TCG cards, missing on Index `ListingCard`)
-- Standardize hover shadow depth
+```text
+{
+  appId: "tcg" | "sports" | "roi" | "search",
+  timestamp: ISO string,
+  route: window.location.pathname + search,
+  searchInputs: { ... },
+  filters: { ... },
+  pagination: { ... },
+  loadingFlags: { ... },
+  errorState: null | { message },
+  resultsSchema: { itemKeys: string[], count: number },
+  layoutMode: { ... }
+}
+```
 
-**6. Spacing + Typography Consistency**
-- Audit and standardize: all result titles → `text-sm font-medium`, all prices → `text-lg font-bold tabular-nums`, all metadata → `text-[11px]`
-- Already 90% consistent across TerminalCard and EbayListingCard
+### Export Format
 
-### Files Changed (Phase 1)
+The "Copy All" output is a single markdown document:
 
-| File | Change |
-|------|--------|
-| `src/components/layout/AppShell.tsx` | **New** — sidebar rail + main content wrapper |
-| `src/components/layout/AppSidebar.tsx` | **New** — icon rail with TCG/Sports/ROI/Search/Watchlist |
-| `src/components/shared/ActiveFilterChips.tsx` | **New** — removable filter chip bar |
-| `src/components/shared/UnifiedEmptyState.tsx` | **New** — consolidated empty state |
-| `src/components/shared/UnifiedErrorState.tsx` | **New** — consolidated error state |
-| `src/App.tsx` | Wrap routes in `AppShell`, remove standalone `TabNavigation` |
-| `src/pages/Index.tsx` | Use `UnifiedEmptyState`/`UnifiedErrorState` |
-| `src/pages/TcgLab.tsx` | Use unified states |
-| `src/pages/SportsLab.tsx` | Use unified states |
-| `src/pages/TopRoi.tsx` | Use unified states, add filter chips |
-| `src/index.css` | Add sidebar rail styles, spacing utility classes |
+```text
+# UI Audit Report — OmniMarket
+Generated: {date}
 
-### What Phase 1 Does NOT Change
-- No API endpoints, fetch logic, or ranking changes
-- No filter algorithm changes
+## A) Routing + Shell
+### Detected Components
+- ...
+### Code Excerpts
+\`\`\`tsx
+// App.tsx route definitions (redacted)
+...
+\`\`\`
+
+## B) App Entry Pages
+...
+
+## C) Global State + Data Plumbing
+...
+
+## D) Auth / Gating
+(Not implemented — skipped)
+
+## E) Styling / Design Tokens
+...
+
+## Snapshots
+\`\`\`json
+[...]
+\`\`\`
+```
+
+### What This Does NOT Change
+- No API behavior, search logic, or data schemas
+- No UI styling changes
 - No business logic modifications
-- TCG/Sports per-app headers remain (they contain app-specific filter dropdowns)
-- `/ui-audit` continues to work
-- Card rendering logic stays intact (each app's card component is preserved)
-
-### Phase 2 (Future, after Phase 1 is validated)
-- Virtualized result grids (requires `@tanstack/virtual`)
-- Unified `ResultCard` component (requires reconciling TCG/Sports/Universal data shapes)
-- Mobile filter drawer (slide-up sheet for filters)
-- Debounced search with skeleton transition
-- Saved searches feature
-
-This phased approach delivers the "professional terminal" feel (sidebar rail, consistent spacing, unified states) without risking breakage of the working search/filter/API logic.
+- No new database tables or edge functions
+- Snapshot buttons are small, unobtrusive, and easily removable
 
