@@ -205,6 +205,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const limit = typeof body?.limit === 'number' ? body.limit : 0;
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -236,6 +239,7 @@ Deno.serve(async (req) => {
 
     const freshCardIds = new Set((freshRows || []).map((r: any) => r.roi_card_id));
     const cardsToScan = allCards.filter(c => !freshCardIds.has(c.id));
+    const toProcess = limit > 0 ? cardsToScan.slice(0, limit) : cardsToScan;
 
     // 3. Get eBay token
     const token = await getEbayToken();
@@ -245,8 +249,8 @@ Deno.serve(async (req) => {
     let found = 0;
     let upserted = 0;
 
-    for (let i = 0; i < cardsToScan.length; i += BATCH_SIZE) {
-      const batch = cardsToScan.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
+      const batch = toProcess.slice(i, i + BATCH_SIZE);
 
       const results = await Promise.allSettled(
         batch.map(async (card) => {
@@ -282,7 +286,7 @@ Deno.serve(async (req) => {
       }
 
       // Delay between batches
-      if (i + BATCH_SIZE < cardsToScan.length) {
+      if (i + BATCH_SIZE < toProcess.length) {
         await sleep(BATCH_DELAY_MS);
       }
     }
