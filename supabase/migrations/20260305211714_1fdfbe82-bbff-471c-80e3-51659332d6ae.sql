@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.roi_live_auctions;
