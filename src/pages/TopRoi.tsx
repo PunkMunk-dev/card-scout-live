@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
