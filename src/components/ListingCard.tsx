@@ -1,9 +1,11 @@
-import { ExternalLink, Clock, Gavel, ShoppingCart, Star } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, Clock, Gavel, ShoppingCart, Star, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
 import { cn } from "@/lib/utils";
 import { useCountdown } from "@/hooks/useCountdown";
+import { cleanListingTitle } from "@/lib/cleanTitle";
 
 interface ListingCardProps {
   item: EbayItem;
@@ -49,6 +51,16 @@ function AuctionCountdown({ endDate }: { endDate: string }) {
 }
 
 export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: ListingCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(cleanListingTitle(item.title));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
   const formatPrice = (value: string, currency: string) => {
     const num = parseFloat(value);
     return new Intl.NumberFormat('en-US', {
@@ -143,17 +155,26 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
           )}
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-7 text-[11px] group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-          asChild
-        >
-          <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
-            View on eBay
-            <ExternalLink className="h-3 w-3 ml-1.5" />
-          </a>
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-7 text-[11px] group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+            asChild
+          >
+            <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
+              View on eBay
+              <ExternalLink className="h-3 w-3 ml-1.5" />
+            </a>
+          </Button>
+          <button
+            onClick={handleCopy}
+            className="w-7 h-7 flex items-center justify-center rounded-md border border-border/40 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Copy title"
+          >
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+          </button>
+        </div>
       </div>
     </div>
   );
