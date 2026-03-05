@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
@@ -25,18 +26,29 @@ function SkeletonGrid() {
 
 export default function TopRoi() {
   const [minProfit, setMinProfit] = useState(50);
+  const [sport, setSport] = useState('All');
 
   const { data: feed, isLoading, isFetching, error, refetch } = useLiveAuctionFeed({ minProfit });
 
+  const uniqueSports = useMemo(
+    () => ['All', ...[...new Set(feed.map(f => f.card.sport).filter(Boolean))].sort()],
+    [feed]
+  );
+
+  const filteredFeed = useMemo(
+    () => sport === 'All' ? feed : feed.filter(f => f.card.sport === sport),
+    [feed, sport]
+  );
+
   const getSnapshotState = useCallback(() => ({
     searchInputs: {},
-    filters: { minProfit },
-    pagination: { liveCount: feed.length },
+    filters: { minProfit, sport },
+    pagination: { liveCount: filteredFeed.length },
     loadingFlags: { isLoading },
     errorState: error ? { message: String(error) } : null,
-    resultsSchema: { itemKeys: ['id', 'roi_card_id', 'item_id', 'current_bid', 'end_time'], count: feed.length },
+    resultsSchema: { itemKeys: ['id', 'roi_card_id', 'item_id', 'current_bid', 'end_time'], count: filteredFeed.length },
     layoutMode: {},
-  }), [minProfit, feed.length, isLoading, error]);
+  }), [minProfit, sport, filteredFeed.length, isLoading, error]);
 
   return (
     <div className="om-page-bg pb-24 md:pb-8 relative">
@@ -63,6 +75,17 @@ export default function TopRoi() {
                 />
               </label>
 
+              <Select value={sport} onValueChange={setSport}>
+                <SelectTrigger className="h-7 w-[130px] text-xs font-mono border-border bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueSports.map(s => (
+                    <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <div className="flex-1" />
 
               <span className="flex items-center gap-1.5 text-[10px] font-mono shrink-0" style={{ color: 'var(--om-text-3)' }}>
@@ -74,14 +97,14 @@ export default function TopRoi() {
             {/* Count */}
             {!isLoading && (
               <p className="text-xs mb-3" style={{ color: 'var(--om-text-3)' }}>
-                {feed.length} live auction{feed.length !== 1 ? 's' : ''}
+                {filteredFeed.length} live auction{filteredFeed.length !== 1 ? 's' : ''}
               </p>
             )}
 
             {/* Grid */}
             {isLoading ? (
               <SkeletonGrid />
-            ) : feed.length === 0 ? (
+            ) : filteredFeed.length === 0 ? (
               <UnifiedEmptyState
                 variant="no-results"
                 title="No live auctions right now"
@@ -89,7 +112,7 @@ export default function TopRoi() {
               />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {feed.map(({ live, card }) => (
+                {filteredFeed.map(({ live, card }) => (
                   <LiveAuctionCard key={live.id} live={live} card={card} />
                 ))}
               </div>
