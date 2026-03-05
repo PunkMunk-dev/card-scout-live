@@ -26,18 +26,29 @@ function SkeletonGrid() {
 
 export default function TopRoi() {
   const [minProfit, setMinProfit] = useState(50);
+  const [sport, setSport] = useState('All');
 
   const { data: feed, isLoading, isFetching, error, refetch } = useLiveAuctionFeed({ minProfit });
 
+  const uniqueSports = useMemo(
+    () => ['All', ...[...new Set(feed.map(f => f.card.sport).filter(Boolean))].sort()],
+    [feed]
+  );
+
+  const filteredFeed = useMemo(
+    () => sport === 'All' ? feed : feed.filter(f => f.card.sport === sport),
+    [feed, sport]
+  );
+
   const getSnapshotState = useCallback(() => ({
     searchInputs: {},
-    filters: { minProfit },
-    pagination: { liveCount: feed.length },
+    filters: { minProfit, sport },
+    pagination: { liveCount: filteredFeed.length },
     loadingFlags: { isLoading },
     errorState: error ? { message: String(error) } : null,
-    resultsSchema: { itemKeys: ['id', 'roi_card_id', 'item_id', 'current_bid', 'end_time'], count: feed.length },
+    resultsSchema: { itemKeys: ['id', 'roi_card_id', 'item_id', 'current_bid', 'end_time'], count: filteredFeed.length },
     layoutMode: {},
-  }), [minProfit, feed.length, isLoading, error]);
+  }), [minProfit, sport, filteredFeed.length, isLoading, error]);
 
   return (
     <div className="om-page-bg pb-24 md:pb-8 relative">
