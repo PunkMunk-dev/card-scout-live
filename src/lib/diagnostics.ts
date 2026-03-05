@@ -36,3 +36,13 @@ export function inferRlsHint(
   }
   return null;
 }
+
+export function inferEdgeHint(status: number | null): string | null {
+  if (!status) return null;
+  if (status === 401 || status === 403) return 'Auth/apikey issue (anon key, JWT, or function auth check).';
+  if (status === 404) return 'Function not deployed or name mismatch.';
+  if (status === 429) return 'Rate limited by upstream API (eBay) or throttled; reduce concurrency / add caching.';
+  if (status >= 500) return 'Runtime error in function; check Edge Function logs for stack trace.';
+  if (status >= 400) return 'Bad request / payload mismatch; verify function expects the body you send.';
+  return null;
+}

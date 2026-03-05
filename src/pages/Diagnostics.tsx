@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
-import { maskKey, safeJsonStringify, inferRlsHint } from '@/lib/diagnostics';
+import { maskKey, safeJsonStringify, inferRlsHint, inferEdgeHint } from '@/lib/diagnostics';
 import { toast } from 'sonner';
 import { Loader2, ChevronDown, Copy, ClipboardCheck, Play, RefreshCw } from 'lucide-react';
 
@@ -27,6 +27,10 @@ interface EdgeResult {
   data: unknown;
   error: unknown;
   ms: number;
+  httpStatus: number | null;
+  bodyPreview: string | null;
+  corsOk: boolean | null;
+  hint: string | null;
 }
 
 /* ── constants ── */
@@ -49,6 +53,57 @@ const EDGE_FUNCTIONS: { name: string; body: Record<string, unknown> }[] = [
 const UNIQUE_EDGE_FUNCTIONS = EDGE_FUNCTIONS.filter(
   (f, i, arr) => arr.findIndex((x) => x.name === f.name) === i,
 );
+
+/* ── edge fetch helpers ── */
+const getFunctionUrl = (name: string) =>
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`;
+
+const getAuthHeaders = () => {
+  const anon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+  return {
+    'Content-Type': 'application/json',
+    apikey: anon || '',
+    Authorization: `Bearer ${anon || ''}`,
+  };
+};
+
+async function fetchEdgeRaw(name: string, payload: unknown) {
+  const url = getFunctionUrl(name);
+  let corsOk: boolean | null = null;
+  try {
+    const opt = await fetch(url, { method: 'OPTIONS', headers: getAuthHeaders() });
+    corsOk = opt.ok;
+  } catch {
+    corsOk = false;
+  }
+
+  let httpStatus: number | null = null;
+  let bodyPreview: string | null = null;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload ?? {}),
+    });
+    httpStatus = res.status;
+    const text = await res.text();
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      try {
+        bodyPreview = JSON.stringify(JSON.parse(text), null, 2).slice(0, 2000);
+      } catch {
+        bodyPreview = text.slice(0, 2000);
+      }
+    } else {
+      bodyPreview = text.slice(0, 2000);
+    }
+  } catch (e: unknown) {
+    httpStatus = null;
+    bodyPreview = String(e instanceof Error ? e.message : e || 'Fetch failed');
+  }
+
+  return { corsOk, httpStatus, bodyPreview, hint: inferEdgeHint(httpStatus) };
+}
 
 /* ── helpers ── */
 const statusBadge = (s: Status) => {
@@ -131,7 +186,10 @@ export default function Diagnostics() {
     setRunningEdge(true);
     const results: EdgeResult[] = [];
     for (const fn of UNIQUE_EDGE_FUNCTIONS) {
-      const entry: EdgeResult = { name: fn.name, status: 'running', data: null, error: null, ms: 0 };
+      const entry: EdgeResult = {
+        name: fn.name, status: 'running', data: null, error: null, ms: 0,
+        httpStatus: null, bodyPreview: null, corsOk: null, hint: null,
+      };
       const t0 = performance.now();
       try {
         const { data, error } = await supabase.functions.invoke(fn.name, { body: fn.body });
@@ -139,14 +197,26 @@ export default function Diagnostics() {
         if (error) {
           entry.status = 'fail';
           entry.error = { message: error.message, name: error.name, context: (error as any).context };
+          const raw = await fetchEdgeRaw(fn.name, fn.body);
+          entry.httpStatus = raw.httpStatus;
+          entry.bodyPreview = raw.bodyPreview;
+          entry.corsOk = raw.corsOk;
+          entry.hint = raw.hint;
         } else {
           entry.status = 'ok';
           entry.data = data;
+          entry.httpStatus = 200;
+          entry.corsOk = true;
         }
       } catch (e: unknown) {
         entry.ms = Math.round(performance.now() - t0);
         entry.status = 'fail';
         entry.error = e instanceof Error ? e.message : String(e);
+        const raw = await fetchEdgeRaw(fn.name, fn.body);
+        entry.httpStatus = raw.httpStatus;
+        entry.bodyPreview = raw.bodyPreview;
+        entry.corsOk = raw.corsOk;
+        entry.hint = raw.hint;
       }
       results.push(entry);
       setEdgeResults([...results]);
@@ -256,18 +326,37 @@ export default function Diagnostics() {
         {edgeResults.map((r) => (
           <Collapsible key={r.name}>
             <div className="border rounded-md p-3 space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center flex-wrap gap-2">
                 {statusBadge(r.status)}
                 <span className="font-mono text-sm font-medium">{r.name}</span>
                 {r.ms > 0 && <span className="text-xs text-muted-foreground">{r.ms}ms</span>}
+                {r.httpStatus != null && (
+                  <Badge className={r.httpStatus < 400
+                    ? 'bg-emerald-600/20 text-emerald-400 border-emerald-600/30'
+                    : 'bg-red-600/20 text-red-400 border-red-600/30'
+                  }>
+                    HTTP {r.httpStatus}
+                  </Badge>
+                )}
+                {r.corsOk != null && (
+                  <Badge className={r.corsOk
+                    ? 'bg-emerald-600/20 text-emerald-400 border-emerald-600/30'
+                    : 'bg-red-600/20 text-red-400 border-red-600/30'
+                  }>
+                    CORS {r.corsOk ? 'OK' : 'FAIL'}
+                  </Badge>
+                )}
               </div>
-              {(r.data || r.error) && (
+              {r.hint && <p className="text-xs text-amber-400">Hint: {r.hint}</p>}
+              {(r.data || r.error || r.bodyPreview) && (
                 <>
                   <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
                     <ChevronDown className="w-3.5 h-3.5" /> Response
                   </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <JsonBlock data={r.error ?? r.data} />
+                  <CollapsibleContent className="space-y-2">
+                    {r.error && <JsonBlock data={r.error} label="SDK Error" />}
+                    {r.bodyPreview && <JsonBlock data={r.bodyPreview} label="Raw HTTP Body" />}
+                    {r.data && <JsonBlock data={r.data} label="Data" />}
                   </CollapsibleContent>
                 </>
               )}
