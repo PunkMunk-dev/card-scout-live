@@ -51,6 +51,16 @@ function AuctionCountdown({ endDate }: { endDate: string }) {
 }
 
 export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: ListingCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(cleanListingTitle(item.title));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
   const formatPrice = (value: string, currency: string) => {
     const num = parseFloat(value);
     return new Intl.NumberFormat('en-US', {

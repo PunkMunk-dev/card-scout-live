@@ -47,3 +47,22 @@ export function tcgListingToEbayItem(listing: TcgListing): EbayItem {
     itemUrl: listing.itemWebUrl,
   };
 }
+
+export function roiAuctionToEbayItem(card: RoiCard, live: LiveRoiAuction): EbayItem {
+  return {
+    itemId: live.item_id,
+    title: card.card_name,
+    price: {
+      value: live.current_bid != null ? String(live.current_bid) : '0.00',
+      currency: 'USD',
+    },
+    shipping: live.shipping != null
+      ? { value: String(live.shipping), currency: 'USD' }
+      : undefined,
+    condition: 'Not Specified',
+    buyingOption: 'AUCTION',
+    endDate: live.end_time ?? undefined,
+    imageUrl: live.image_url ?? undefined,
+    itemUrl: live.listing_url,
+  };
+}
