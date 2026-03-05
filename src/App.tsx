@@ -36,6 +36,7 @@ const App = () => (
                   <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
                   <Route path="/roi" element={<ErrorBoundary><TopRoi /></ErrorBoundary>} />
                   <Route path="/ui-audit" element={<UIAudit />} />
+                  <Route path="/diagnostics" element={<ErrorBoundary><Diagnostics /></ErrorBoundary>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
