@@ -15,6 +15,7 @@ const TcgLab = lazy(() => import("./pages/TcgLab"));
 const SportsLab = lazy(() => import("./pages/SportsLab"));
 const TopRoi = lazy(() => import("./pages/TopRoi"));
 const UIAudit = lazy(() => import("./pages/UIAudit"));
+const Diagnostics = lazy(() => import("./pages/Diagnostics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
