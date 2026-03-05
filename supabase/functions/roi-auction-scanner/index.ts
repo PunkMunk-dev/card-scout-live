@@ -178,15 +178,37 @@ function filterAndMapAuctions(items: any[]): AuctionItem[] {
 }
 
 // ── Title-match validation ────────────────────────────────────────────
+function normalizeCardNumber(raw: string): string {
+  // Strip #, leading zeros, lowercase — e.g. "#AK-01" → "ak-1"
+  return raw.replace(/^#/, '').toLowerCase().replace(/\b0+(\d)/g, '$1');
+}
+
 function titleMatchesCard(title: string, parsed: ParsedCard): boolean {
   const lowerTitle = title.toLowerCase();
-  // Must contain the player/character name (all words from nameCore)
+
+  // 1. All player/character name words must appear
   const nameWords = parsed.nameCore.toLowerCase().split(/\s+/).filter(w => w.length > 1);
   const nameMatched = nameWords.length > 0 && nameWords.every(w => lowerTitle.includes(w));
   if (!nameMatched) return false;
 
-  // Bonus: check for at least one brand/set token match (relaxed — not required)
-  // This is enough — the name match ensures it's the right card
+  // 2. Card number must match when available
+  if (parsed.cardNumber) {
+    const normNum = normalizeCardNumber(parsed.cardNumber);
+    const normTitle = normalizeCardNumber(lowerTitle);
+    if (!normTitle.includes(normNum)) return false;
+  }
+
+  // 3. At least one significant set/brand keyword must appear
+  const STOP_WORDS = new Set(['the', 'and', 'for', 'with', 'from', 'new']);
+  const setTokens = parsed.setCore
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w) && !/^\d{4}$/.test(w));
+  if (setTokens.length > 0) {
+    const hasSetMatch = setTokens.some(tok => lowerTitle.includes(tok));
+    if (!hasSetMatch) return false;
+  }
+
   return true;
 }
 
