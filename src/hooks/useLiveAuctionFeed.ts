@@ -30,6 +30,7 @@ export function useLiveAuctionFeed(opts: UseLiveAuctionFeedOpts = {}) {
         .from('roi_live_auctions')
         .select('*')
         .gte('last_seen_at', cutoff)
+        .gte('end_time', new Date().toISOString())
         .order('end_time', { ascending: true, nullsFirst: false });
       if (error) throw error;
       return (data ?? []) as LiveRoiAuction[];
@@ -74,9 +75,13 @@ export function useLiveAuctionFeed(opts: UseLiveAuctionFeedOpts = {}) {
       })
       .filter((x): x is LiveAuctionFeedItem => x !== null);
 
-    if (minProfit > 0) {
-      items = items.filter(i => (i.card.psa10_profit ?? 0) >= minProfit);
-    }
+    // JS safety net: drop any auctions that ended between query and render
+    const nowMs = Date.now();
+    items = items.filter(i => {
+      if (i.live.end_time && new Date(i.live.end_time).getTime() <= nowMs) return false;
+      if (minProfit > 0 && (i.card.psa10_profit ?? 0) < minProfit) return false;
+      return true;
+    });
 
     // Ensure ending-soonest sort (DB should handle, but enforce here)
     items.sort((a, b) => {
