@@ -1,9 +1,11 @@
-import { ExternalLink, Clock, Gavel, ShoppingCart, Star } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, Clock, Gavel, ShoppingCart, Star, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
 import { cn } from "@/lib/utils";
 import { useCountdown } from "@/hooks/useCountdown";
+import { cleanListingTitle } from "@/lib/cleanTitle";
 
 interface ListingCardProps {
   item: EbayItem;

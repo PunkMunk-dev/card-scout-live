@@ -1,6 +1,8 @@
 import type { EbayItem } from '@/types/ebay';
 import type { EbayListing as SportsListing } from '@/types/sportsEbay';
 import type { EbayListing as TcgListing } from '@/types/tcg';
+import type { RoiCard } from '@/hooks/useRoiCards';
+import type { LiveRoiAuction } from '@/hooks/useLiveRoiAuctions';
 
 export function sportsListingToEbayItem(listing: SportsListing): EbayItem {
   const buyingOption = listing.buyingOptions?.includes('AUCTION')
