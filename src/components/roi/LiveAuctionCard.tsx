@@ -1,5 +1,9 @@
-import { ExternalLink, ImageOff, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { ExternalLink, ImageOff, Clock, Star, Copy, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useCountdown } from '@/hooks/useCountdown';
+import { useSharedWatchlist } from '@/contexts/WatchlistContext';
+import { roiAuctionToEbayItem } from '@/lib/watchlistAdapters';
 import type { RoiCard } from '@/hooks/useRoiCards';
 import type { LiveRoiAuction } from '@/hooks/useLiveRoiAuctions';
 
@@ -52,6 +56,20 @@ function CountdownLabel({ endDate }: { endDate: string }) {
 }
 
 export function LiveAuctionCard({ card, live }: LiveAuctionCardProps) {
+  const [copied, setCopied] = useState(false);
+  const { isInWatchlist, toggleWatchlist } = useSharedWatchlist();
+
+  const ebayItem = roiAuctionToEbayItem(card, live);
+  const watched = isInWatchlist(ebayItem.itemId);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(card.card_name);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
   return (
     <div
       className="om-card rounded-2xl overflow-hidden flex flex-col group"
@@ -79,6 +97,22 @@ export function LiveAuctionCard({ card, live }: LiveAuctionCardProps) {
             <ImageOff className="h-6 w-6 opacity-30" style={{ color: 'var(--om-text-3)' }} />
           </div>
         )}
+
+        {/* Watchlist star */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleWatchlist(ebayItem);
+          }}
+          className={cn(
+            "absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors",
+            watched ? "text-[var(--om-accent)]" : "text-white/70 hover:text-white"
+          )}
+          aria-label={watched ? "Remove from watchlist" : "Add to watchlist"}
+        >
+          <Star className={cn("h-3.5 w-3.5", watched && "fill-current")} />
+        </button>
       </div>
 
       <div className="p-3 flex flex-col gap-2 flex-1">
@@ -112,20 +146,30 @@ export function LiveAuctionCard({ card, live }: LiveAuctionCardProps) {
           )}
         </div>
 
-        {/* CTA */}
-        <a
-          href={live.listing_url}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-colors"
-          style={{
-            background: 'var(--om-accent)',
-            color: 'var(--om-accent-fg, #fff)',
-          }}
-        >
-          Open on eBay
-          <ExternalLink className="h-3 w-3" />
-        </a>
+        {/* CTA row */}
+        <div className="mt-1 flex items-center gap-1.5">
+          <a
+            href={live.listing_url}
+            target="_blank"
+            rel="noreferrer"
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-colors"
+            style={{
+              background: 'var(--om-accent)',
+              color: 'var(--om-accent-fg, #fff)',
+            }}
+          >
+            Open on eBay
+            <ExternalLink className="h-3 w-3" />
+          </a>
+          <button
+            onClick={handleCopy}
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+            style={{ border: '1px solid var(--om-border-0)', color: 'var(--om-text-2)' }}
+            aria-label="Copy title"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+          </button>
+        </div>
       </div>
     </div>
   );
