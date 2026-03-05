@@ -1,118 +1,55 @@
 
 
-## Plan: UI Audit Export Page + Snapshot System
+## Spot-Check Results: Title-Match Validation is Too Loose
 
-This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
+I cross-referenced 3 live auction cards against their actual eBay listings and found a significant data accuracy problem. **Bid prices are accurate**, but **auctions are being matched to the wrong cards**, causing incorrect profit/multiplier display.
 
-### New Files
+### Findings
 
-**1. `src/lib/uiAuditData.ts`** — Static audit data module
-- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
-  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
-  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
-  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
-  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
-  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
-- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
-- All secrets/tokens replaced with `***REDACTED***`
+| # | roi_cards entry | eBay listing title | Bid match? | Card match? |
+|---|---|---|---|---|
+| 1 | Victor Wembanyama 2025 Topps **#AK-1 All Kings** | 2025-26 Topps Chrome **Go Time** (no #AK-1) | Yes ($0.99) | **Wrong card** |
+| 2 | Nikola Jokic 2025 Topps **#AK-6 All Kings** | 2025-26 Topps Chrome **Inspirational Insert #IP8** | Yes ($0.99) | **Wrong card** |
+| 3 | Drake Maye 2024 Prizm **#329 Hyper** | 2024 Prizm Draft Picks **#103 Purple Prizm /75** | Yes ($79.99) | **Wrong card** |
 
-**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
-- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
-- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
-- `exportSnapshotsJSON()` — serializes to downloadable JSON
+### Root Cause
 
-**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
-- Props: `appId: string`, `getState: () => SnapshotPayload`
-- Renders a small pill button ("📸 Snapshot") in top-right area
-- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
+In `supabase/functions/roi-auction-scanner/index.ts`, the `titleMatchesCard()` function (line ~178) only checks that the player name words appear in the listing title. It does **not** verify:
+- Card number (e.g. `#AK-1` vs no match)
+- Set/variant keywords (e.g. "All Kings" vs "Go Time")
 
-**4. `src/pages/UIAudit.tsx`** — The audit page
-- "How to Use" card at top (4-step instructions)
-- Sections A–E rendered from `uiAuditData.ts` with code blocks
-- "Snapshots" section: lists snapshots grouped by app, with timestamps
-- Sticky footer bar with:
-  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
-  - "Download .md" — downloads as `ui-audit-report.md`
-  - "Copy Snapshots JSON" — copies just snapshots
-  - "Download snapshots.json"
-  - "Clear Snapshots" — with confirm dialog
+So any auction for the same player in any set passes validation, and the profit figure from the `roi_cards` entry (which is specific to one card variant) gets shown against a completely different card.
 
-### Modified Files
+### Fix: Tighten `titleMatchesCard()` in the Scanner
 
-**5. `src/App.tsx`** — Add route
-- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
-- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
-- No nav entry added (dev-only URL)
+**File:** `supabase/functions/roi-auction-scanner/index.ts`
 
-**6. `src/pages/TcgLab.tsx`** — Add snapshot button
-- Import `CaptureSnapshotButton`
-- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
+1. **Require card number match when available.** If the `roi_cards` entry includes a card number (e.g. `#AK-1`), the eBay title must also contain that number (normalized — strip leading zeros, handle `/` separators). If the card number is absent from the title, reject the match.
 
-**7. `src/pages/SportsLab.tsx`** — Add snapshot button
-- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
+2. **Require at least one set/brand keyword match.** Extract significant tokens from `setCore` and `baseBrand` (e.g. "All Kings", "Hyper", "Prizm"). At least one multi-character token from the set name must appear in the listing title. This prevents "Topps Chrome Go Time" from matching a card catalogued as "Topps All Kings".
 
-**8. `src/pages/TopRoi.tsx`** — Add snapshot button
-- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
+3. **Keep the existing player-name check** as the first gate (unchanged).
 
-**9. `src/pages/Index.tsx`** — Add snapshot button
-- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
-
-### Snapshot Payload Shape
+The updated logic:
 
 ```text
-{
-  appId: "tcg" | "sports" | "roi" | "search",
-  timestamp: ISO string,
-  route: window.location.pathname + search,
-  searchInputs: { ... },
-  filters: { ... },
-  pagination: { ... },
-  loadingFlags: { ... },
-  errorState: null | { message },
-  resultsSchema: { itemKeys: string[], count: number },
-  layoutMode: { ... }
-}
+function titleMatchesCard(title, parsed):
+  1. All player name words must appear in title (existing)
+  2. If parsed.cardNumber exists:
+     - normalize both (strip #, lowercase)
+     - title must contain the card number token
+     - if not found → reject
+  3. Extract set keywords from parsed.setCore (split on spaces, filter len>2)
+     - at least 1 keyword must appear in title
+     - if zero match → reject
+  4. Return true
 ```
 
-### Export Format
+This will significantly reduce false-positive matches without being so strict that legitimate listings get filtered out.
 
-The "Copy All" output is a single markdown document:
+No frontend changes needed — the displayed data will automatically become accurate once the scanner stops writing mismatched auctions to `roi_live_auctions`.
 
-```text
-# UI Audit Report — OmniMarket
-Generated: {date}
+### Optional: Cleanup Existing Bad Data
 
-## A) Routing + Shell
-### Detected Components
-- ...
-### Code Excerpts
-\`\`\`tsx
-// App.tsx route definitions (redacted)
-...
-\`\`\`
-
-## B) App Entry Pages
-...
-
-## C) Global State + Data Plumbing
-...
-
-## D) Auth / Gating
-(Not implemented — skipped)
-
-## E) Styling / Design Tokens
-...
-
-## Snapshots
-\`\`\`json
-[...]
-\`\`\`
-```
-
-### What This Does NOT Change
-- No API behavior, search logic, or data schemas
-- No UI styling changes
-- No business logic modifications
-- No new database tables or edge functions
-- Snapshot buttons are small, unobtrusive, and easily removable
+After deploying the fix, run the scanner once with a full re-scan (no `FRESH_MINUTES` skip) to replace stale mismatched rows. Alternatively, truncate `roi_live_auctions` and let the next cron cycle repopulate cleanly.
 
