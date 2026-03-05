@@ -52,8 +52,6 @@ function CountdownLabel({ endDate }: { endDate: string }) {
 }
 
 export function LiveAuctionCard({ card, live }: LiveAuctionCardProps) {
-  const profit = card.psa10_profit ?? 0;
-
   return (
     <div
       className="om-card rounded-2xl overflow-hidden flex flex-col group"
@@ -80,18 +78,6 @@ export function LiveAuctionCard({ card, live }: LiveAuctionCardProps) {
           <div className="h-full w-full flex items-center justify-center">
             <ImageOff className="h-6 w-6 opacity-30" style={{ color: 'var(--om-text-3)' }} />
           </div>
-        )}
-        {/* Profit badge */}
-        {profit > 0 && (
-          <span
-            className="absolute top-2 right-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full"
-            style={{
-              background: 'var(--om-success-bg, rgba(34,197,94,0.15))',
-              color: 'var(--om-success, #22c55e)',
-            }}
-          >
-            +{fmt(card.psa10_profit)}
-          </span>
         )}
       </div>
 
