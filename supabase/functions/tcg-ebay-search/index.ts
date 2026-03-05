@@ -193,7 +193,7 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   url.searchParams.set('filter', filterParts.join(','));
   url.searchParams.set('sort', ebaySort);
   
-  const response = await fetch(url.toString(), {
+  const response = await fetchWithRetry(url.toString(), {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
