@@ -120,7 +120,10 @@ serve(async (req) => {
     const EBAY_CLIENT_ID = Deno.env.get('EBAY_CLIENT_ID');
     if (!EBAY_CLIENT_ID) throw new Error('EBAY_CLIENT_ID is not configured');
 
-    const { playerName, brand, year } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const playerName = body.playerName || body.query || body.player || body.name || null;
+    const brand = body.brand || null;
+    const year = body.year || null;
     if (!playerName) throw new Error('playerName is required');
 
     const result = await searchPsa10Sold(EBAY_CLIENT_ID, { playerName, brand, year });

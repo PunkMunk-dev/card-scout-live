@@ -13,7 +13,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { cards } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const cards = body.cards || body.cardNames || null;
     if (!Array.isArray(cards) || cards.length === 0) {
       return new Response(JSON.stringify({ error: 'cards array required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
