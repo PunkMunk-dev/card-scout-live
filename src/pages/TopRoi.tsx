@@ -97,14 +97,14 @@ export default function TopRoi() {
             {/* Count */}
             {!isLoading && (
               <p className="text-xs mb-3" style={{ color: 'var(--om-text-3)' }}>
-                {feed.length} live auction{feed.length !== 1 ? 's' : ''}
+                {filteredFeed.length} live auction{filteredFeed.length !== 1 ? 's' : ''}
               </p>
             )}
 
             {/* Grid */}
             {isLoading ? (
               <SkeletonGrid />
-            ) : feed.length === 0 ? (
+            ) : filteredFeed.length === 0 ? (
               <UnifiedEmptyState
                 variant="no-results"
                 title="No live auctions right now"
@@ -112,7 +112,7 @@ export default function TopRoi() {
               />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {feed.map(({ live, card }) => (
+                {filteredFeed.map(({ live, card }) => (
                   <LiveAuctionCard key={live.id} live={live} card={card} />
                 ))}
               </div>
