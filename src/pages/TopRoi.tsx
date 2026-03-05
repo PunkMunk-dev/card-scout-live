@@ -75,6 +75,17 @@ export default function TopRoi() {
                 />
               </label>
 
+              <Select value={sport} onValueChange={setSport}>
+                <SelectTrigger className="h-7 w-[130px] text-xs font-mono border-border bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueSports.map(s => (
+                    <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <div className="flex-1" />
 
               <span className="flex items-center gap-1.5 text-[10px] font-mono shrink-0" style={{ color: 'var(--om-text-3)' }}>
