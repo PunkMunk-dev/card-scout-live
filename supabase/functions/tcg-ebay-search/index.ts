@@ -263,7 +263,7 @@ async function searchSoldListings(query: string, limit = 10) {
   findingUrl.searchParams.set('itemFilter(0).name', 'SoldItemsOnly');
   findingUrl.searchParams.set('itemFilter(0).value', 'true');
   
-  const response = await fetch(findingUrl.toString());
+  const response = await fetchWithRetry(findingUrl.toString(), {});
   
   if (!response.ok) {
     return { soldItems: [], metrics: null };
