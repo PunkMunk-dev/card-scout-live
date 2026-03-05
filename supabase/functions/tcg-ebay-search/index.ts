@@ -105,6 +105,20 @@ function getTimeRemaining(endDate: string): string {
   return `${hours}h`;
 }
 
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, options);
+    if (response.status === 429 && attempt < maxRetries) {
+      const delay = Math.pow(2, attempt + 1) * 1000 + Math.random() * 1000;
+      console.log(`[EBAY] 429 rate limit, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, delay));
+      continue;
+    }
+    return response;
+  }
+  throw new Error('Max retries exceeded');
+}
+
 async function searchActiveListings(query: string, limit = 100, sort = 'best_match', cardType = 'single', minPrice = 0, maxPrice = 0, buyingOptions = 'ALL', offset = 0) {
   const token = await getAccessToken();
 
