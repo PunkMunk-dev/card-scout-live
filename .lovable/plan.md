@@ -1,28 +1,118 @@
 
 
-## Plan: Default Auction Sorting to "Ending Soonest" Across the App
+## Plan: UI Audit Export Page + Snapshot System
 
-### Summary
-When auctions are shown anywhere in the app, they should default to sorting by "ending soonest." The TCG Lab and Sports Lab already do this when their auction filter is toggled. The Card Finder (Index page) does not — it lacks an "Ending Soonest" sort option entirely, and the `ebay-search` edge function ignores sort values.
+This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
 
-### Changes
+### New Files
 
-**1. Add "Ending Soonest" sort to Card Finder types and UI**
-- `src/types/ebay.ts`: Add `'ending_soonest'` to the `SortOption` union type.
-- `src/components/SearchFilters.tsx`: Add an "Ending Soonest" `<SelectItem>`.
+**1. `src/lib/uiAuditData.ts`** — Static audit data module
+- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
+  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
+  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
+  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
+  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
+  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
+- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
+- All secrets/tokens replaced with `***REDACTED***`
 
-**2. Wire up sort in `ebay-search` edge function**
-- `supabase/functions/ebay-search/index.ts` (line ~257): Update `getSortParam()` to return `'endingSoonest'` when sort is `'ending_soonest'` or `'auction_only'`, instead of always returning `'bestMatch'`.
+**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
+- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
+- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
+- `exportSnapshotsJSON()` — serializes to downloadable JSON
 
-**3. Auto-select "Ending Soonest" when auction filter is active on Card Finder**
-- `src/pages/Index.tsx`: When user selects `auction_only`, auto-switch sort to `ending_soonest`. Update `deriveBuyingOptions()` to handle the new sort value. When switching away from auction, revert to `best`.
+**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
+- Props: `appId: string`, `getState: () => SnapshotPayload`
+- Renders a small pill button ("📸 Snapshot") in top-right area
+- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
 
-**4. Client-side fallback sort for auction listings**
-- In the Card Finder results, when sort is `ending_soonest`, also sort client-side by `endDate` ascending (ending soonest first) as a safety net, since `endDate` is already present on `EbayItem`.
+**4. `src/pages/UIAudit.tsx`** — The audit page
+- "How to Use" card at top (4-step instructions)
+- Sections A–E rendered from `uiAuditData.ts` with code blocks
+- "Snapshots" section: lists snapshots grouped by app, with timestamps
+- Sticky footer bar with:
+  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
+  - "Download .md" — downloads as `ui-audit-report.md`
+  - "Copy Snapshots JSON" — copies just snapshots
+  - "Download snapshots.json"
+  - "Clear Snapshots" — with confirm dialog
 
-### Files to edit
-- `src/types/ebay.ts`
-- `src/components/SearchFilters.tsx`
-- `supabase/functions/ebay-search/index.ts` (line 257-259)
-- `src/pages/Index.tsx`
+### Modified Files
+
+**5. `src/App.tsx`** — Add route
+- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
+- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
+- No nav entry added (dev-only URL)
+
+**6. `src/pages/TcgLab.tsx`** — Add snapshot button
+- Import `CaptureSnapshotButton`
+- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
+
+**7. `src/pages/SportsLab.tsx`** — Add snapshot button
+- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
+
+**8. `src/pages/TopRoi.tsx`** — Add snapshot button
+- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
+
+**9. `src/pages/Index.tsx`** — Add snapshot button
+- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
+
+### Snapshot Payload Shape
+
+```text
+{
+  appId: "tcg" | "sports" | "roi" | "search",
+  timestamp: ISO string,
+  route: window.location.pathname + search,
+  searchInputs: { ... },
+  filters: { ... },
+  pagination: { ... },
+  loadingFlags: { ... },
+  errorState: null | { message },
+  resultsSchema: { itemKeys: string[], count: number },
+  layoutMode: { ... }
+}
+```
+
+### Export Format
+
+The "Copy All" output is a single markdown document:
+
+```text
+# UI Audit Report — OmniMarket
+Generated: {date}
+
+## A) Routing + Shell
+### Detected Components
+- ...
+### Code Excerpts
+\`\`\`tsx
+// App.tsx route definitions (redacted)
+...
+\`\`\`
+
+## B) App Entry Pages
+...
+
+## C) Global State + Data Plumbing
+...
+
+## D) Auth / Gating
+(Not implemented — skipped)
+
+## E) Styling / Design Tokens
+...
+
+## Snapshots
+\`\`\`json
+[...]
+\`\`\`
+```
+
+### What This Does NOT Change
+- No API behavior, search logic, or data schemas
+- No UI styling changes
+- No business logic modifications
+- No new database tables or edge functions
+- Snapshot buttons are small, unobtrusive, and easily removable
 

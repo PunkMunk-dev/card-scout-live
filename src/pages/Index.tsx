@@ -17,9 +17,19 @@ import { getSession, setSession, pushRecentSearch } from "@/lib/sessionStore";
 import type { EbayItem, SortOption } from "@/types/ebay";
 
 function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
-  if (sort === 'auction_only') return 'AUCTION';
+  if (sort === 'auction_only' || sort === 'ending_soonest') return 'AUCTION';
   if (sort === 'buy_now_only') return 'FIXED_PRICE';
   return 'ALL';
+}
+
+/* ── Client-side fallback sort for ending_soonest ── */
+function sortItemsClientSide(items: EbayItem[], sort: SortOption): EbayItem[] {
+  if (sort !== 'ending_soonest') return items;
+  return [...items].sort((a, b) => {
+    if (!a.endDate) return 1;
+    if (!b.endDate) return -1;
+    return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+  });
 }
 
 /* ── Recent-searches helpers (localStorage backward compat) ── */
@@ -109,9 +119,10 @@ export default function Index() {
       if (append) {
         setItems(prev => {
           const existingIds = new Set(prev.map(item => item.itemId));
-          return [...prev, ...response.items.filter(item => !existingIds.has(item.itemId))];
+          const merged = [...prev, ...response.items.filter(item => !existingIds.has(item.itemId))];
+          return sortItemsClientSide(merged, activeSort);
         });
-      } else { setItems(response.items); }
+      } else { setItems(sortItemsClientSide(response.items, activeSort)); }
       setTotal(response.total);
       setNextPage(response.items.length > 0 ? response.nextPage : null);
       setError(null);
@@ -129,9 +140,11 @@ export default function Index() {
 
   const handleLoadMore = () => { if (nextPage && query && !isLoadingMore) performSearch(query, nextPage, true); };
   const handleSortChange = (newSort: SortOption) => {
-    setSort(newSort);
-    setSession({ indexSortKey: newSort });
-    if (query && hasSearched) { setError(null); performSearch(query, 1, false, newSort); }
+    // Auto-switch to ending_soonest when selecting auction_only
+    const effectiveSort = newSort === 'auction_only' ? 'ending_soonest' : newSort;
+    setSort(effectiveSort);
+    setSession({ indexSortKey: effectiveSort });
+    if (query && hasSearched) { setError(null); performSearch(query, 1, false, effectiveSort); }
   };
   const handleRetry = () => { if (query) { setError(null); performSearch(query, 1, false); } };
 
