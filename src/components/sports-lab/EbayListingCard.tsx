@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Copy, Check, Info } from 'lucide-react';
+import { AuctionCountdownBadge } from '@/components/shared/AuctionCountdownBadge';
 import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
 import { GemRateBadge } from './GemRateBadge';
@@ -13,8 +14,6 @@ const GRADING_COST = 25;
 export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing: EbayListing; sportKey?: string | null; isAuctionMode?: boolean }) {
   const [showComps, setShowComps] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
-  const [isEndingSoon, setIsEndingSoon] = useState(false);
   const [imageSrc, setImageSrc] = useState(listing.imageUrl);
   const [imageError, setImageError] = useState(false);
 
@@ -27,20 +26,6 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
       setImageSrc(listing.imageUrl.replace('/s-l1600', '/s-l500').replace('/s-l800', '/s-l300'));
     }
   }, [listing.imageUrl, imageError]);
-
-  useEffect(() => {
-    if (!isAuctionMode || !isAuction || !listing.itemEndDate) { setTimeRemaining(null); return; }
-    const calc = () => {
-      const diff = new Date(listing.itemEndDate!).getTime() - Date.now();
-      if (diff <= 0) { setTimeRemaining(null); return; }
-      setIsEndingSoon(diff < 5 * 60 * 1000);
-      const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
-      setTimeRemaining(h > 0 ? `${h}h ${m}m` : `${m}m`);
-    };
-    calc();
-    const interval = setInterval(calc, 60000);
-    return () => clearInterval(interval);
-  }, [isAuctionMode, isAuction, listing.itemEndDate]);
 
   const soldMarketValue = listing.psa10MarketValue ?? null;
   const soldConfidence = listing.psa10MarketValueConfidence ?? null;
@@ -60,6 +45,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
               <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: 'var(--om-text-3)' }}>No image</div>}
             <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
             <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-sm">eBay</span>
+            {isAuction && listing.itemEndDate && <AuctionCountdownBadge endDate={listing.itemEndDate} />}
             <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
               <WatchlistStar listing={listing} />
               {isAuction && <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-orange-400 bg-black/50 backdrop-blur-sm">Auction</span>}
@@ -71,7 +57,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
                   {listing.price !== null && <span className="text-lg font-bold text-white tabular-nums drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">${listing.price.toFixed(2)}</span>}
                   {listing.shippingCost !== null && listing.shippingCost > 0 && <span className="text-[11px] text-white/50">+${listing.shippingCost.toFixed(2)} ship</span>}
                 </div>
-                {isAuctionMode && isAuction && timeRemaining && <span className={cn("text-[11px] font-medium", isEndingSoon ? "text-orange-400" : "text-white/60")}>{timeRemaining}</span>}
+                {isAuctionMode && isAuction && listing.bidCount !== undefined && <span className="text-[11px] font-medium text-white/60">{listing.bidCount} bid{listing.bidCount !== 1 ? 's' : ''}</span>}
               </div>
             </div>
           </div>
