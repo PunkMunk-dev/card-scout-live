@@ -487,6 +487,16 @@ serve(async (req) => {
       buyingOptions = 'ALL',
     } = body;
 
+    // Check request-level cache
+    const cacheKey = getSearchCacheKey(body);
+    const cached = getSearchCache(cacheKey);
+    if (cached) {
+      console.log('[ebay-search] Cache hit for:', cacheKey);
+      return new Response(JSON.stringify(cached), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!query || query.trim() === '') {
       return new Response(
         JSON.stringify({ error: 'Query is required' }),
@@ -612,15 +622,19 @@ serve(async (req) => {
 
     const hasMore = offset + rawItems.length < total;
 
+    const responseData = {
+      query,
+      page,
+      limit: clampedLimit,
+      total,
+      nextPage: hasMore ? page + 1 : null,
+      items: normalizedItems,
+    };
+
+    setSearchCache(cacheKey, responseData);
+
     return new Response(
-      JSON.stringify({
-        query,
-        page,
-        limit: clampedLimit,
-        total,
-        nextPage: hasMore ? page + 1 : null,
-        items: normalizedItems,
-      }),
+      JSON.stringify(responseData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
