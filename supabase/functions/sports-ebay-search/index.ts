@@ -35,6 +35,7 @@ function getCacheKey(params: EbaySearchParams): string {
     brand: params.brand?.toLowerCase().trim(),
     traits: params.traits?.map(t => t.toLowerCase().trim()).sort(),
     year: params.year,
+    sort: params.sort,
     offset: params.offset,
     pageNumber: params.pageNumber,
   });
@@ -152,6 +153,7 @@ interface EbaySearchParams {
   traits?: string[];
   year?: string;
   freeFormSearch?: boolean;
+  sort?: string;
   offset?: number;
   pageNumber?: number;
 }
@@ -206,6 +208,14 @@ async function searchEbayBrowseApi(params: EbaySearchParams): Promise<Pagination
   url.searchParams.set('limit', String(limit));
   url.searchParams.set('offset', String(offset));
   url.searchParams.set('filter', 'buyingOptions:{FIXED_PRICE|AUCTION}');
+  const browseSortMap: Record<string, string> = {
+    ending_soonest: 'endingSoonest',
+    price_low: 'price',
+    price_high: '-price',
+    best_match: 'bestMatch',
+    newly_listed: 'newlyListed',
+  };
+  url.searchParams.set('sort', browseSortMap[params.sort || ''] || 'newlyListed');
 
   const response = await fetch(url.toString(), {
     method: 'GET',
@@ -292,7 +302,13 @@ async function searchEbayFindingApi(appId: string, params: EbaySearchParams): Pr
   url.searchParams.set('categoryId', '212');
   url.searchParams.set('paginationInput.entriesPerPage', '100');
   url.searchParams.set('paginationInput.pageNumber', String(pageNumber));
-  url.searchParams.set('sortOrder', 'StartTimeNewest');
+  const findingSortMap: Record<string, string> = {
+    ending_soonest: 'EndTimeSoonest',
+    price_low: 'PricePlusShippingLowest',
+    price_high: 'PricePlusShippingHighest',
+    best_match: 'BestMatch',
+  };
+  url.searchParams.set('sortOrder', findingSortMap[params.sort || ''] || 'StartTimeNewest');
   url.searchParams.set('itemFilter(0).name', 'ListingType');
   url.searchParams.set('itemFilter(0).value(0)', 'FixedPrice');
   url.searchParams.set('itemFilter(0).value(1)', 'AuctionWithBIN');
@@ -392,9 +408,9 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
-    const { brand, traits, year, offset, pageNumber, freeFormSearch } = body;
+    const { brand, traits, year, offset, pageNumber, freeFormSearch, sort } = body;
 
-    const searchParams: EbaySearchParams = { playerName, brand, traits, year, freeFormSearch, offset, pageNumber };
+    const searchParams: EbaySearchParams = { playerName, brand, traits, year, freeFormSearch, sort, offset, pageNumber };
 
     const cacheKey = getCacheKey(searchParams);
     const cachedEntry = getFromCache(cacheKey);
