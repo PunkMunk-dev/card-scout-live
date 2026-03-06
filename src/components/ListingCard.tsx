@@ -14,25 +14,17 @@ interface ListingCardProps {
   onToggleWatchlist?: (item: EbayItem) => void;
 }
 
-function AuctionCountdown({ endDate }: { endDate: string }) {
+function AuctionCountdownBadge({ endDate }: { endDate: string }) {
   const countdown = useCountdown(endDate);
 
   if (!countdown) return null;
 
   const { days, hours, minutes, seconds, isEnded, isUrgent, isWarning } = countdown;
 
-  const colorClass = isEnded
-    ? "text-muted-foreground"
-    : isUrgent
-    ? "text-destructive animate-pulse"
-    : isWarning
-    ? "text-auction"
-    : "text-muted-foreground";
+  if (isEnded) return null;
 
   let label: string;
-  if (isEnded) {
-    label = "Ended";
-  } else if (days > 0) {
+  if (days > 0) {
     label = `${days}d ${hours}h`;
   } else if (hours > 0) {
     label = `${hours}h ${minutes}m`;
@@ -43,10 +35,19 @@ function AuctionCountdown({ endDate }: { endDate: string }) {
   }
 
   return (
-    <span className={cn("flex items-center gap-1 font-medium tabular-nums text-[10px]", colorClass)}>
+    <div
+      className={cn(
+        "absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums backdrop-blur-md",
+        isUrgent
+          ? "bg-destructive/80 text-destructive-foreground shadow-[0_4px_12px_rgba(255,0,0,0.35)] animate-pulse"
+          : isWarning
+          ? "bg-auction/80 text-auction-foreground shadow-[0_4px_12px_rgba(255,165,0,0.25)]"
+          : "bg-black/60 text-white/90"
+      )}
+    >
       <Clock className="h-2.5 w-2.5 flex-shrink-0" />
       {label}
-    </span>
+    </div>
   );
 }
 
