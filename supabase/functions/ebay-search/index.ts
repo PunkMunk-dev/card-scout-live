@@ -258,7 +258,30 @@ function getSortParam(_sort: string): string {
   return 'bestMatch';
 }
 
+// --- Retry with exponential backoff ---
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, options);
+    if (response.status === 429 && attempt < maxRetries) {
+      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+      console.warn(`[ebay-search] 429 rate limited, retry ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`);
+      await response.text(); // consume body
+      await new Promise(r => setTimeout(r, delay));
+      continue;
+    }
+    return response;
+  }
+  throw new Error('fetchWithRetry: exhausted retries');
+}
+
+// --- In-memory OAuth token cache ---
+let tokenCache: { token: string; expiresAt: number } | null = null;
+
 async function getEbayToken(): Promise<string> {
+  if (tokenCache && Date.now() < tokenCache.expiresAt) {
+    return tokenCache.token;
+  }
+
   const clientId = Deno.env.get('EBAY_CLIENT_ID');
   const clientSecret = Deno.env.get('EBAY_CLIENT_SECRET');
   const oauthBase = Deno.env.get('EBAY_OAUTH_BASE') || 'https://api.ebay.com';
@@ -269,7 +292,7 @@ async function getEbayToken(): Promise<string> {
 
   const credentials = btoa(`${clientId}:${clientSecret}`);
   
-  const response = await fetch(`${oauthBase}/identity/v1/oauth2/token`, {
+  const response = await fetchWithRetry(`${oauthBase}/identity/v1/oauth2/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -285,6 +308,8 @@ async function getEbayToken(): Promise<string> {
   }
 
   const data = await response.json();
+  // Cache for 4 minutes (tokens valid ~2 hours)
+  tokenCache = { token: data.access_token, expiresAt: Date.now() + 4 * 60 * 1000 };
   return data.access_token;
 }
 
@@ -318,7 +343,7 @@ async function searchEbay(
   
   console.log('Searching eBay:', url);
 
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-EBAY-C-MARKETPLACE-ID': marketplaceId,
