@@ -275,6 +275,37 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
   throw new Error('fetchWithRetry: exhausted retries');
 }
 
+// --- In-memory request-level cache ---
+interface SearchCacheEntry {
+  data: any;
+  expiresAt: number;
+}
+const searchResultCache = new Map<string, SearchCacheEntry>();
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_SEARCH_CACHE_SIZE = 50;
+
+function getSearchCacheKey(body: SearchRequest): string {
+  return `${body.query}|${body.page ?? 1}|${body.limit ?? 24}|${body.sort ?? 'best'}|${body.includeLots ?? false}|${body.buyingOptions ?? 'ALL'}`;
+}
+
+function getSearchCache(key: string): any | null {
+  const entry = searchResultCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    searchResultCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setSearchCache(key: string, data: any): void {
+  if (searchResultCache.size >= MAX_SEARCH_CACHE_SIZE) {
+    const firstKey = searchResultCache.keys().next().value;
+    if (firstKey) searchResultCache.delete(firstKey);
+  }
+  searchResultCache.set(key, { data, expiresAt: Date.now() + SEARCH_CACHE_TTL_MS });
+}
+
 // --- In-memory OAuth token cache ---
 let tokenCache: { token: string; expiresAt: number } | null = null;
 
@@ -456,6 +487,16 @@ serve(async (req) => {
       buyingOptions = 'ALL',
     } = body;
 
+    // Check request-level cache
+    const cacheKey = getSearchCacheKey(body);
+    const cached = getSearchCache(cacheKey);
+    if (cached) {
+      console.log('[ebay-search] Cache hit for:', cacheKey);
+      return new Response(JSON.stringify(cached), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!query || query.trim() === '') {
       return new Response(
         JSON.stringify({ error: 'Query is required' }),
@@ -581,15 +622,19 @@ serve(async (req) => {
 
     const hasMore = offset + rawItems.length < total;
 
+    const responseData = {
+      query,
+      page,
+      limit: clampedLimit,
+      total,
+      nextPage: hasMore ? page + 1 : null,
+      items: normalizedItems,
+    };
+
+    setSearchCache(cacheKey, responseData);
+
     return new Response(
-      JSON.stringify({
-        query,
-        page,
-        limit: clampedLimit,
-        total,
-        nextPage: hasMore ? page + 1 : null,
-        items: normalizedItems,
-      }),
+      JSON.stringify(responseData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
