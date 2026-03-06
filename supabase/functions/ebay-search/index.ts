@@ -355,6 +355,10 @@ async function searchEbay(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('eBay Browse API error:', errorText);
+    // Return empty results on rate limit instead of crashing with 500
+    if (response.status === 429) {
+      return { items: [], total: 0 };
+    }
     throw new Error(`eBay search failed: ${response.status}`);
   }
 
