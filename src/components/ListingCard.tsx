@@ -122,6 +122,11 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
             <Star className={cn("h-3.5 w-3.5", isInWatchlist && "fill-current")} />
           </button>
         )}
+
+        {/* Auction countdown overlay */}
+        {item.endDate && item.buyingOption === 'AUCTION' && (
+          <AuctionCountdownBadge endDate={item.endDate} />
+        )}
       </div>
 
       {/* Content */}
@@ -150,10 +155,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
         </div>
 
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-          <span className="truncate max-w-[60%]">{item.condition}</span>
-          {item.endDate && item.buyingOption === 'AUCTION' && (
-            <AuctionCountdown endDate={item.endDate} />
-          )}
+          <span className="truncate">{item.condition}</span>
         </div>
 
         <div className="flex items-center gap-1.5">
