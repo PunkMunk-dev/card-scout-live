@@ -254,7 +254,9 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
   return nameTermsMatch && otherTermsMatch;
 }
 
-function getSortParam(_sort: string): string {
+function getSortParam(sort: string): string {
+  if (sort === 'ending_soonest' || sort === 'auction_only') return 'endingSoonest';
+  if (sort === 'price_asc') return 'price';
   return 'bestMatch';
 }
 

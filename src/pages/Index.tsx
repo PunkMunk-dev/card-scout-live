@@ -17,7 +17,7 @@ import { getSession, setSession, pushRecentSearch } from "@/lib/sessionStore";
 import type { EbayItem, SortOption } from "@/types/ebay";
 
 function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
-  if (sort === 'auction_only') return 'AUCTION';
+  if (sort === 'auction_only' || sort === 'ending_soonest') return 'AUCTION';
   if (sort === 'buy_now_only') return 'FIXED_PRICE';
   return 'ALL';
 }
