@@ -12,7 +12,7 @@ export function OmniIcon({ size = 36, dark = true }: OmniIconProps) {
       alt="OmniMarket"
       width={size}
       height={size}
-      className="select-none"
+      className="select-none transition-transform duration-200 hover:scale-110"
       style={{
         filter: dark ? 'invert(1)' : 'none',
         mixBlendMode: dark ? 'screen' : 'multiply',
