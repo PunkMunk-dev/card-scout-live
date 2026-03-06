@@ -263,7 +263,8 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const response = await fetch(url, options);
     if (response.status === 429 && attempt < maxRetries) {
-      const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+      // Longer backoff: 3s, 6s, 12s + jitter
+      const delay = Math.pow(2, attempt) * 3000 + Math.random() * 1500;
       console.warn(`[ebay-search] 429 rate limited, retry ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`);
       await response.text(); // consume body
       await new Promise(r => setTimeout(r, delay));
