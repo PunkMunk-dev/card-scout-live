@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Copy, Check, Info } from 'lucide-react';
+import { AuctionCountdownBadge } from '@/components/shared/AuctionCountdownBadge';
 import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
 import { GemRateBadge } from './GemRateBadge';

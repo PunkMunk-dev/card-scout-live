@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { ExternalLink, Clock, Gavel, ShoppingCart, Star, Copy, Check } from "lucide-react";
+import { ExternalLink, Gavel, ShoppingCart, Star, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
 import { cn } from "@/lib/utils";
-import { useCountdown } from "@/hooks/useCountdown";
+import { AuctionCountdownBadge } from "@/components/shared/AuctionCountdownBadge";
 import { cleanListingTitle } from "@/lib/cleanTitle";
 
 interface ListingCardProps {
@@ -12,43 +12,6 @@ interface ListingCardProps {
   index: number;
   isInWatchlist?: boolean;
   onToggleWatchlist?: (item: EbayItem) => void;
-}
-
-function AuctionCountdownBadge({ endDate }: { endDate: string }) {
-  const countdown = useCountdown(endDate);
-
-  if (!countdown) return null;
-
-  const { days, hours, minutes, seconds, isEnded, isUrgent, isWarning } = countdown;
-
-  if (isEnded) return null;
-
-  let label: string;
-  if (days > 0) {
-    label = `${days}d ${hours}h`;
-  } else if (hours > 0) {
-    label = `${hours}h ${minutes}m`;
-  } else if (minutes > 0) {
-    label = `${minutes}m ${seconds}s`;
-  } else {
-    label = `${seconds}s`;
-  }
-
-  return (
-    <div
-      className={cn(
-        "absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums backdrop-blur-md",
-        isUrgent
-          ? "bg-destructive/80 text-destructive-foreground shadow-[0_4px_12px_rgba(255,0,0,0.35)] animate-pulse"
-          : isWarning
-          ? "bg-auction/80 text-auction-foreground shadow-[0_4px_12px_rgba(255,165,0,0.25)]"
-          : "bg-black/60 text-white/90"
-      )}
-    >
-      <Clock className="h-2.5 w-2.5 flex-shrink-0" />
-      {label}
-    </div>
-  );
 }
 
 export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: ListingCardProps) {

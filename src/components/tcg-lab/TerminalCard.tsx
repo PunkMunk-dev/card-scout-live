@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Copy, Check, Star, Clock } from 'lucide-react';
+import { Copy, Check, Star } from 'lucide-react';
+import { AuctionCountdownBadge } from '@/components/shared/AuctionCountdownBadge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { EbayListing } from '@/types/tcg';
