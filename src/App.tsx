@@ -16,6 +16,7 @@ const SportsLab = lazy(() => import("./pages/SportsLab"));
 const TopRoi = lazy(() => import("./pages/TopRoi"));
 const UIAudit = lazy(() => import("./pages/UIAudit"));
 const Diagnostics = lazy(() => import("./pages/Diagnostics"));
+const LogoShowcase = lazy(() => import("./pages/LogoShowcase"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
                   <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
                   <Route path="/roi" element={<ErrorBoundary><TopRoi /></ErrorBoundary>} />
                   <Route path="/ui-audit" element={<UIAudit />} />
+                  <Route path="/logo-showcase" element={<LogoShowcase />} />
                   <Route path="/diagnostics" element={<ErrorBoundary><Diagnostics /></ErrorBoundary>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
