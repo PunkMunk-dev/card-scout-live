@@ -16,6 +16,7 @@ const SportsLab = lazy(() => import("./pages/SportsLab"));
 const TopRoi = lazy(() => import("./pages/TopRoi"));
 const UIAudit = lazy(() => import("./pages/UIAudit"));
 const Diagnostics = lazy(() => import("./pages/Diagnostics"));
+const LogoShowcase = lazy(() => import("./pages/LogoShowcase"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
