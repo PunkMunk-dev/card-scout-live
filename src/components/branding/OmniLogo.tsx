@@ -1,4 +1,4 @@
-import { OmniIcon } from './OmniIcon';
+import { OmniOrb } from './OmniOrb';
 
 interface OmniLogoProps {
   dark?: boolean;
@@ -7,13 +7,12 @@ interface OmniLogoProps {
 export function OmniLogo({ dark = false }: OmniLogoProps) {
   return (
     <div className="flex items-center gap-2.5">
-      <OmniIcon size={34} dark={dark} />
+      <OmniOrb variant={1} size={34} />
       <span
-        className="font-display font-semibold text-[22px] select-none"
-        style={{ letterSpacing: '-0.025em' }}
+        className="om-wordmark text-[18px]"
+        style={{ color: 'var(--om-text-0)' }}
       >
-        <span className={dark ? 'text-white' : 'text-gray-900'} style={dark ? { textShadow: '0 1px 6px rgba(0,0,0,0.35)' } : undefined}>Omni</span>
-        <span className={dark ? 'text-white' : 'text-gray-900'} style={dark ? { textShadow: '0 1px 6px rgba(0,0,0,0.35)' } : undefined}>Market</span>
+        OMNIMARKET
       </span>
     </div>
   );
