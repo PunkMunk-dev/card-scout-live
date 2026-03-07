@@ -274,7 +274,8 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
     }
     return response;
   }
-  throw new Error('fetchWithRetry: exhausted retries');
+  // Return last 429 response instead of throwing — caller handles gracefully
+  return new Response(JSON.stringify({ rateLimited: true }), { status: 429 });
 }
 
 // --- In-memory request-level cache ---
@@ -642,6 +643,14 @@ serve(async (req) => {
   } catch (error) {
     console.error('Edge function error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    // Graceful fallback for rate limiting
+    if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('Too many requests')) {
+      console.warn('[ebay-search] Rate limited — returning empty result set');
+      return new Response(
+        JSON.stringify({ query: body?.query || '', page: 1, limit: 24, total: 0, nextPage: null, items: [], rateLimited: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
