@@ -116,7 +116,8 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
     }
     return response;
   }
-  throw new Error('Max retries exceeded');
+  // Return last 429 response instead of throwing
+  return new Response(JSON.stringify({ rateLimited: true }), { status: 429 });
 }
 
 async function searchActiveListings(query: string, limit = 100, sort = 'best_match', cardType = 'single', minPrice = 0, maxPrice = 0, buyingOptions = 'ALL', offset = 0) {
@@ -343,6 +344,17 @@ serve(async (req) => {
   } catch (error) {
     console.error('Edge function error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
+    // Graceful fallback for rate limiting
+    if (message.includes('429') || message.includes('rate limit') || message.includes('Too many requests')) {
+      console.warn('[tcg-ebay-search] Rate limited — returning empty result set');
+      const emptyResult = action === 'active'
+        ? { items: [], total: 0, hasMore: false, rateLimited: true }
+        : { soldItems: [], metrics: { salesLast7Days: 0, mostRecentSale: null, medianSoldPrice: '0.00' }, rateLimited: true };
+      return new Response(
+        JSON.stringify(emptyResult),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

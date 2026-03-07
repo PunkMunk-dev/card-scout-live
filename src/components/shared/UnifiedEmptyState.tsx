@@ -1,22 +1,30 @@
-import { Search, PackageOpen } from 'lucide-react';
+import { Search, PackageOpen, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface UnifiedEmptyStateProps {
   title?: string;
   message?: string;
-  variant?: 'search' | 'no-results' | 'idle';
+  variant?: 'search' | 'no-results' | 'idle' | 'rate-limited';
+  onRetry?: () => void;
 }
 
 export function UnifiedEmptyState({
   title,
   message,
   variant = 'idle',
+  onRetry,
 }: UnifiedEmptyStateProps) {
-  const Icon = variant === 'no-results' ? PackageOpen : Search;
-  const defaultTitle = variant === 'no-results' ? 'No results found' : 'Ready to search';
+  const Icon = variant === 'no-results' ? PackageOpen : variant === 'rate-limited' ? Clock : Search;
+  const defaultTitle =
+    variant === 'no-results' ? 'No results found'
+    : variant === 'rate-limited' ? 'eBay rate limit reached'
+    : 'Ready to search';
   const defaultMessage =
     variant === 'no-results'
       ? 'Try adjusting your search or filters.'
-      : 'Select from the dropdown or type a query to get started.';
+      : variant === 'rate-limited'
+        ? 'Too many requests to eBay. Please wait 30–60 seconds and try again.'
+        : 'Select from the dropdown or type a query to get started.';
 
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-fadeIn">
@@ -32,6 +40,11 @@ export function UnifiedEmptyState({
       <p className="text-sm max-w-md" style={{ color: 'var(--om-text-2)' }}>
         {message || defaultMessage}
       </p>
+      {variant === 'rate-limited' && onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry} className="mt-4">
+          Retry
+        </Button>
+      )}
     </div>
   );
 }

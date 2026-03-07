@@ -449,7 +449,7 @@ serve(async (req) => {
 
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return new Response(JSON.stringify({ success: false, error: error.message, listings: [], retryAfter: 60 }), {
+      return new Response(JSON.stringify({ success: false, error: error.message, listings: [], rateLimited: true, retryAfter: 60 }), {
         status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
       });
     }
