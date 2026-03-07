@@ -199,6 +199,7 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
           </linearGradient>
         </defs>
         <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-split)`} />
+        {sparkle(cx + r * 0.25, cy - r * 0.25, r * 0.35)}
       </>
     ),
     // 12: Split Sphere — Black/Blue
