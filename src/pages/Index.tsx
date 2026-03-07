@@ -75,6 +75,7 @@ export default function Index() {
   const hasSearched = useMemo(() => !!urlQuery, [urlQuery]);
   const [sort, setSort] = useState<SortOption>(sessionSort || "best");
   const [error, setError] = useState<string | null>(null);
+  const [rateLimited, setRateLimited] = useState(false);
   const [fromWatchlist, setFromWatchlist] = useState(urlSrc === 'wl');
   const abortRef = useRef<AbortController | null>(null);
   const lastSearchedRef = useRef<string>('');
@@ -111,21 +112,27 @@ export default function Index() {
     if (abortRef.current) abortRef.current.abort();
     const ac = new AbortController();
     abortRef.current = ac;
-    if (page === 1) { setIsLoading(true); setError(null); } else { setIsLoadingMore(true); }
+    if (page === 1) { setIsLoading(true); setError(null); setRateLimited(false); } else { setIsLoadingMore(true); }
     const activeSort = overrideSort ?? sort;
     try {
       const response = await searchEbay({ query: searchQuery, page, limit: 48, sort: activeSort, buyingOptions: deriveBuyingOptions(activeSort) });
       if (ac.signal.aborted) return;
-      if (append) {
-        setItems(prev => {
-          const existingIds = new Set(prev.map(item => item.itemId));
-          const merged = [...prev, ...response.items.filter(item => !existingIds.has(item.itemId))];
-          return sortItemsClientSide(merged, activeSort);
-        });
-      } else { setItems(sortItemsClientSide(response.items, activeSort)); }
-      setTotal(response.total);
-      setNextPage(response.items.length > 0 ? response.nextPage : null);
-      setError(null);
+      if (response.rateLimited) {
+        setRateLimited(true);
+        if (!append) { setItems([]); setNextPage(null); }
+        toast.error('eBay rate limit reached. Please wait a moment and try again.');
+      } else {
+        if (append) {
+          setItems(prev => {
+            const existingIds = new Set(prev.map(item => item.itemId));
+            const merged = [...prev, ...response.items.filter(item => !existingIds.has(item.itemId))];
+            return sortItemsClientSide(merged, activeSort);
+          });
+        } else { setItems(sortItemsClientSide(response.items, activeSort)); }
+        setTotal(response.total);
+        setNextPage(response.items.length > 0 ? response.nextPage : null);
+        setError(null);
+      }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       const msg = err instanceof Error ? err.message : 'Failed to search eBay';
@@ -219,7 +226,7 @@ export default function Index() {
               </div>
             </div>
           ) : (
-            <UnifiedEmptyState variant="no-results" title="No results found" message={query ? `No listings found for "${query}". Try adjusting your search.` : 'Enter a card name to start searching.'} />
+            <UnifiedEmptyState variant={rateLimited ? "rate-limited" : "no-results"} title={rateLimited ? undefined : "No results found"} message={rateLimited ? undefined : (query ? `No listings found for "${query}". Try adjusting your search.` : 'Enter a card name to start searching.')} onRetry={rateLimited ? handleRetry : undefined} />
           )}
         </main>
       ) : (

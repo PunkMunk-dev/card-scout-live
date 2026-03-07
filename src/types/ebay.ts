@@ -23,6 +23,7 @@ export interface SearchResponse {
   total: number;
   nextPage: number | null;
   items: EbayItem[];
+  rateLimited?: boolean;
 }
 
 export interface SearchParams {
