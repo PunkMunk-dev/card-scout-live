@@ -4,6 +4,7 @@ import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2, Star, X, Search, Layers, Trophy, TrendingUp, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LandingHero } from "@/components/landing/LandingHero";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
@@ -230,62 +231,8 @@ export default function Index() {
           )}
         </main>
       ) : (
-        /* ── App Dashboard ── */
-        <div className="max-w-[1320px] mx-auto px-4 md:px-8 py-4 md:py-6">
-          <PageHeader
-            title="OmniMarket Cards"
-            subtitle="Find underpriced listings fast."
-            rightSlot={<CaptureSnapshotButton appId="search" getState={getSearchSnapshotState} />}
-          />
-
-          <div className="space-y-6">
-            {/* Quick Start cards */}
-            {/* Search CTA */}
-            <button
-              onClick={() => window.dispatchEvent(new Event("omni:focus-search"))}
-              className="om-card rounded-2xl px-4 py-2.5 flex items-center gap-2 cursor-pointer hover:-translate-y-px transition-all duration-200 w-full sm:w-auto"
-              style={{ border: '1px solid var(--om-border-0)' }}
-            >
-              <Search className="h-4 w-4" style={{ color: 'var(--om-accent)' }} />
-              <span className="text-xs font-medium" style={{ color: 'var(--om-text-1)' }}>Search any card on eBay</span>
-            </button>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {quickStartCards.map((card) => (
-                <Link key={card.title} to={card.to}>
-                  <div
-                    className="om-card rounded-2xl p-4 flex flex-col gap-1.5 cursor-pointer hover:-translate-y-px transition-all duration-200"
-                    style={{ border: '1px solid var(--om-border-0)' }}
-                  >
-                    <card.icon className="h-5 w-5" style={{ color: 'var(--om-accent)' }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--om-text-0)' }}>{card.title}</span>
-                    <span className="text-[12px] leading-relaxed" style={{ color: 'var(--om-text-2)' }}>{card.desc}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Search Ideas — merged recent + suggested */}
-            <section>
-              <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] mb-3 flex items-center gap-1.5" style={{ color: 'var(--om-text-3)' }}>
-                <Sparkles className="h-3.5 w-3.5" /> Trending
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {searchIdeas.map(({ term, isRecent }) => (
-                  <button
-                    key={term}
-                    onClick={() => navigate(`/?q=${encodeURIComponent(term)}`)}
-                    className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium hover:-translate-y-px transition-all duration-150 cursor-pointer"
-                    style={{ background: 'var(--om-bg-2)', color: 'var(--om-text-1)', border: '1px solid var(--om-border-0)' }}
-                  >
-                    {isRecent && <span className="opacity-50">↺</span>}
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
-        </div>
+        /* ── Landing Page ── */
+        <LandingHero />
       )}
     </div>
   );
