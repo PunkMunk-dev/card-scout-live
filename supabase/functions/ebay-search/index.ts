@@ -391,7 +391,7 @@ async function searchEbay(
     console.error('eBay Browse API error:', errorText);
     // Return empty results on rate limit instead of crashing with 500
     if (response.status === 429) {
-      return { items: [], total: 0 };
+      return { items: [], total: 0, rateLimited: true };
     }
     throw new Error(`eBay search failed: ${response.status}`);
   }
@@ -551,8 +551,16 @@ serve(async (req) => {
       truncatedQuery = searchWords.slice(0, 10).join(' ');
     }
 
-    const { items: rawItems, total } = await searchEbay(token, truncatedQuery, requestLimit, offset, sortParam, apiBuyingOptions);
+    const searchResult = await searchEbay(token, truncatedQuery, requestLimit, offset, sortParam, apiBuyingOptions);
+    
+    if (searchResult.rateLimited) {
+      return new Response(
+        JSON.stringify({ query, page, limit: clampedLimit, total: 0, nextPage: null, items: [], rateLimited: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    const { items: rawItems, total } = searchResult;
     let normalizedItems = rawItems.map(normalizeItem);
 
     // For title matching, use simplified query (don't penalize missing decorative terms)
@@ -647,7 +655,7 @@ serve(async (req) => {
     if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('Too many requests')) {
       console.warn('[ebay-search] Rate limited — returning empty result set');
       return new Response(
-        JSON.stringify({ query: body?.query || '', page: 1, limit: 24, total: 0, nextPage: null, items: [], rateLimited: true }),
+        JSON.stringify({ query: query || '', page: 1, limit: 24, total: 0, nextPage: null, items: [], rateLimited: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
