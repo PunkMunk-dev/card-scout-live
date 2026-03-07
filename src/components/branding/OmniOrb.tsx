@@ -1,5 +1,5 @@
 interface OmniOrbProps {
-  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
   size?: number;
   className?: string;
   mono?: boolean;
@@ -173,6 +173,51 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
           <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="20s" repeatCount="indefinite" />
         </circle>
         <circle cx={cx} cy={cy} r={r * 0.06} fill="#fff" opacity="0.9" />
+      </>
+    ),
+    // 11: Black Dot — pure solid black circle
+    11: (
+      <circle cx={cx} cy={cy} r={r} fill="#000000" />
+    ),
+    // 12: Green Core — black circle with green center dot
+    12: (
+      <>
+        <circle cx={cx} cy={cy} r={r} fill="#000000" />
+        <circle cx={cx} cy={cy} r={r * 0.22} fill="#00E0C6" />
+      </>
+    ),
+    // 13: Ringed Dot — black circle with thin green outer ring
+    13: (
+      <>
+        <circle cx={cx} cy={cy} r={r} fill="#000000" />
+        <circle cx={cx} cy={cy} r={r * 1.12} fill="none" stroke="#00E0C6" strokeWidth={size * 0.015} opacity="0.85" />
+      </>
+    ),
+    // 14: Split Sphere — half black / half dark-green gradient
+    14: (
+      <>
+        <defs>
+          <linearGradient id={`${id}-split`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#000000" />
+            <stop offset="50%" stopColor="#000000" />
+            <stop offset="100%" stopColor="#00E0C6" stopOpacity="0.6" />
+          </linearGradient>
+        </defs>
+        <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-split)`} />
+      </>
+    ),
+    // 15: Beacon — black circle with green top-highlight crescent
+    15: (
+      <>
+        <defs>
+          <radialGradient id={`${id}-beacon`} cx="50%" cy="25%" r="60%">
+            <stop offset="0%" stopColor="#00E0C6" stopOpacity="0.7" />
+            <stop offset="50%" stopColor="#00E0C6" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx={cx} cy={cy} r={r} fill="#000000" />
+        <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-beacon)`} />
       </>
     ),
   };
