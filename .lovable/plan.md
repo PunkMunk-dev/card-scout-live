@@ -1,118 +1,29 @@
 
 
-## Plan: UI Audit Export Page + Snapshot System
+## Plan: Fix Rate-Limit Flag Propagation in Edge Functions
 
-This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
+### Problem
+When eBay returns 429 (rate limited), the inner `searchEbay()` function in `ebay-search/index.ts` returns `{ items: [], total: 0 }` **without** a `rateLimited` flag. The outer handler builds a normal empty response, so the frontend never shows the rate-limit UI — it just shows "0 listings" with infinite loading skeletons.
 
-### New Files
+Same issue exists in `tcg-ebay-search/index.ts` where the inner `searchActiveListings()` throws on non-OK responses (including 429 from the synthetic `fetchWithRetry` fallback), which **does** hit the catch block, but only if the error message contains "429".
 
-**1. `src/lib/uiAuditData.ts`** — Static audit data module
-- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
-  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
-  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
-  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
-  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
-  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
-- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
-- All secrets/tokens replaced with `***REDACTED***`
+### Root Cause
+- `ebay-search`: `searchEbay()` line 393-394 returns `{ items: [], total: 0 }` on 429 — no `rateLimited` flag. The main handler at line 628 builds a normal response.
+- `ebay-search`: catch block line 650 references `body` which is scoped inside the try block — will cause a ReferenceError.
+- `tcg-ebay-search`: `searchActiveListings()` line 205-208 throws on any non-OK response. The synthetic 429 from `fetchWithRetry` triggers this throw, which hits the catch block correctly. This path works but is fragile.
 
-**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
-- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
-- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
-- `exportSnapshotsJSON()` — serializes to downloadable JSON
+### Changes
 
-**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
-- Props: `appId: string`, `getState: () => SnapshotPayload`
-- Renders a small pill button ("📸 Snapshot") in top-right area
-- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
+**1. `supabase/functions/ebay-search/index.ts`**
+- Inner `searchEbay()`: return `{ items: [], total: 0, rateLimited: true }` on 429 (add flag).
+- Main handler (~line 554): after calling `searchEbay()`, check if result has `rateLimited: true` and short-circuit to return the rate-limited response immediately.
+- Fix catch block: replace `body?.query` with `'unknown'` or capture query in outer scope before try.
 
-**4. `src/pages/UIAudit.tsx`** — The audit page
-- "How to Use" card at top (4-step instructions)
-- Sections A–E rendered from `uiAuditData.ts` with code blocks
-- "Snapshots" section: lists snapshots grouped by app, with timestamps
-- Sticky footer bar with:
-  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
-  - "Download .md" — downloads as `ui-audit-report.md`
-  - "Copy Snapshots JSON" — copies just snapshots
-  - "Download snapshots.json"
-  - "Clear Snapshots" — with confirm dialog
+**2. `supabase/functions/tcg-ebay-search/index.ts`**
+- Inner `searchActiveListings()`: catch 429 specifically and return `{ items: [], total: 0, hasMore: false, rateLimited: true }` instead of throwing.
+- Main handler: check for `rateLimited` in result and return it in the response.
 
-### Modified Files
-
-**5. `src/App.tsx`** — Add route
-- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
-- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
-- No nav entry added (dev-only URL)
-
-**6. `src/pages/TcgLab.tsx`** — Add snapshot button
-- Import `CaptureSnapshotButton`
-- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
-
-**7. `src/pages/SportsLab.tsx`** — Add snapshot button
-- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
-
-**8. `src/pages/TopRoi.tsx`** — Add snapshot button
-- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
-
-**9. `src/pages/Index.tsx`** — Add snapshot button
-- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
-
-### Snapshot Payload Shape
-
-```text
-{
-  appId: "tcg" | "sports" | "roi" | "search",
-  timestamp: ISO string,
-  route: window.location.pathname + search,
-  searchInputs: { ... },
-  filters: { ... },
-  pagination: { ... },
-  loadingFlags: { ... },
-  errorState: null | { message },
-  resultsSchema: { itemKeys: string[], count: number },
-  layoutMode: { ... }
-}
-```
-
-### Export Format
-
-The "Copy All" output is a single markdown document:
-
-```text
-# UI Audit Report — OmniMarket
-Generated: {date}
-
-## A) Routing + Shell
-### Detected Components
-- ...
-### Code Excerpts
-\`\`\`tsx
-// App.tsx route definitions (redacted)
-...
-\`\`\`
-
-## B) App Entry Pages
-...
-
-## C) Global State + Data Plumbing
-...
-
-## D) Auth / Gating
-(Not implemented — skipped)
-
-## E) Styling / Design Tokens
-...
-
-## Snapshots
-\`\`\`json
-[...]
-\`\`\`
-```
-
-### What This Does NOT Change
-- No API behavior, search logic, or data schemas
-- No UI styling changes
-- No business logic modifications
-- No new database tables or edge functions
-- Snapshot buttons are small, unobtrusive, and easily removable
+### Files to edit
+- `supabase/functions/ebay-search/index.ts`
+- `supabase/functions/tcg-ebay-search/index.ts`
 
