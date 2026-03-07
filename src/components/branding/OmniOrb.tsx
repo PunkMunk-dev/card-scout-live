@@ -115,11 +115,11 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     6: (
       <>
         {common}
-        <circle cx={cx} cy={cy} r={r * 1.3} fill={`url(#${id}-glow)`} filter={`url(#${id}-blur-lg)`} />
+        <circle cx={cx} cy={cy} r={r * 1.3} fill={`url(#${id}-glow)`} filter={`url(#${id}-blur-lg)`} opacity={mono ? 0.6 : 1} />
         {[0.9, 0.7, 0.5, 0.3].map((scale, i) => (
-          <circle key={i} cx={cx} cy={cy} r={r * scale} fill="none" stroke={i % 2 === 0 ? accent1 : accent2} strokeWidth={size * 0.008} opacity={0.2 + i * 0.1} />
+          <circle key={i} cx={cx} cy={cy} r={r * scale} fill="none" stroke={i % 2 === 0 ? accent1 : accent2} strokeWidth={mono ? size * 0.02 : size * 0.008} opacity={mono ? 0.5 + i * 0.12 : 0.2 + i * 0.1} />
         ))}
-        <circle cx={cx} cy={cy} r={r * 0.15} fill={accent1} opacity="0.8">
+        <circle cx={cx} cy={cy} r={r * (mono ? 0.2 : 0.15)} fill={accent1} opacity={mono ? "1" : "0.8"}>
           <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite" />
         </circle>
       </>
