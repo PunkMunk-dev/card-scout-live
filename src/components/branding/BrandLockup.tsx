@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { OmniIcon } from './OmniIcon';
+import { OmniOrb } from './OmniOrb';
 
 interface BrandLockupProps {
   dark?: boolean;
@@ -8,12 +8,12 @@ interface BrandLockupProps {
 export function BrandLockup({ dark = false }: BrandLockupProps) {
   return (
     <Link to="/" className="flex items-center gap-2 shrink-0 select-none">
-      <OmniIcon size={22} dark={dark} />
+      <OmniOrb variant={1} size={22} />
       <span
-        className="font-display font-semibold text-[17px] leading-none"
-        style={{ letterSpacing: '-0.01em', color: 'var(--om-text-0)' }}
+        className="om-wordmark text-[14px]"
+        style={{ color: 'var(--om-text-0)' }}
       >
-        OmniMarket
+        OMNIMARKET
       </span>
     </Link>
   );

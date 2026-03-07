@@ -1,90 +1,118 @@
 
 
-## Plan: OmniMarket Brand Identity & Landing Page
+## Plan: UI Audit Export Page + Snapshot System
 
-### Overview
-Transform OmniMarket from a card-trading tool into a venture-grade AI marketplace search engine brand with SVG orb logos, new color system, and a Perplexity-style landing page.
+This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
 
-### 1. SVG Orb Logo System
-**New file: `src/components/branding/OmniOrb.tsx`**
-- Create 10 SVG orb explorations as React components using radial gradients, blur filters, and animated glows
-- Primary orb: "OmniCore" — minimal sphere with inner neural glow, AI Teal (#00E0C6) → Neural Blue (#3B82F6) gradient
-- Export a configurable `<OmniOrb variant={1-10} size={} />` component
-- Each variant uses pure SVG (scalable, no images): radial gradients, feGaussianBlur, animated opacity pulses
+### New Files
 
-### 2. Favicon & App Icon
-**Edit: `public/favicon.svg`** — Replace M monogram with minimal orb SVG
-**New file: `public/app-icon.svg`** — 1024px version with black background + glowing orb
+**1. `src/lib/uiAuditData.ts`** — Static audit data module
+- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
+  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
+  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
+  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
+  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
+  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
+- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
+- All secrets/tokens replaced with `***REDACTED***`
 
-### 3. Updated Brand Components
-**Edit: `src/components/branding/OmniIcon.tsx`** — Replace PNG import with `<OmniOrb />` SVG component
-**Edit: `src/components/branding/OmniLogo.tsx`** — Use new orb + updated wordmark (Inter SemiBold, slightly tracked "OMNIMARKET")
-**Edit: `src/components/branding/BrandLockup.tsx`** — Use new orb, update wordmark to uppercase tracked style
+**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
+- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
+- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
+- `exportSnapshotsJSON()` — serializes to downloadable JSON
 
-### 4. Color System Update
-**Edit: `src/index.css`** — Add new brand tokens:
-```css
---om-accent: #00E0C6;        /* AI Teal (replaces #00B9FF) */
---om-accent-blue: #3B82F6;   /* Neural Blue */
---om-slate: #1F2937;
---om-gradient: linear-gradient(135deg, #00E0C6, #3B82F6);
-```
-Keep existing `om-bg-*` dark surfaces (#0B0B0C base). Light mode tokens remain functional.
+**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
+- Props: `appId: string`, `getState: () => SnapshotPayload`
+- Renders a small pill button ("📸 Snapshot") in top-right area
+- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
 
-### 5. Landing Page
-**New file: `src/components/landing/LandingHero.tsx`**
-- Full-viewport hero with centered orb logo (animated ambient glow)
-- Headline: "Search every marketplace on the internet."
-- Subheadline: "OmniMarket uses AI to find the best listings across every trusted marketplace in real time."
-- Large floating search bar (rounded-full, glassmorphism, centered)
-- Example search pills below input
-- Marketplace trust badges row (Amazon, eBay, Etsy, StockX, Mercari, Walmart) as subtle gray logos/text
+**4. `src/pages/UIAudit.tsx`** — The audit page
+- "How to Use" card at top (4-step instructions)
+- Sections A–E rendered from `uiAuditData.ts` with code blocks
+- "Snapshots" section: lists snapshots grouped by app, with timestamps
+- Sticky footer bar with:
+  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
+  - "Download .md" — downloads as `ui-audit-report.md`
+  - "Copy Snapshots JSON" — copies just snapshots
+  - "Download snapshots.json"
+  - "Clear Snapshots" — with confirm dialog
 
-**New file: `src/components/landing/MarketplaceBadges.tsx`**
-- Horizontal row of marketplace names in muted text with subtle separators
+### Modified Files
 
-**New file: `src/components/landing/ProductCard.tsx`**
-- Apple Store-style product card: image, price, marketplace source badge, seller rating dots, "View" CTA
-- Glassmorphism card with 16px radius, soft shadow
+**5. `src/App.tsx`** — Add route
+- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
+- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
+- No nav entry added (dev-only URL)
 
-**New file: `src/components/landing/FeaturesSection.tsx`**
-- 3-column grid: "AI-Powered Search", "Every Marketplace", "Real-Time Results"
-- Each card with icon, title, description
+**6. `src/pages/TcgLab.tsx`** — Add snapshot button
+- Import `CaptureSnapshotButton`
+- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
 
-### 6. Landing Page Route
-**Edit: `src/pages/Index.tsx`**
-- When no search is active (dashboard mode), replace the current quick-start cards with the new `LandingHero` + `FeaturesSection`
-- Search results mode stays as-is
+**7. `src/pages/SportsLab.tsx`** — Add snapshot button
+- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
 
-### 7. Typography
-**Edit: `src/index.css`** — Ensure Inter is loaded (already present). Add wordmark utility class:
-```css
-.om-wordmark {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+**8. `src/pages/TopRoi.tsx`** — Add snapshot button
+- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
+
+**9. `src/pages/Index.tsx`** — Add snapshot button
+- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
+
+### Snapshot Payload Shape
+
+```text
+{
+  appId: "tcg" | "sports" | "roi" | "search",
+  timestamp: ISO string,
+  route: window.location.pathname + search,
+  searchInputs: { ... },
+  filters: { ... },
+  pagination: { ... },
+  loadingFlags: { ... },
+  errorState: null | { message },
+  resultsSchema: { itemKeys: string[], count: number },
+  layoutMode: { ... }
 }
 ```
 
-### Files to create
-- `src/components/branding/OmniOrb.tsx` (10 SVG orb variants)
-- `src/components/landing/LandingHero.tsx`
-- `src/components/landing/MarketplaceBadges.tsx`
-- `src/components/landing/ProductCard.tsx`
-- `src/components/landing/FeaturesSection.tsx`
+### Export Format
 
-### Files to edit
-- `public/favicon.svg`
-- `src/components/branding/OmniIcon.tsx`
-- `src/components/branding/OmniLogo.tsx`
-- `src/components/branding/BrandLockup.tsx`
-- `src/index.css`
-- `src/pages/Index.tsx`
+The "Copy All" output is a single markdown document:
 
-### Preserved
-- All existing search/results functionality untouched
-- AppShell, sidebar, mobile tab bar structure preserved
-- TCG, Sports, ROI pages unaffected
-- Existing om-* token system extended (not replaced)
+```text
+# UI Audit Report — OmniMarket
+Generated: {date}
+
+## A) Routing + Shell
+### Detected Components
+- ...
+### Code Excerpts
+\`\`\`tsx
+// App.tsx route definitions (redacted)
+...
+\`\`\`
+
+## B) App Entry Pages
+...
+
+## C) Global State + Data Plumbing
+...
+
+## D) Auth / Gating
+(Not implemented — skipped)
+
+## E) Styling / Design Tokens
+...
+
+## Snapshots
+\`\`\`json
+[...]
+\`\`\`
+```
+
+### What This Does NOT Change
+- No API behavior, search logic, or data schemas
+- No UI styling changes
+- No business logic modifications
+- No new database tables or edge functions
+- Snapshot buttons are small, unobtrusive, and easily removable
 

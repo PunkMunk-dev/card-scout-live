@@ -1,1 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="140" fill="#000"/><path d="M110 390 L110 132 L182 132 L256 275 L330 132 L402 132 L402 390 L338 390 L338 235 L256 345 L174 235 L174 390 Z" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="128" fill="#0B0B0C"/>
+  <defs>
+    <radialGradient id="c" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#00E0C6" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#3B82F6" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0B0B0C" stop-opacity="0.9"/>
+    </radialGradient>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00E0C6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#00E0C6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="b"><feGaussianBlur stdDeviation="16"/></filter>
+  </defs>
+  <circle cx="256" cy="256" r="180" fill="url(#g)" filter="url(#b)"/>
+  <circle cx="256" cy="256" r="120" fill="url(#c)"/>
+  <circle cx="256" cy="256" r="36" fill="none" stroke="#00E0C6" stroke-width="2.5" opacity="0.5"/>
+  <circle cx="256" cy="256" r="10" fill="#00E0C6" opacity="0.9"/>
+</svg>

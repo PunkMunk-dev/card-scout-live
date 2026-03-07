@@ -1,22 +1,10 @@
-import omniIcon from '@/assets/omni-icon.png';
+import { OmniOrb } from './OmniOrb';
 
 interface OmniIconProps {
   size?: number;
   dark?: boolean;
 }
 
-export function OmniIcon({ size = 36, dark = true }: OmniIconProps) {
-  return (
-    <img
-      src={omniIcon}
-      alt="OmniMarket"
-      width={size}
-      height={size}
-      className="select-none transition-transform duration-200 hover:scale-110"
-      style={{
-        filter: dark ? 'invert(1)' : 'none',
-        mixBlendMode: dark ? 'screen' : 'multiply',
-      }}
-    />
-  );
+export function OmniIcon({ size = 36 }: OmniIconProps) {
+  return <OmniOrb variant={1} size={size} />;
 }
