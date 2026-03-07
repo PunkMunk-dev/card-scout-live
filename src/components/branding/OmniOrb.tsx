@@ -35,6 +35,19 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     </defs>
   );
 
+  // Reusable 4-point sparkle (AI symbol)
+  const sparkle = (sx: number, sy: number, s: number) => {
+    const t = s; // tip distance
+    const p = s * 0.25; // pinch distance
+    return (
+      <path
+        d={`M${sx} ${sy - t} Q${sx + p} ${sy - p} ${sx + t} ${sy} Q${sx + p} ${sy + p} ${sx} ${sy + t} Q${sx - p} ${sy + p} ${sx - t} ${sy} Q${sx - p} ${sy - p} ${sx} ${sy - t}Z`}
+        fill="white"
+        opacity="0.85"
+      />
+    );
+  };
+
   const variants: Record<number, React.ReactNode> = {
     // 1: OmniCore — minimal glowing orb with inner neural core
     1: (
