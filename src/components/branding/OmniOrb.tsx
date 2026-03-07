@@ -175,26 +175,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
         <circle cx={cx} cy={cy} r={r * 0.06} fill="#fff" opacity="0.9" />
       </>
     ),
-    // 11: Black Dot — pure solid black circle
+    // 11: Split Sphere — Black/Teal
     11: (
-      <circle cx={cx} cy={cy} r={r} fill="#000000" />
-    ),
-    // 12: Green Core — black circle with green center dot
-    12: (
-      <>
-        <circle cx={cx} cy={cy} r={r} fill="#000000" />
-        <circle cx={cx} cy={cy} r={r * 0.22} fill="#00E0C6" />
-      </>
-    ),
-    // 13: Ringed Dot — black circle with thin green outer ring
-    13: (
-      <>
-        <circle cx={cx} cy={cy} r={r} fill="#000000" />
-        <circle cx={cx} cy={cy} r={r * 1.12} fill="none" stroke="#00E0C6" strokeWidth={size * 0.015} opacity="0.85" />
-      </>
-    ),
-    // 14: Split Sphere — half black / half dark-green gradient
-    14: (
       <>
         <defs>
           <linearGradient id={`${id}-split`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -206,18 +188,55 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
         <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-split)`} />
       </>
     ),
-    // 15: Beacon — black circle with green top-highlight crescent
+    // 12: Split Sphere — Black/Blue
+    12: (
+      <>
+        <defs>
+          <linearGradient id={`${id}-split`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#000000" />
+            <stop offset="50%" stopColor="#000000" />
+            <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.6" />
+          </linearGradient>
+        </defs>
+        <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-split)`} />
+      </>
+    ),
+    // 13: Split Sphere — Teal/Blue
+    13: (
+      <>
+        <defs>
+          <linearGradient id={`${id}-split`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00E0C6" />
+            <stop offset="100%" stopColor="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-split)`} />
+      </>
+    ),
+    // 14: Split Sphere — Radial Core
+    14: (
+      <>
+        <defs>
+          <radialGradient id={`${id}-split`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#00E0C6" stopOpacity="0.9" />
+            <stop offset="55%" stopColor="#00E0C6" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="1" />
+          </radialGradient>
+        </defs>
+        <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-split)`} />
+      </>
+    ),
+    // 15: Split Sphere — Triple Band
     15: (
       <>
         <defs>
-          <radialGradient id={`${id}-beacon`} cx="50%" cy="25%" r="60%">
-            <stop offset="0%" stopColor="#00E0C6" stopOpacity="0.7" />
-            <stop offset="50%" stopColor="#00E0C6" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-          </radialGradient>
+          <linearGradient id={`${id}-split`} x1="0%" y1="50%" x2="100%" y2="50%">
+            <stop offset="0%" stopColor="#000000" />
+            <stop offset="40%" stopColor="#00E0C6" />
+            <stop offset="100%" stopColor="#3B82F6" />
+          </linearGradient>
         </defs>
-        <circle cx={cx} cy={cy} r={r} fill="#000000" />
-        <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-beacon)`} />
+        <circle cx={cx} cy={cy} r={r} fill={`url(#${id}-split)`} />
       </>
     ),
   };

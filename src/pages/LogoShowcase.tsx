@@ -1,11 +1,11 @@
 import { OmniOrb } from '@/components/branding/OmniOrb';
 
 const VARIANTS: { variant: 11|12|13|14|15; name: string; desc: string }[] = [
-  { variant: 11, name: 'Black Dot', desc: 'Pure minimal mark' },
-  { variant: 12, name: 'Green Core', desc: 'Black with green center' },
-  { variant: 13, name: 'Ringed Dot', desc: 'Black with green ring' },
-  { variant: 14, name: 'Split Sphere', desc: 'Two-tone gradient' },
-  { variant: 15, name: 'Beacon', desc: 'Green crescent highlight' },
+  { variant: 11, name: 'Black / Teal', desc: 'Linear gradient, dark to teal' },
+  { variant: 12, name: 'Black / Blue', desc: 'Linear gradient, dark to blue' },
+  { variant: 13, name: 'Teal / Blue', desc: 'Brand colors, no black' },
+  { variant: 14, name: 'Radial Core', desc: 'Teal center fading to black' },
+  { variant: 15, name: 'Triple Band', desc: 'Black → teal → blue banded' },
 ];
 
 export default function LogoShowcase() {
