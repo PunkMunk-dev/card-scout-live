@@ -2,24 +2,29 @@ interface OmniOrbProps {
   variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
   size?: number;
   className?: string;
+  mono?: boolean;
 }
 
-export function OmniOrb({ variant = 1, size = 40, className = '' }: OmniOrbProps) {
-  const id = `orb-${variant}-${size}`;
+export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }: OmniOrbProps) {
+  const id = `orb-${variant}-${size}${mono ? '-m' : ''}`;
   const cx = size / 2;
   const cy = size / 2;
   const r = size * 0.38;
 
+  const accent1 = mono ? '#FFFFFF' : '#00E0C6';
+  const accent2 = mono ? '#A0A0A0' : '#3B82F6';
+  const bg = mono ? '#000000' : '#0B0B0C';
+
   const common = (
     <defs>
       <radialGradient id={`${id}-core`} cx="45%" cy="40%" r="55%">
-        <stop offset="0%" stopColor="#00E0C6" stopOpacity="0.95" />
-        <stop offset="60%" stopColor="#3B82F6" stopOpacity="0.7" />
-        <stop offset="100%" stopColor="#0B0B0C" stopOpacity="0.9" />
+        <stop offset="0%" stopColor={accent1} stopOpacity="0.95" />
+        <stop offset="60%" stopColor={accent2} stopOpacity="0.7" />
+        <stop offset="100%" stopColor={bg} stopOpacity="0.9" />
       </radialGradient>
       <radialGradient id={`${id}-glow`} cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#00E0C6" stopOpacity="0.3" />
-        <stop offset="100%" stopColor="#00E0C6" stopOpacity="0" />
+        <stop offset="0%" stopColor={accent1} stopOpacity="0.3" />
+        <stop offset="100%" stopColor={accent1} stopOpacity="0" />
       </radialGradient>
       <filter id={`${id}-blur`}>
         <feGaussianBlur stdDeviation={size * 0.04} />
@@ -112,9 +117,9 @@ export function OmniOrb({ variant = 1, size = 40, className = '' }: OmniOrbProps
         {common}
         <circle cx={cx} cy={cy} r={r * 1.3} fill={`url(#${id}-glow)`} filter={`url(#${id}-blur-lg)`} />
         {[0.9, 0.7, 0.5, 0.3].map((scale, i) => (
-          <circle key={i} cx={cx} cy={cy} r={r * scale} fill="none" stroke={i % 2 === 0 ? '#00E0C6' : '#3B82F6'} strokeWidth={size * 0.008} opacity={0.2 + i * 0.1} />
+          <circle key={i} cx={cx} cy={cy} r={r * scale} fill="none" stroke={i % 2 === 0 ? accent1 : accent2} strokeWidth={size * 0.008} opacity={0.2 + i * 0.1} />
         ))}
-        <circle cx={cx} cy={cy} r={r * 0.15} fill="#00E0C6" opacity="0.8">
+        <circle cx={cx} cy={cy} r={r * 0.15} fill={accent1} opacity="0.8">
           <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite" />
         </circle>
       </>
