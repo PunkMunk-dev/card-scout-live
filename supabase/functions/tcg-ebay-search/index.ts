@@ -205,6 +205,9 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Search error:', errorText);
+    if (response.status === 429) {
+      return { items: [], total: 0, hasMore: false, rateLimited: true };
+    }
     throw new Error(`eBay search failed: ${response.status}`);
   }
 
@@ -325,7 +328,7 @@ serve(async (req) => {
       );
     }
 
-    let result;
+    let result: any;
     if (action === 'active') {
       result = await searchActiveListings(query, limit || 100, sort || 'best_match', cardType || 'single', minPrice || 0, maxPrice || 0, buyingOptions || 'ALL', offset || 0);
     } else if (action === 'sold') {
@@ -347,7 +350,8 @@ serve(async (req) => {
     // Graceful fallback for rate limiting
     if (message.includes('429') || message.includes('rate limit') || message.includes('Too many requests')) {
       console.warn('[tcg-ebay-search] Rate limited — returning empty result set');
-      const emptyResult = action === 'active'
+      const reqAction = (() => { try { return action; } catch { return 'active'; } })();
+      const emptyResult = reqAction === 'active'
         ? { items: [], total: 0, hasMore: false, rateLimited: true }
         : { soldItems: [], metrics: { salesLast7Days: 0, mostRecentSale: null, medianSoldPrice: '0.00' }, rateLimited: true };
       return new Response(
