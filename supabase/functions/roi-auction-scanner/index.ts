@@ -213,6 +213,10 @@ function titleMatchesCard(title: string, parsed: ParsedCard): boolean {
 }
 
 // ── eBay auction search ───────────────────────────────────────────────
+class RateLimitError extends Error {
+  constructor() { super('eBay rate limit hit'); this.name = 'RateLimitError'; }
+}
+
 async function searchEbayAuctions(queryText: string, token: string): Promise<AuctionItem[]> {
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   url.searchParams.set('q', queryText);
@@ -222,6 +226,12 @@ async function searchEbayAuctions(queryText: string, token: string): Promise<Auc
   const resp = await fetch(url.toString(), {
     headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
   });
+
+  if (resp.status === 429) {
+    const errText = await resp.text();
+    console.error(`[EBAY] 429 RATE LIMITED for query="${queryText}": ${errText.slice(0, 200)}`);
+    throw new RateLimitError();
+  }
 
   if (!resp.ok) {
     const errText = await resp.text();
