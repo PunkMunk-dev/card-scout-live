@@ -421,7 +421,7 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
           <mask id={breakMaskId}>
             <rect x="0" y="0" width={size} height={size} fill="white" />
             {/* Remove a wedge from band 1 near the search icon */}
-            <circle cx={eCx - r * 0.1} cy={eCy - r * 0.1} r={r * 0.22} fill="black" />
+            <circle cx={sp.cx - r * 0.1} cy={sp.cy - r * 0.1} r={r * 0.22} fill="black" />
           </mask>
         </defs>
         <g mask={`url(#${searchMaskId})`}>
