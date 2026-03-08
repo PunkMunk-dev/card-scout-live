@@ -7,7 +7,7 @@ interface OmniLogoProps {
 export function OmniLogo({ dark = false }: OmniLogoProps) {
   return (
     <div className="flex items-center gap-2.5">
-      <OmniOrb variant={6} size={34} mono />
+      <OmniOrb variant={31} size={34} mono />
       <span
         className="om-wordmark text-[18px]"
         style={{ color: 'var(--om-text-0)' }}

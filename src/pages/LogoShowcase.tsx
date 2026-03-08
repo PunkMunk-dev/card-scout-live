@@ -8,6 +8,10 @@ const RENDITIONS: { variant: 21|22|23|24|25; name: string; desc: string }[] = [
   { variant: 25, name: 'Partial Fill', desc: 'Stroke fading to fill near search' },
 ];
 
+const CLOUD_EYE: { variant: 31; name: string; desc: string }[] = [
+  { variant: 31, name: 'Cloud Eye', desc: 'Solid cloud with centered eye mark' },
+];
+
 const CLOUD_SERIES: { variant: 26|27|28|29|30; name: string; desc: string }[] = [
   { variant: 26, name: 'Cloud Core', desc: 'Minimal cloud outline with signal arcs' },
   { variant: 27, name: 'Cloud Pulse', desc: 'Animated pulsing signal waves' },
@@ -73,11 +77,25 @@ function VariantCard({ variant, name, desc }: { variant: any; name: string; desc
 export default function LogoShowcase() {
   return (
     <div className="min-h-screen bg-background p-8 md:p-12 space-y-16">
-      {/* Cloud Signal Series */}
+      {/* Cloud Eye — Featured */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
-          Cloud Signal Series
+          Cloud Eye — Active Logo
         </h1>
+        <p className="text-muted-foreground">The current app icon used across all surfaces.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+        {CLOUD_EYE.map(({ variant, name, desc }) => (
+          <VariantCard key={variant} variant={variant} name={name} desc={desc} />
+        ))}
+      </div>
+
+      {/* Cloud Signal Series */}
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
+          Cloud Signal Series
+        </h2>
         <p className="text-muted-foreground">
           Greyscale cloud + signal-wave marks — theme-aware for light &amp; dark mode.
         </p>

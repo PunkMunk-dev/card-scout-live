@@ -35,7 +35,7 @@ export function LandingHero() {
               filter: 'blur(30px)',
             }}
           />
-          <OmniOrb variant={6} size={72} className="relative z-10" />
+          <OmniOrb variant={31} size={72} className="relative z-10" />
         </div>
 
         {/* Wordmark */}

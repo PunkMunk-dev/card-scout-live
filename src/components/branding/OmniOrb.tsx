@@ -1,5 +1,5 @@
 interface OmniOrbProps {
-  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30;
+  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31;
   size?: number;
   className?: string;
   mono?: boolean;
@@ -683,6 +683,25 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
         {nodes.map((n, i) => (
           <circle key={i} cx={n.x} cy={n.y} r={nodeR} fill={greyFill} opacity={0.9 - i * 0.15} />
         ))}
+      </>
+    );
+  })();
+
+  // 31 — Cloud Eye: solid filled cloud with centered eye (ring + dot)
+  variants[31] = (() => {
+    const cloudColor = mono ? '#FFFFFF' : '#6FBA2C';
+    const eyeRingColor = mono ? '#6FBA2C' : '#FFFFFF';
+    const eyeDotColor = '#FFFFFF';
+    const eyeCx = cx;
+    const eyeCy = cy - r * 0.08;
+    const eyeOuterR = r * 0.22;
+    const eyeInnerR = r * 0.08;
+    const eyeStrokeW = sw * 1.8;
+    return (
+      <>
+        <path d={cloudPath} fill={cloudColor} stroke={cloudColor} strokeWidth={sw * 0.5} strokeLinejoin="round" />
+        <circle cx={eyeCx} cy={eyeCy} r={eyeOuterR} fill="none" stroke={eyeRingColor} strokeWidth={eyeStrokeW} />
+        <circle cx={eyeCx} cy={eyeCy} r={eyeInnerR} fill={mono ? '#6FBA2C' : eyeDotColor} />
       </>
     );
   })();
