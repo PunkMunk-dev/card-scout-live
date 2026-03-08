@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const BATCH_SIZE = 2;
-const BATCH_DELAY_MS = 2000;
+const BATCH_SIZE = 1;
+const BATCH_DELAY_MS = 4000;
 const EBAY_FETCH_LIMIT = 20;
 const FRESH_MINUTES = 15;
 const MIN_PROFIT = 20;
@@ -213,6 +213,10 @@ function titleMatchesCard(title: string, parsed: ParsedCard): boolean {
 }
 
 // ── eBay auction search ───────────────────────────────────────────────
+class RateLimitError extends Error {
+  constructor() { super('eBay rate limit hit'); this.name = 'RateLimitError'; }
+}
+
 async function searchEbayAuctions(queryText: string, token: string): Promise<AuctionItem[]> {
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   url.searchParams.set('q', queryText);
@@ -222,6 +226,12 @@ async function searchEbayAuctions(queryText: string, token: string): Promise<Auc
   const resp = await fetch(url.toString(), {
     headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
   });
+
+  if (resp.status === 429) {
+    const errText = await resp.text();
+    console.error(`[EBAY] 429 RATE LIMITED for query="${queryText}": ${errText.slice(0, 200)}`);
+    throw new RateLimitError();
+  }
 
   if (!resp.ok) {
     const errText = await resp.text();
@@ -285,63 +295,68 @@ Deno.serve(async (req) => {
     // 3. Get eBay token
     const token = await getEbayToken();
 
-    // 4. Process in batches
+    // 4. Process in batches with circuit breaker
     let scanned = 0;
     let found = 0;
     let upserted = 0;
     let matched = 0;
+    let rateLimited = false;
 
     for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
+      if (rateLimited) break;
+
       const batch = toProcess.slice(i, i + BATCH_SIZE);
 
-      const results = await Promise.allSettled(
-        batch.map(async (card) => {
-          const parsed = parseCardName(card.card_name);
-          const query = buildBroadQuery(card.card_name);
-          if (!query) {
-            console.log(`[SCAN] "${card.card_name}" → SKIP (empty query)`);
-            return { cardId: card.id, auctions: [] };
-          }
+      for (const card of batch) {
+        const parsed = parseCardName(card.card_name);
+        const query = buildBroadQuery(card.card_name);
+        if (!query) {
+          console.log(`[SCAN] "${card.card_name}" → SKIP (empty query)`);
+          scanned++;
+          continue;
+        }
+
+        try {
           const rawAuctions = await searchEbayAuctions(query, token);
-          // Title-match validation: only keep auctions that match the card
           const matchedAuctions = rawAuctions.filter(a => titleMatchesCard(a.title, parsed));
           console.log(`[SCAN] "${card.card_name}" → q="${query}" → raw=${rawAuctions.length} matched=${matchedAuctions.length}`);
-          return { cardId: card.id, auctions: matchedAuctions };
-        })
-      );
+          scanned++;
+          found += matchedAuctions.length;
+          matched += matchedAuctions.length;
 
-      for (const result of results) {
-        scanned++;
-        if (result.status !== 'fulfilled') continue;
-        const { cardId, auctions } = result.value;
-        found += auctions.length;
-        matched += auctions.length;
-
-        for (const auction of auctions) {
-          const { error } = await supabase
-            .from('roi_live_auctions')
-            .upsert({
-              roi_card_id: cardId,
-              item_id: auction.itemId,
-              listing_url: auction.itemUrl,
-              current_bid: auction.currentBid,
-              shipping: auction.shipping,
-              end_time: auction.endTime,
-              image_url: auction.imageUrl || null,
-              last_seen_at: new Date().toISOString(),
-            }, { onConflict: 'item_id' });
-
-          if (!error) upserted++;
+          for (const auction of matchedAuctions) {
+            const { error } = await supabase
+              .from('roi_live_auctions')
+              .upsert({
+                roi_card_id: card.id,
+                item_id: auction.itemId,
+                listing_url: auction.itemUrl,
+                current_bid: auction.currentBid,
+                shipping: auction.shipping,
+                end_time: auction.endTime,
+                image_url: auction.imageUrl || null,
+                last_seen_at: new Date().toISOString(),
+              }, { onConflict: 'item_id' });
+            if (!error) upserted++;
+          }
+        } catch (err) {
+          if (err instanceof RateLimitError) {
+            console.warn(`[SCANNER] CIRCUIT BREAKER — stopping after ${scanned} cards`);
+            rateLimited = true;
+            break;
+          }
+          console.error(`[SCAN] error for "${card.card_name}":`, err);
+          scanned++;
         }
       }
 
       // Delay between batches
-      if (i + BATCH_SIZE < toProcess.length) {
+      if (!rateLimited && i + BATCH_SIZE < toProcess.length) {
         await sleep(BATCH_DELAY_MS);
       }
     }
 
-    console.log(`[SCANNER] DONE scanned=${scanned} found=${found} matched=${matched} upserted=${upserted}`);
+    console.log(`[SCANNER] DONE scanned=${scanned} found=${found} matched=${matched} upserted=${upserted} rateLimited=${rateLimited}`);
 
     return new Response(JSON.stringify({
       total_cards: allCards.length,
@@ -350,6 +365,7 @@ Deno.serve(async (req) => {
       found,
       matched,
       upserted,
+      rateLimited,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     console.error('roi-auction-scanner error:', err);
