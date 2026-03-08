@@ -693,10 +693,10 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     const eyeRingColor = mono ? '#6FBA2C' : '#FFFFFF';
     const eyeDotColor = '#FFFFFF';
     const eyeCx = cx;
-    const eyeCy = cy - r * 0.08;
-    const eyeOuterR = r * 0.22;
-    const eyeInnerR = r * 0.08;
-    const eyeStrokeW = sw * 1.8;
+    const eyeCy = cy - r * 0.12;
+    const eyeOuterR = r * 0.26;
+    const eyeInnerR = r * 0.09;
+    const eyeStrokeW = sw * 2.0;
     return (
       <>
         <path d={cloudPath} fill={cloudColor} stroke={cloudColor} strokeWidth={sw * 0.5} strokeLinejoin="round" />
