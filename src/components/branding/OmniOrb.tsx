@@ -540,26 +540,27 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   // Cloud-Signal Series (26–30) — greyscale, theme-aware via mono
   // Cloud path builder relative to cx/cy/r
   const cloudPath = (() => {
-    const cw = r * 0.9;   // cloud width
-    const ch = r * 0.55;  // cloud height
-    const baseY = cy + r * 0.15;
+    const cw = r * 1.05;  // wider cloud
+    const ch = r * 0.65;  // taller puffs
+    const baseY = cy + r * 0.2;
     const leftX = cx - cw * 0.5;
     const rightX = cx + cw * 0.5;
+    // 3 puffy bumps across the top, rounder curves
     return `M${leftX} ${baseY}
-      Q${leftX} ${baseY - ch * 0.6} ${cx - cw * 0.15} ${baseY - ch * 0.7}
-      Q${cx - cw * 0.05} ${baseY - ch * 1.2} ${cx + cw * 0.1} ${baseY - ch * 0.8}
-      Q${cx + cw * 0.35} ${baseY - ch * 1.1} ${cx + cw * 0.4} ${baseY - ch * 0.5}
-      Q${rightX + cw * 0.05} ${baseY - ch * 0.3} ${rightX} ${baseY}
+      C${leftX - cw * 0.08} ${baseY - ch * 0.5} ${leftX + cw * 0.05} ${baseY - ch * 0.9} ${cx - cw * 0.18} ${baseY - ch * 0.75}
+      C${cx - cw * 0.12} ${baseY - ch * 1.35} ${cx + cw * 0.05} ${baseY - ch * 1.35} ${cx + cw * 0.08} ${baseY - ch * 0.85}
+      C${cx + cw * 0.18} ${baseY - ch * 1.2} ${cx + cw * 0.42} ${baseY - ch * 1.0} ${cx + cw * 0.42} ${baseY - ch * 0.5}
+      C${rightX + cw * 0.08} ${baseY - ch * 0.15} ${rightX} ${baseY} ${rightX} ${baseY}
       Z`;
   })();
 
-  // Signal arcs emanating from top-right of cloud
-  const signalCenter = { x: cx + r * 0.25, y: cy - r * 0.25 };
+  // Signal arcs emanating from top-right of cloud — wider sweep
+  const signalCenter = { x: cx + r * 0.2, y: cy - r * 0.3 };
   const signalArcs = (stroke: string, sw: number, opacities: number[]) =>
-    [0.28, 0.45, 0.62].map((scale, i) => {
+    [0.3, 0.5, 0.7].map((scale, i) => {
       const arcR = r * scale;
-      const startAngle = -70 * (Math.PI / 180);
-      const endAngle = 20 * (Math.PI / 180);
+      const startAngle = -80 * (Math.PI / 180);  // wider sweep (was -70)
+      const endAngle = 30 * (Math.PI / 180);      // wider sweep (was 20)
       const x1 = signalCenter.x + arcR * Math.cos(startAngle);
       const y1 = signalCenter.y + arcR * Math.sin(startAngle);
       const x2 = signalCenter.x + arcR * Math.cos(endAngle);
@@ -595,8 +596,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
       <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {[0.3, 0.5, 0.7].map((scale, i) => {
         const arcR = r * scale;
-        const startAngle = -70 * (Math.PI / 180);
-        const endAngle = 20 * (Math.PI / 180);
+        const startAngle = -80 * (Math.PI / 180);
+        const endAngle = 30 * (Math.PI / 180);
         const x1 = signalCenter.x + arcR * Math.cos(startAngle);
         const y1 = signalCenter.y + arcR * Math.sin(startAngle);
         const x2 = signalCenter.x + arcR * Math.cos(endAngle);
