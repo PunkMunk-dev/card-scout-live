@@ -361,112 +361,174 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     );
   })();
 
-  // Search icon mask for negative-space variants
+  // Edge-positioned search mask — subtle, lower-right
   const searchMaskId = `${id}-search-mask`;
-  const sCx = cx - r * 0.12; // lens center offset up-left
-  const sCy = cy - r * 0.15;
-  const sR = r * 0.28; // lens radius
-  // Handle extends from lens edge at ~135° toward bottom-right
-  const hAngle = (135 * Math.PI) / 180;
-  const hx1 = sCx + sR * Math.cos(hAngle);
-  const hy1 = sCy + sR * Math.sin(hAngle);
-  const hx2 = sCx + (sR + r * 0.32) * Math.cos(hAngle);
-  const hy2 = sCy + (sR + r * 0.32) * Math.sin(hAngle);
+  const eCx = cx + r * 0.42; // lens at lower-right edge
+  const eCy = cy + r * 0.42;
+  const eR = r * 0.18; // smaller lens
+  const eAngle = (135 * Math.PI) / 180;
+  const ehx1 = eCx + eR * Math.cos(eAngle);
+  const ehy1 = eCy + eR * Math.sin(eAngle);
+  const ehx2 = eCx + (eR + r * 0.22) * Math.cos(eAngle);
+  const ehy2 = eCy + (eR + r * 0.22) * Math.sin(eAngle);
 
-  const searchMaskDefs = (
+  const edgeSearchMask = (
     <mask id={searchMaskId}>
       <rect x="0" y="0" width={size} height={size} fill="white" />
-      <circle cx={sCx} cy={sCy} r={sR} fill="black" />
-      <line x1={hx1} y1={hy1} x2={hx2} y2={hy2} stroke="black" strokeWidth={r * 0.12} strokeLinecap="round" />
+      <circle cx={eCx} cy={eCy} r={eR} fill="black" />
+      <line x1={ehx1} y1={ehy1} x2={ehx2} y2={ehy2} stroke="black" strokeWidth={r * 0.09} strokeLinecap="round" />
     </mask>
   );
 
-  // 21: Negative Search White — white filled bands, search cutout
+  const tealBlueGrad = (
+    <linearGradient id={`${id}-tb-grad`} x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#00E0C6" />
+      <stop offset="100%" stopColor="#3B82F6" />
+    </linearGradient>
+  );
+
+  // 21 — Open Knot: gradient strokes (not filled), edge search cutout
   variants[21] = (
     <>
-      <defs>{searchMaskDefs}</defs>
-      <g mask={`url(#${searchMaskId})`}>
-        {hexKnot.map((d, i) => (
-          <path key={i} d={d} fill="white" opacity="0.9" />
-        ))}
-      </g>
-    </>
-  );
-
-  // 22: Negative Search Teal Gradient
-  variants[22] = (
-    <>
       <defs>
-        <linearGradient id={`${id}-ns-grad`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#00E0C6" />
-          <stop offset="100%" stopColor="#3B82F6" />
-        </linearGradient>
-        {searchMaskDefs}
+        {tealBlueGrad}
+        {edgeSearchMask}
       </defs>
       <g mask={`url(#${searchMaskId})`}>
         {hexKnot.map((d, i) => (
-          <path key={i} d={d} fill={`url(#${id}-ns-grad)`} opacity="0.9" />
+          <path key={i} d={d} fill="none" stroke={`url(#${id}-tb-grad)`} strokeWidth={size * 0.025} strokeLinejoin="round" opacity="0.9" />
         ))}
       </g>
     </>
   );
 
-  // 23: Negative Search Glow — white bands + teal glow
-  variants[23] = (
-    <>
-      <defs>
-        <filter id={`${id}-ns-glow`}>
-          <feGaussianBlur stdDeviation={size * 0.04} result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        {searchMaskDefs}
-      </defs>
-      <g mask={`url(#${searchMaskId})`}>
-        {hexKnot.map((d, i) => (
-          <path key={i} d={d} fill="#00E0C6" opacity="0.35" filter={`url(#${id}-ns-glow)`} />
-        ))}
-        {hexKnot.map((d, i) => (
-          <path key={`f-${i}`} d={d} fill="white" opacity="0.9" />
-        ))}
-      </g>
-    </>
-  );
-
-  // 24: Negative Search on Black Hex — black hex bg, white bands, search reveals black
-  variants[24] = (() => {
-    const s2 = r * 1.05;
-    const bgHex = Array.from({ length: 6 }, (_, i) => {
-      const a = (Math.PI / 3) * i - Math.PI / 2;
-      return `${(cx + s2 * Math.cos(a)).toFixed(2)},${(cy + s2 * Math.sin(a)).toFixed(2)}`;
-    }).join(' ');
+  // 22 — Broken Band: band[1] has a gap near the search icon, others solid fill
+  variants[22] = (() => {
+    // Create a secondary mask that removes a chunk from band 1 near the search area
+    const breakMaskId = `${id}-break-mask`;
     return (
       <>
-        <defs>{searchMaskDefs}</defs>
-        <polygon points={bgHex} fill="#0B0B0C" />
+        <defs>
+          {tealBlueGrad}
+          {edgeSearchMask}
+          <mask id={breakMaskId}>
+            <rect x="0" y="0" width={size} height={size} fill="white" />
+            {/* Remove a wedge from band 1 near the search icon */}
+            <circle cx={eCx - r * 0.1} cy={eCy - r * 0.1} r={r * 0.22} fill="black" />
+          </mask>
+        </defs>
         <g mask={`url(#${searchMaskId})`}>
-          {hexKnot.map((d, i) => (
-            <path key={i} d={d} fill="white" opacity="0.9" />
+          <path d={hexKnot[0]} fill={`url(#${id}-tb-grad)`} opacity="0.9" />
+          {/* Band 1 with break */}
+          <g mask={`url(#${breakMaskId})`}>
+            <path d={hexKnot[1]} fill={`url(#${id}-tb-grad)`} opacity="0.9" />
+          </g>
+          <path d={hexKnot[2]} fill={`url(#${id}-tb-grad)`} opacity="0.9" />
+        </g>
+      </>
+    );
+  })();
+
+  // 23 — Rounded Knot: softened geometry with quadratic curves
+  variants[23] = (() => {
+    const s = r * 0.95;
+    const hv = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return [cx + s * Math.cos(a), cy + s * Math.sin(a)] as [number, number];
+    });
+    const ih = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return [cx + s * 0.5 * Math.cos(a), cy + s * 0.5 * Math.sin(a)] as [number, number];
+    });
+    // Same band topology but with quadratic curves at corners
+    const roundBand = (pts: [number, number][]) => {
+      const f = (p: [number, number]) => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`;
+      const mid = (a: [number, number], b: [number, number]): [number, number] =>
+        [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      // Start at midpoint of first edge
+      const m0 = mid(pts[0], pts[1]);
+      let d = `M${f(m0)}`;
+      for (let i = 0; i < pts.length; i++) {
+        const next = pts[(i + 1) % pts.length];
+        const mNext = mid(pts[(i + 1) % pts.length], pts[(i + 2) % pts.length]);
+        d += ` Q${f(next)} ${f(mNext)}`;
+      }
+      d += 'Z';
+      return d;
+    };
+    const roundBands = [
+      [hv[0], hv[1], ih[1], ih[4], hv[4], hv[3], ih[3], ih[0]],
+      [hv[1], hv[2], ih[2], ih[5], hv[5], hv[4], ih[4], ih[1]],
+      [hv[2], hv[3], ih[3], ih[0], hv[0], hv[5], ih[5], ih[2]],
+    ].map(roundBand);
+
+    return (
+      <>
+        <defs>
+          {tealBlueGrad}
+          {edgeSearchMask}
+        </defs>
+        <g mask={`url(#${searchMaskId})`}>
+          {roundBands.map((d, i) => (
+            <path key={i} d={d} fill={`url(#${id}-tb-grad)`} opacity="0.9" />
           ))}
         </g>
       </>
     );
   })();
 
-  // 25: Negative Search Duotone — alternating teal/blue filled bands
-  const duoNsColors = ['#00E0C6', '#3B82F6', '#00E0C6'];
-  variants[25] = (
+  // 24 — Layered Depth: bands at varying opacity with drop shadow on front
+  variants[24] = (
     <>
-      <defs>{searchMaskDefs}</defs>
+      <defs>
+        {tealBlueGrad}
+        {edgeSearchMask}
+        <filter id={`${id}-drop`}>
+          <feDropShadow dx={size * 0.005} dy={size * 0.01} stdDeviation={size * 0.02} floodColor="#00E0C6" floodOpacity="0.4" />
+        </filter>
+      </defs>
       <g mask={`url(#${searchMaskId})`}>
-        {hexKnot.map((d, i) => (
-          <path key={i} d={d} fill={duoNsColors[i]} opacity="0.9" />
-        ))}
+        <path d={hexKnot[0]} fill={`url(#${id}-tb-grad)`} opacity="0.35" />
+        <path d={hexKnot[1]} fill={`url(#${id}-tb-grad)`} opacity="0.6" />
+        <path d={hexKnot[2]} fill={`url(#${id}-tb-grad)`} opacity="0.92" filter={`url(#${id}-drop)`} />
       </g>
     </>
   );
+
+  // 25 — Partial Fill: halves nearest search filled, far halves stroke-only
+  variants[25] = (() => {
+    const fadeMaskId = `${id}-fade-mask`;
+    // Gradient mask: right-bottom half is white (filled), left-top fades to grey (stroke-only effect)
+    return (
+      <>
+        <defs>
+          {tealBlueGrad}
+          {edgeSearchMask}
+          <linearGradient id={`${id}-fade-dir`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="black" />
+            <stop offset="45%" stopColor="black" />
+            <stop offset="70%" stopColor="white" />
+            <stop offset="100%" stopColor="white" />
+          </linearGradient>
+          <mask id={fadeMaskId}>
+            <rect x="0" y="0" width={size} height={size} fill={`url(#${id}-fade-dir)`} />
+          </mask>
+        </defs>
+        <g mask={`url(#${searchMaskId})`}>
+          {/* Stroke outlines everywhere */}
+          {hexKnot.map((d, i) => (
+            <path key={`s-${i}`} d={d} fill="none" stroke={`url(#${id}-tb-grad)`} strokeWidth={size * 0.012} strokeLinejoin="round" opacity="0.5" />
+          ))}
+          {/* Filled halves fading in near search */}
+          <g mask={`url(#${fadeMaskId})`}>
+            {hexKnot.map((d, i) => (
+              <path key={`f-${i}`} d={d} fill={`url(#${id}-tb-grad)`} opacity="0.9" />
+            ))}
+          </g>
+        </g>
+      </>
+    );
+  })();
 
   return (
     <svg
