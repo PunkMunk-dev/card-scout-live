@@ -95,7 +95,7 @@ export default function LogoShowcase() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
           Cloud Signal Series
-        </h1>
+        </h2>
         <p className="text-muted-foreground">
           Greyscale cloud + signal-wave marks — theme-aware for light &amp; dark mode.
         </p>
