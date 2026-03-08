@@ -16,6 +16,14 @@ const HEX_VARIANTS: { variant: 16|17|18|19|20; name: string; desc: string }[] = 
   { variant: 20, name: 'Filled Hex', desc: 'Black hex bg with white knot' },
 ];
 
+const SEARCH_VARIANTS: { variant: 21|22|23|24|25; name: string; desc: string }[] = [
+  { variant: 21, name: 'White Cutout', desc: 'White bands, search negative space' },
+  { variant: 22, name: 'Teal Gradient', desc: 'Gradient bands, search cutout' },
+  { variant: 23, name: 'Glow Cutout', desc: 'Glowing bands, search negative space' },
+  { variant: 24, name: 'On Black Hex', desc: 'Black hex bg, search reveals black' },
+  { variant: 25, name: 'Duotone', desc: 'Teal/blue bands, search cutout' },
+];
+
 function VariantSection({ title, subtitle, variants }: { title: string; subtitle: string; variants: { variant: number; name: string; desc: string }[] }) {
   return (
     <section>
@@ -78,6 +86,12 @@ export default function LogoShowcase() {
         title="Hexagonal Knot"
         subtitle="5 geometric hex-knot marks — the uploaded logo recreated as scalable SVG."
         variants={HEX_VARIANTS}
+      />
+
+      <VariantSection
+        title="Negative Space Search"
+        subtitle="5 hex-knot marks with a magnifying glass cut out as negative space."
+        variants={SEARCH_VARIANTS}
       />
 
       <VariantSection

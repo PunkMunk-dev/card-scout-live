@@ -1,5 +1,5 @@
 interface OmniOrbProps {
-  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
+  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25;
   size?: number;
   className?: string;
   mono?: boolean;
@@ -360,6 +360,113 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
       </>
     );
   })();
+
+  // Search icon mask for negative-space variants
+  const searchMaskId = `${id}-search-mask`;
+  const sCx = cx - r * 0.12; // lens center offset up-left
+  const sCy = cy - r * 0.15;
+  const sR = r * 0.28; // lens radius
+  // Handle extends from lens edge at ~135° toward bottom-right
+  const hAngle = (135 * Math.PI) / 180;
+  const hx1 = sCx + sR * Math.cos(hAngle);
+  const hy1 = sCy + sR * Math.sin(hAngle);
+  const hx2 = sCx + (sR + r * 0.32) * Math.cos(hAngle);
+  const hy2 = sCy + (sR + r * 0.32) * Math.sin(hAngle);
+
+  const searchMaskDefs = (
+    <mask id={searchMaskId}>
+      <rect x="0" y="0" width={size} height={size} fill="white" />
+      <circle cx={sCx} cy={sCy} r={sR} fill="black" />
+      <line x1={hx1} y1={hy1} x2={hx2} y2={hy2} stroke="black" strokeWidth={r * 0.12} strokeLinecap="round" />
+    </mask>
+  );
+
+  // 21: Negative Search White — white filled bands, search cutout
+  variants[21] = (
+    <>
+      <defs>{searchMaskDefs}</defs>
+      <g mask={`url(#${searchMaskId})`}>
+        {hexKnot.map((d, i) => (
+          <path key={i} d={d} fill="white" opacity="0.9" />
+        ))}
+      </g>
+    </>
+  );
+
+  // 22: Negative Search Teal Gradient
+  variants[22] = (
+    <>
+      <defs>
+        <linearGradient id={`${id}-ns-grad`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00E0C6" />
+          <stop offset="100%" stopColor="#3B82F6" />
+        </linearGradient>
+        {searchMaskDefs}
+      </defs>
+      <g mask={`url(#${searchMaskId})`}>
+        {hexKnot.map((d, i) => (
+          <path key={i} d={d} fill={`url(#${id}-ns-grad)`} opacity="0.9" />
+        ))}
+      </g>
+    </>
+  );
+
+  // 23: Negative Search Glow — white bands + teal glow
+  variants[23] = (
+    <>
+      <defs>
+        <filter id={`${id}-ns-glow`}>
+          <feGaussianBlur stdDeviation={size * 0.04} result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        {searchMaskDefs}
+      </defs>
+      <g mask={`url(#${searchMaskId})`}>
+        {hexKnot.map((d, i) => (
+          <path key={i} d={d} fill="#00E0C6" opacity="0.35" filter={`url(#${id}-ns-glow)`} />
+        ))}
+        {hexKnot.map((d, i) => (
+          <path key={`f-${i}`} d={d} fill="white" opacity="0.9" />
+        ))}
+      </g>
+    </>
+  );
+
+  // 24: Negative Search on Black Hex — black hex bg, white bands, search reveals black
+  variants[24] = (() => {
+    const s2 = r * 1.05;
+    const bgHex = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return `${(cx + s2 * Math.cos(a)).toFixed(2)},${(cy + s2 * Math.sin(a)).toFixed(2)}`;
+    }).join(' ');
+    return (
+      <>
+        <defs>{searchMaskDefs}</defs>
+        <polygon points={bgHex} fill="#0B0B0C" />
+        <g mask={`url(#${searchMaskId})`}>
+          {hexKnot.map((d, i) => (
+            <path key={i} d={d} fill="white" opacity="0.9" />
+          ))}
+        </g>
+      </>
+    );
+  })();
+
+  // 25: Negative Search Duotone — alternating teal/blue filled bands
+  const duoNsColors = ['#00E0C6', '#3B82F6', '#00E0C6'];
+  variants[25] = (
+    <>
+      <defs>{searchMaskDefs}</defs>
+      <g mask={`url(#${searchMaskId})`}>
+        {hexKnot.map((d, i) => (
+          <path key={i} d={d} fill={duoNsColors[i]} opacity="0.9" />
+        ))}
+      </g>
+    </>
+  );
 
   return (
     <svg
