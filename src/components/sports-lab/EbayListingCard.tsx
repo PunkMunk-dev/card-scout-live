@@ -95,6 +95,8 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
                 <RoiCalculator psa10MedianPrice={soldMarketValue} />
               )}
             </div>
+          </div>
+        </a>
       </div>
       <SoldCompsDialog open={showComps} onOpenChange={setShowComps} soldComps={soldComps} marketValue={soldMarketValue} confidence={soldConfidence} />
     </>
