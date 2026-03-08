@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.manage-comps]
 verify_jwt = false
+
+[functions.verify-psa-cert]
+verify_jwt = false
+
+[functions.sync-psa-population]
+verify_jwt = false

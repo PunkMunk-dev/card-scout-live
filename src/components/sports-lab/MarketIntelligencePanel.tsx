@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { TrendingUp, BarChart3, ChevronDown, ChevronUp, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useCardMarketMetrics, getConfidenceLevel, RAW_THRESHOLD, PSA10_THRESHOLD, type SoldComp } from '@/hooks/useCardMarketMetrics';
+import { usePsaCertData } from '@/hooks/usePsaCertData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CompManagementControls } from './CompManagementControls';
+import { PsaDataSection } from './PsaDataSection';
+import { PsaMappingControls } from './PsaMappingControls';
 import { cn } from '@/lib/utils';
 
 interface MarketIntelligencePanelProps {
@@ -116,6 +119,7 @@ function CompGroup({ label, comps, dimmed, onMutated }: { label: string; comps: 
 
 export function MarketIntelligencePanel({ title, searchContext }: MarketIntelligencePanelProps) {
   const { metrics, comps, isLoading, error, fetchMetrics, refetch } = useCardMarketMetrics();
+  const { certData, populationData, isLoading: psaLoading, fetchPsaData } = usePsaCertData();
   const fetchedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +138,13 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
     return () => observer.disconnect();
   }, [title, searchContext, fetchMetrics]);
 
+  // Fetch PSA data once metrics resolve with a card_identity_key
+  useEffect(() => {
+    if (metrics && (metrics as any).card_identity_key) {
+      fetchPsaData((metrics as any).card_identity_key);
+    }
+  }, [metrics, fetchPsaData]);
+
   const handleMutated = () => {
     if (searchContext) refetch(title, searchContext);
   };
@@ -142,6 +153,7 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
 
   const confidence = getConfidenceLevel(metrics);
   const showSpread = confidence === 'full';
+  const cardIdentityKey = (metrics as any)?.card_identity_key;
 
   return (
     <div ref={containerRef} className="mt-2 rounded-lg p-2.5" style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)' }}>
@@ -216,6 +228,10 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
           )}
 
           <CompsSection comps={comps} onMutated={handleMutated} />
+
+          <PsaDataSection certData={certData} populationData={populationData} isLoading={psaLoading} />
+
+          {cardIdentityKey && <PsaMappingControls cardIdentityKey={cardIdentityKey} onMutated={handleMutated} />}
         </div>
       )}
     </div>
