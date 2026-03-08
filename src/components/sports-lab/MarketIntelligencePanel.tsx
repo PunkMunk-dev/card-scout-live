@@ -228,6 +228,10 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
           )}
 
           <CompsSection comps={comps} onMutated={handleMutated} />
+
+          <PsaDataSection certData={certData} populationData={populationData} isLoading={psaLoading} />
+
+          {cardIdentityKey && <PsaMappingControls cardIdentityKey={cardIdentityKey} onMutated={handleMutated} />}
         </div>
       )}
     </div>
