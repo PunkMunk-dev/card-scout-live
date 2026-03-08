@@ -608,7 +608,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   // 27 — Cloud Pulse: cloud + animated pulsing signal waves
   variants[27] = (
     <>
-      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      {cloudDefs}
+      <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {[0.3, 0.5, 0.7].map((scale, i) => {
         const arcR = r * scale;
         const startAngle = -80 * (Math.PI / 180);
