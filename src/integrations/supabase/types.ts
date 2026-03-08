@@ -18,9 +18,11 @@ export type Database = {
         Row: {
           card_identity_key: string
           id: string
+          pop_last_synced_at: string | null
           population: number | null
           psa10_comp_count: number | null
           psa10_median_price: number | null
+          psa10_population: number | null
           raw_comp_count: number | null
           raw_median_price: number | null
           spread_amount: number | null
@@ -30,9 +32,11 @@ export type Database = {
         Insert: {
           card_identity_key: string
           id?: string
+          pop_last_synced_at?: string | null
           population?: number | null
           psa10_comp_count?: number | null
           psa10_median_price?: number | null
+          psa10_population?: number | null
           raw_comp_count?: number | null
           raw_median_price?: number | null
           spread_amount?: number | null
@@ -42,9 +46,11 @@ export type Database = {
         Update: {
           card_identity_key?: string
           id?: string
+          pop_last_synced_at?: string | null
           population?: number | null
           psa10_comp_count?: number | null
           psa10_median_price?: number | null
+          psa10_population?: number | null
           raw_comp_count?: number | null
           raw_median_price?: number | null
           spread_amount?: number | null
@@ -222,6 +228,10 @@ export type Database = {
           psa_grade: string | null
           psa_set: string | null
           psa_subject: string | null
+          source_label: string | null
+          source_last_synced_at: string | null
+          source_url: string | null
+          updated_at: string
         }
         Insert: {
           card_identity_key: string
@@ -231,6 +241,10 @@ export type Database = {
           psa_grade?: string | null
           psa_set?: string | null
           psa_subject?: string | null
+          source_label?: string | null
+          source_last_synced_at?: string | null
+          source_url?: string | null
+          updated_at?: string
         }
         Update: {
           card_identity_key?: string
@@ -240,6 +254,10 @@ export type Database = {
           psa_grade?: string | null
           psa_set?: string | null
           psa_subject?: string | null
+          source_label?: string | null
+          source_last_synced_at?: string | null
+          source_url?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -259,10 +277,14 @@ export type Database = {
           is_admin_verified: boolean | null
           last_synced_at: string | null
           mapping_confidence: string | null
+          notes: string | null
           psa_card_number: string | null
           psa_population_source: string | null
+          psa_population_url: string | null
+          psa_search_query: string | null
           psa_set_name: string | null
           psa_subject: string | null
+          updated_at: string
         }
         Insert: {
           card_identity_key: string
@@ -271,10 +293,14 @@ export type Database = {
           is_admin_verified?: boolean | null
           last_synced_at?: string | null
           mapping_confidence?: string | null
+          notes?: string | null
           psa_card_number?: string | null
           psa_population_source?: string | null
+          psa_population_url?: string | null
+          psa_search_query?: string | null
           psa_set_name?: string | null
           psa_subject?: string | null
+          updated_at?: string
         }
         Update: {
           card_identity_key?: string
@@ -283,10 +309,53 @@ export type Database = {
           is_admin_verified?: boolean | null
           last_synced_at?: string | null
           mapping_confidence?: string | null
+          notes?: string | null
           psa_card_number?: string | null
           psa_population_source?: string | null
+          psa_population_url?: string | null
+          psa_search_query?: string | null
           psa_set_name?: string | null
           psa_subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      psa_sync_runs: {
+        Row: {
+          created_at: string
+          error_log: Json | null
+          finished_at: string | null
+          id: string
+          records_failed: number | null
+          records_seen: number | null
+          records_updated: number | null
+          source_type: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_log?: Json | null
+          finished_at?: string | null
+          id?: string
+          records_failed?: number | null
+          records_seen?: number | null
+          records_updated?: number | null
+          source_type?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_log?: Json | null
+          finished_at?: string | null
+          id?: string
+          records_failed?: number | null
+          records_seen?: number | null
+          records_updated?: number | null
+          source_type?: string | null
+          started_at?: string | null
+          status?: string
         }
         Relationships: []
       }
