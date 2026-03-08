@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { TrendingUp, BarChart3, ChevronDown, ChevronUp, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useCardMarketMetrics, getConfidenceLevel, RAW_THRESHOLD, PSA10_THRESHOLD, type SoldComp } from '@/hooks/useCardMarketMetrics';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CompManagementControls } from './CompManagementControls';
 import { cn } from '@/lib/utils';
 
 interface MarketIntelligencePanelProps {
@@ -45,11 +46,11 @@ function ConfidenceBadge({ level }: { level: 'full' | 'limited' | 'insufficient'
   );
 }
 
-function CompsSection({ comps }: { comps: SoldComp[] }) {
+function CompsSection({ comps, onMutated }: { comps: SoldComp[]; onMutated: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const exactComps = comps.filter(c => c.confidence_score === 'exact' && !c.excluded);
   const broadComps = comps.filter(c => c.confidence_score === 'high' && !c.excluded);
-  const excludedComps = comps.filter(c => c.excluded || c.confidence_score === 'low' || c.confidence_score === 'medium');
+  const excludedComps = comps.filter(c => c.excluded || c.confidence_score === 'excluded' || c.confidence_score === 'low' || c.confidence_score === 'medium');
 
   if (comps.length === 0) return null;
 
@@ -63,22 +64,16 @@ function CompsSection({ comps }: { comps: SoldComp[] }) {
       </button>
       {expanded && (
         <div className="space-y-2 pb-1">
-          {exactComps.length > 0 && (
-            <CompGroup label="Exact Match" comps={exactComps} />
-          )}
-          {broadComps.length > 0 && (
-            <CompGroup label="Broad Match" comps={broadComps} />
-          )}
-          {excludedComps.length > 0 && (
-            <CompGroup label="Excluded" comps={excludedComps} dimmed />
-          )}
+          {exactComps.length > 0 && <CompGroup label="Exact Match" comps={exactComps} onMutated={onMutated} />}
+          {broadComps.length > 0 && <CompGroup label="Broad Match" comps={broadComps} onMutated={onMutated} />}
+          {excludedComps.length > 0 && <CompGroup label="Excluded" comps={excludedComps} dimmed onMutated={onMutated} />}
         </div>
       )}
     </div>
   );
 }
 
-function CompGroup({ label, comps, dimmed }: { label: string; comps: SoldComp[]; dimmed?: boolean }) {
+function CompGroup({ label, comps, dimmed, onMutated }: { label: string; comps: SoldComp[]; dimmed?: boolean; onMutated: () => void }) {
   return (
     <div>
       <span className="text-[8px] font-bold uppercase tracking-widest" style={{ color: dimmed ? 'var(--om-text-3)' : 'var(--om-accent)' }}>
@@ -97,12 +92,18 @@ function CompGroup({ label, comps, dimmed }: { label: string; comps: SoldComp[];
                   {c.raw_or_graded === 'graded' && c.grader ? `${c.grader} ${c.grade}` : c.raw_or_graded}
                 </span>
               </div>
+              {c.match_reason && (
+                <p className="text-[8px] mt-0.5 italic" style={{ color: 'var(--om-text-3)' }}>{c.match_reason}</p>
+              )}
             </div>
-            {c.url && (
-              <a href={c.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                <ExternalLink className="h-2.5 w-2.5 mt-0.5 shrink-0" style={{ color: 'var(--om-text-3)' }} />
-              </a>
-            )}
+            <div className="flex items-center gap-1 shrink-0">
+              {c.id && <CompManagementControls saleId={c.id} currentConfidence={c.confidence_score} onMutated={onMutated} />}
+              {c.url && (
+                <a href={c.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                  <ExternalLink className="h-2.5 w-2.5 mt-0.5" style={{ color: 'var(--om-text-3)' }} />
+                </a>
+              )}
+            </div>
           </div>
         ))}
         {comps.length > 10 && (
@@ -114,7 +115,7 @@ function CompGroup({ label, comps, dimmed }: { label: string; comps: SoldComp[];
 }
 
 export function MarketIntelligencePanel({ title, searchContext }: MarketIntelligencePanelProps) {
-  const { metrics, comps, isLoading, error, fetchMetrics } = useCardMarketMetrics();
+  const { metrics, comps, isLoading, error, fetchMetrics, refetch } = useCardMarketMetrics();
   const fetchedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -132,6 +133,10 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
     if (containerRef.current) observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [title, searchContext, fetchMetrics]);
+
+  const handleMutated = () => {
+    if (searchContext) refetch(title, searchContext);
+  };
 
   if (!searchContext?.playerName) return null;
 
@@ -201,7 +206,6 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
             value={metrics.psa10_comp_count > 0 ? String(metrics.psa10_comp_count) : null}
           />
 
-          {/* Spread indicator - only when full confidence */}
           {showSpread && metrics.spread_percent !== null && metrics.spread_percent > 0 && (
             <div className="flex items-center gap-1 mt-1.5 pt-1.5" style={{ borderTop: '1px solid var(--om-divider)' }}>
               <TrendingUp className="h-3 w-3" style={{ color: 'hsl(142 71% 45%)' }} />
@@ -211,8 +215,7 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
             </div>
           )}
 
-          {/* Expandable comps used section */}
-          <CompsSection comps={comps} />
+          <CompsSection comps={comps} onMutated={handleMutated} />
         </div>
       )}
     </div>

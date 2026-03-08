@@ -1,130 +1,118 @@
 
 
-## Plan: Opportunity Scoring, Comp Transparency, and Admin Comp Management
+## Plan: UI Audit Export Page + Snapshot System
 
-This plan adds three layers: (1) an opportunity score badge on each listing card, (2) match-reason annotations on comps, and (3) an admin comp management edge function with a lightweight UI.
+This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
 
----
+### New Files
 
-### 1. Opportunity Score Engine (client-side)
+**1. `src/lib/uiAuditData.ts`** — Static audit data module
+- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
+  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
+  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
+  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
+  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
+  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
+- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
+- All secrets/tokens replaced with `***REDACTED***`
 
-**New file: `src/lib/opportunityScore.ts`**
+**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
+- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
+- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
+- `exportSnapshotsJSON()` — serializes to downloadable JSON
 
-Pure function that takes a listing price, `CardMarketMetrics`, and assumptions (grading cost = $25, gem rate = 50%) and returns:
+**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
+- Props: `appId: string`, `getState: () => SnapshotPayload`
+- Renders a small pill button ("📸 Snapshot") in top-right area
+- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
+
+**4. `src/pages/UIAudit.tsx`** — The audit page
+- "How to Use" card at top (4-step instructions)
+- Sections A–E rendered from `uiAuditData.ts` with code blocks
+- "Snapshots" section: lists snapshots grouped by app, with timestamps
+- Sticky footer bar with:
+  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
+  - "Download .md" — downloads as `ui-audit-report.md`
+  - "Copy Snapshots JSON" — copies just snapshots
+  - "Download snapshots.json"
+  - "Clear Snapshots" — with confirm dialog
+
+### Modified Files
+
+**5. `src/App.tsx`** — Add route
+- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
+- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
+- No nav entry added (dev-only URL)
+
+**6. `src/pages/TcgLab.tsx`** — Add snapshot button
+- Import `CaptureSnapshotButton`
+- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
+
+**7. `src/pages/SportsLab.tsx`** — Add snapshot button
+- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
+
+**8. `src/pages/TopRoi.tsx`** — Add snapshot button
+- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
+
+**9. `src/pages/Index.tsx`** — Add snapshot button
+- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
+
+### Snapshot Payload Shape
 
 ```text
-interface OpportunityScore {
-  label: 'Strong Buy' | 'Potential Flip' | 'Neutral' | 'Overpriced';
-  color: string;                // green / blue / gray / red
-  upsideDollars: number | null; // psa10Median - listingPrice - gradingCost
-  expectedProfit: number | null;// upsideDollars * gemRate
-  modeledRoi: number | null;   // expectedProfit / (listingPrice + gradingCost) * 100
-  gated: boolean;               // true if not enough exact data
-  reason: string;               // human-readable explanation
+{
+  appId: "tcg" | "sports" | "roi" | "search",
+  timestamp: ISO string,
+  route: window.location.pathname + search,
+  searchInputs: { ... },
+  filters: { ... },
+  pagination: { ... },
+  loadingFlags: { ... },
+  errorState: null | { message },
+  resultsSchema: { itemKeys: string[], count: number },
+  layoutMode: { ... }
 }
 ```
 
-**Gating rules**: Only score when confidence === 'full' (raw_comp_count >= 3, psa10_comp_count >= 2). Otherwise return `{ gated: true, label: 'Neutral', reason: 'Insufficient exact-match data' }`.
+### Export Format
 
-**Scoring thresholds** (on modeled ROI):
-- Strong Buy: ROI >= 100%
-- Potential Flip: ROI >= 25%
-- Neutral: ROI >= -10%
-- Overpriced: ROI < -10%
+The "Copy All" output is a single markdown document:
 
-### 2. Opportunity Badge on Listing Card
+```text
+# UI Audit Report — OmniMarket
+Generated: {date}
 
-**Edit: `src/components/sports-lab/EbayListingCard.tsx`**
+## A) Routing + Shell
+### Detected Components
+- ...
+### Code Excerpts
+\`\`\`tsx
+// App.tsx route definitions (redacted)
+...
+\`\`\`
 
-- Import `computeOpportunityScore` and `useCardMarketMetrics` results
-- After the Market Intelligence panel loads, compute the score from the listing price + metrics
-- Display a small colored badge below the price overlay (inside the card body, near Est. Profit):
-  - Badge text = label (e.g. "Strong Buy")
-  - If gated, show a dimmed "Limited Data" chip instead
-  - Show upside dollars and modeled ROI when available
+## B) App Entry Pages
+...
 
-### 3. Comp Match Reasons
+## C) Global State + Data Plumbing
+...
 
-**Edit: `src/hooks/useCardMarketMetrics.ts`**
-- Add `match_reason: string` field to `SoldComp` interface
+## D) Auth / Gating
+(Not implemented — skipped)
 
-**Edit: `supabase/functions/ingest-sold-comps/index.ts`**
-- For each comp, generate a `match_reason` string explaining why it was included/excluded/broad-matched:
-  - "Exact: player + year + brand + card# match"
-  - "Broad: player + year match, missing card#"
-  - "Excluded: title contains 'lot'"
-  - "Low confidence: only player matched"
-- Return `match_reason` in the comp response payload
+## E) Styling / Design Tokens
+...
 
-**Edit: `src/components/sports-lab/MarketIntelligencePanel.tsx`**
-- Display `match_reason` as a small muted line under each comp in the expanded comps section
-
-### 4. Expanded Parallel Taxonomy
-
-**Edit: `src/lib/cardNormalization.ts`**
-
-Expand `PARALLEL_KEYWORDS` with multi-word parallels and add a priority-ordered matching system:
-
-- Add: `'red ice'`, `'blue ice'`, `'green ice'`, `'sparkle'`, `'laser'`, `'fast break exclusive'`, `'courtside level'`, `'premier level'`, `'concourse level'`, `'club level'`, `'field level'`, `'mezzanine'`
-- Change `extractParallel` to match multi-word parallels first (longest match wins), then single-word, then numbered patterns
-
-**Edit: `computeConfidence` in `src/lib/cardNormalization.ts`**
-- Increase card_number weight from 2 to 3 so exact card-number matches score much more heavily
-- Adjust thresholds: exact >= 7, high >= 5, medium >= 3
-
-Mirror the same parallel + confidence changes in the edge function `ingest-sold-comps/index.ts`.
-
-### 5. Admin Comp Management
-
-**New edge function: `supabase/functions/manage-comps/index.ts`**
-
-A simple admin-only edge function accepting actions:
-
-```json
-{ "action": "exclude_comp", "sale_id": "uuid" }
-{ "action": "approve_comp", "sale_id": "uuid" }
-{ "action": "merge_cards", "source_key": "...", "target_key": "..." }
-{ "action": "split_card", "sale_ids": ["..."], "new_key": "..." }
-{ "action": "override_metadata", "card_identity_key": "...", "fields": { "brand": "..." } }
+## Snapshots
+\`\`\`json
+[...]
+\`\`\`
 ```
 
-- Validates admin role via `has_role(auth.uid(), 'admin')`
-- `exclude_comp`: updates `sales_history.confidence_score` to `'excluded'`
-- `approve_comp`: updates confidence to `'exact'`
-- `merge_cards`: reassigns all `sales_history` and `card_market_metrics` from source_key to target_key, deletes source `cards_normalized`
-- `split_card`: creates a new `cards_normalized` row with new_key, reassigns specified sale_ids
-- `override_metadata`: updates fields on `cards_normalized`
-- After any mutation, triggers recompute for affected keys
-
-**Config: `supabase/config.toml`**
-- Add `[functions.manage-comps]` with `verify_jwt = false` (auth checked in code)
-
-**New component: `src/components/sports-lab/CompManagementControls.tsx`**
-
-Small inline controls that appear on each comp row in the expanded comps section (only when user is admin). Buttons: Exclude / Approve. Plus a dialog for merge/split/override at the card level.
-
-- Uses `supabase.functions.invoke('manage-comps', ...)` for mutations
-- Checks admin status via existing `has_role` RPC
-- After mutation, invalidates the in-memory metrics cache and re-fetches
-
-### 6. Database Changes
-
-**Migration**: Add a unique constraint on `sales_history(source, source_sale_id)` if not already present — needed for upsert conflict target.
-
-No new tables needed.
-
----
-
-### Files to create
-- `src/lib/opportunityScore.ts`
-- `supabase/functions/manage-comps/index.ts`
-- `src/components/sports-lab/CompManagementControls.tsx`
-
-### Files to edit
-- `src/components/sports-lab/EbayListingCard.tsx` — add opportunity badge
-- `src/components/sports-lab/MarketIntelligencePanel.tsx` — show match_reason + admin controls
-- `src/hooks/useCardMarketMetrics.ts` — add match_reason to SoldComp, add cache invalidation helper
-- `src/lib/cardNormalization.ts` — expanded parallels, heavier card# weight
-- `supabase/functions/ingest-sold-comps/index.ts` — match_reason generation, parallel improvements
-- `supabase/config.toml` — add manage-comps function
+### What This Does NOT Change
+- No API behavior, search logic, or data schemas
+- No UI styling changes
+- No business logic modifications
+- No new database tables or edge functions
+- Snapshot buttons are small, unobtrusive, and easily removable
 
