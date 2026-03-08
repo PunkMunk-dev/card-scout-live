@@ -68,18 +68,28 @@ const GRADER_PATTERNS: { regex: RegExp; grader: string; gradeGroup: number }[] =
   { regex: /\bACE\s*(\d+\.?\d*)\b/i, grader: 'ACE', gradeGroup: 1 },
 ];
 
-// Parallel/variation keywords
-const PARALLEL_KEYWORDS = [
+// Multi-word parallels first (longest match wins), then single-word
+const MULTI_WORD_PARALLELS = [
+  'red ice', 'blue ice', 'green ice', 'cracked ice',
+  'fast break exclusive', 'fast break', 'first off the line', 'fotl',
+  'color blast', 'case hit', 'tie-dye',
+  'courtside level', 'club level', 'field level', 'premier level',
+  'concourse level', 'mezzanine level',
+];
+
+const SINGLE_WORD_PARALLELS = [
   'silver', 'gold', 'bronze', 'ruby', 'sapphire', 'emerald', 'diamond',
   'red', 'blue', 'green', 'orange', 'purple', 'pink', 'black', 'white',
-  'ice', 'camo', 'holo', 'holographic', 'shimmer', 'scope', 'lazer',
-  'mojo', 'refractor', 'xfractor', 'wave', 'hyper', 'neon', 'cracked ice',
-  'tie-dye', 'disco', 'galaxy', 'nebula', 'cosmic', 'atomic',
+  'ice', 'camo', 'holo', 'holographic', 'shimmer', 'scope', 'lazer', 'laser',
+  'mojo', 'refractor', 'xfractor', 'wave', 'hyper', 'neon',
+  'disco', 'galaxy', 'nebula', 'cosmic', 'atomic', 'sparkle',
   'peacock', 'tiger', 'leopard', 'zebra', 'snakeskin', 'marble',
-  'pulsar', 'velocity', 'fast break', 'courtside', 'fotl',
-  'first off the line', 'mega', 'retail', 'hobby', 'choice',
-  'color blast', 'downtown', 'case hit', 'ssp', 'sp',
-  'numbered', '/10', '/25', '/35', '/49', '/50', '/75', '/99',
+  'pulsar', 'velocity', 'mega', 'retail', 'hobby', 'choice',
+  'ssp', 'sp',
+];
+
+const NUMBERED_PARALLELS = [
+  '/10', '/25', '/35', '/49', '/50', '/75', '/99',
   '/100', '/149', '/150', '/199', '/200', '/249', '/250', '/299', '/300',
   '/399', '/499', '/500', '/999',
 ];
@@ -152,27 +162,32 @@ function extractGrading(title: string): { grader: string | null; grade: string |
 
 function extractParallel(title: string): string | null {
   const titleLower = title.toLowerCase();
+
+  // 1. Numbered pattern with optional color prefix
   const numberedMatch = titleLower.match(/\/(\d+)\b/);
   if (numberedMatch) {
     const beforeSlash = titleLower.substring(0, titleLower.indexOf('/' + numberedMatch[1]));
     const colorMatch = beforeSlash.match(/(\w+)\s*$/);
     if (colorMatch) {
       const color = colorMatch[1];
-      if (PARALLEL_KEYWORDS.some(k => k.toLowerCase() === color)) {
+      if (SINGLE_WORD_PARALLELS.some(k => k === color)) {
         return `${color} /${numberedMatch[1]}`;
       }
     }
     return `/${numberedMatch[1]}`;
   }
 
-  const found: string[] = [];
-  for (const kw of PARALLEL_KEYWORDS) {
-    if (kw.startsWith('/')) continue;
-    if (titleLower.includes(kw.toLowerCase())) {
-      found.push(kw);
-    }
+  // 2. Multi-word parallels first (longest match wins)
+  for (const mw of MULTI_WORD_PARALLELS) {
+    if (titleLower.includes(mw)) return mw;
   }
-  return found.length > 0 ? found[0] : null;
+
+  // 3. Single-word parallels
+  for (const sw of SINGLE_WORD_PARALLELS) {
+    if (titleLower.includes(sw)) return sw;
+  }
+
+  return null;
 }
 
 function extractFlags(title: string): { rookie: boolean; autograph: boolean; memorabilia: boolean } {
@@ -213,12 +228,12 @@ function computeConfidence(fields: NormalizedCard): NormalizedCard['confidence']
   if (fields.player_name) score += 2;
   if (fields.year) score += 1;
   if (fields.brand) score += 1;
-  if (fields.card_number) score += 2;
+  if (fields.card_number) score += 3; // Heavy weight for card number
   if (fields.set_name) score += 1;
 
-  if (score >= 6) return 'exact';
-  if (score >= 4) return 'high';
-  if (score >= 2) return 'medium';
+  if (score >= 7) return 'exact';
+  if (score >= 5) return 'high';
+  if (score >= 3) return 'medium';
   return 'low';
 }
 
@@ -266,6 +281,30 @@ export function normalizeCardTitle(
 }
 
 /**
+ * Generate a human-readable match reason for a comp.
+ */
+export function generateMatchReason(
+  confidence: string,
+  fields: { player: boolean; year: boolean; brand: boolean; cardNum: boolean },
+  excluded: boolean,
+  excludeReason?: string
+): string {
+  if (excluded && excludeReason) return `Excluded: ${excludeReason}`;
+  if (excluded) return 'Excluded: filtered by junk rules';
+
+  const matched: string[] = [];
+  if (fields.player) matched.push('player');
+  if (fields.year) matched.push('year');
+  if (fields.brand) matched.push('brand');
+  if (fields.cardNum) matched.push('card#');
+
+  if (confidence === 'exact') return `Exact: ${matched.join(' + ')} match`;
+  if (confidence === 'high') return `Broad: ${matched.join(' + ')} match${!fields.cardNum ? ', missing card#' : ''}`;
+  if (confidence === 'medium') return `Low confidence: ${matched.join(' + ')} only`;
+  return `Insufficient: only ${matched.join(' + ')} matched`;
+}
+
+/**
  * Expanded exclusion list for junk filtering.
  */
 const EXCLUDE_TERMS = [
@@ -281,17 +320,24 @@ const EXCLUDE_TERMS = [
 
 /**
  * Check if a title should be excluded from sold comps.
+ * Returns the reason if excluded, null otherwise.
+ */
+export function getExcludeReason(title: string): string | null {
+  const titleLower = title.toLowerCase();
+  for (const t of EXCLUDE_TERMS) {
+    if (titleLower.includes(t)) return `title contains '${t}'`;
+  }
+  if (/\b\d+\s*cards?\b/i.test(title)) return 'multi-card listing';
+  if (/\b(?:damaged|poor|creased|torn|water\s*damage|bent|trimmed|miscut|off[- ]?center)\b/i.test(title)) return 'damaged condition';
+  if (/^\s*(card|trading card|sports card)\s*$/i.test(title.trim())) return 'generic title';
+  return null;
+}
+
+/**
+ * Check if a title should be excluded from sold comps.
  */
 export function shouldExcludeFromComps(title: string): boolean {
-  const titleLower = title.toLowerCase();
-  if (EXCLUDE_TERMS.some(t => titleLower.includes(t))) return true;
-  // Multi-card patterns
-  if (/\b\d+\s*cards?\b/i.test(title)) return true;
-  // Damaged condition
-  if (/\b(?:damaged|poor|creased|torn|water\s*damage|bent|trimmed|miscut|off[- ]?center)\b/i.test(title)) return true;
-  // Generic "card" only titles (too ambiguous)
-  if (/^\s*(card|trading card|sports card)\s*$/i.test(title.trim())) return true;
-  return false;
+  return getExcludeReason(title) !== null;
 }
 
 // Re-export brand synonyms for edge function use

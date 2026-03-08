@@ -9,6 +9,8 @@ import { MarketIntelligencePanel } from './MarketIntelligencePanel';
 import { RoiCalculator } from './RoiCalculator';
 import { buildEbaySoldPsa10Url, buildGemRateUrl } from '@/lib/sportsCardsProUrl';
 import { cleanListingTitle } from '@/lib/cleanTitle';
+import { computeOpportunityScore } from '@/lib/opportunityScore';
+import { useCardMarketMetrics } from '@/hooks/useCardMarketMetrics';
 import type { EbayListing } from '@/types/sportsEbay';
 
 const GRADING_COST = 25;
@@ -18,6 +20,7 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
   const [copied, setCopied] = useState(false);
   const [imageSrc, setImageSrc] = useState(listing.imageUrl);
   const [imageError, setImageError] = useState(false);
+  const { metrics } = useCardMarketMetrics();
 
   const isBuyItNow = listing.buyingOptions?.includes('FIXED_PRICE');
   const isAuction = listing.buyingOptions?.includes('AUCTION');
@@ -34,6 +37,9 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
   const soldComps = listing.psa10SoldComps ?? [];
   const canCalcProfit = isBuyItNow && soldMarketValue !== null && listing.price !== null;
   const expectedProfit = canCalcProfit ? soldMarketValue - listing.price! - GRADING_COST : null;
+
+  // Opportunity score from market metrics
+  const opportunityScore = computeOpportunityScore(listing.price, metrics);
 
   const { url: ebaySoldUrl } = buildEbaySoldPsa10Url({ playerName: listing.searchContext?.playerName || '', brand: listing.searchContext?.brand, year: listing.searchContext?.year, traits: listing.searchContext?.traits, title: listing.title });
   const { url: gemRateUrl } = buildGemRateUrl({ playerName: listing.searchContext?.playerName || '', brand: listing.searchContext?.brand, year: listing.searchContext?.year, traits: listing.searchContext?.traits, title: listing.title });
@@ -82,6 +88,32 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
                 <span className={cn("font-semibold tabular-nums", expectedProfit >= 0 ? "text-green-500" : "text-red-500")}>{expectedProfit >= 0 ? '+' : ''}${expectedProfit.toFixed(0)}</span>
               </div>
             )}
+
+            {/* Opportunity Score Badge */}
+            {!opportunityScore.gated ? (
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: `${opportunityScore.color}20`, color: opportunityScore.color }}>
+                    {opportunityScore.label}
+                  </span>
+                  {opportunityScore.modeledRoi !== null && (
+                    <span className="tabular-nums font-medium text-[10px]" style={{ color: opportunityScore.color }}>
+                      {opportunityScore.modeledRoi >= 0 ? '+' : ''}{opportunityScore.modeledRoi.toFixed(0)}% ROI
+                    </span>
+                  )}
+                </div>
+                {opportunityScore.upsideDollars !== null && (
+                  <span className="tabular-nums text-[10px] font-medium" style={{ color: opportunityScore.color }}>
+                    {opportunityScore.upsideDollars >= 0 ? '+' : ''}${opportunityScore.upsideDollars.toFixed(0)} upside
+                  </span>
+                )}
+              </div>
+            ) : metrics ? (
+              <div className="text-[10px] italic" style={{ color: 'var(--om-text-3)' }}>
+                Limited data — no score
+              </div>
+            ) : null}
+
             <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid var(--om-divider)' }}>
               <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); await navigator.clipboard.writeText(cleanListingTitle(listing.title)); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 className="om-btn w-8 h-8 flex items-center justify-center rounded-md transition-all"

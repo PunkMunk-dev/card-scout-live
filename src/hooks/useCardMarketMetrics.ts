@@ -14,6 +14,7 @@ export interface CardMarketMetrics {
 }
 
 export interface SoldComp {
+  id?: string;
   title: string;
   sold_price: number;
   shipping_price?: number;
@@ -26,6 +27,7 @@ export interface SoldComp {
   card_identity_key: string;
   url?: string;
   excluded: boolean;
+  match_reason?: string;
 }
 
 // Minimum comp thresholds
@@ -46,6 +48,14 @@ export function getConfidenceLevel(metrics: CardMarketMetrics | null): Confidenc
 // Simple in-memory cache
 const metricsCache = new Map<string, { data: CardMarketMetrics | null; comps: SoldComp[]; fetchedAt: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
+
+export function invalidateMetricsCache(key?: string) {
+  if (key) {
+    metricsCache.delete(key);
+  } else {
+    metricsCache.clear();
+  }
+}
 
 export function useCardMarketMetrics() {
   const [metrics, setMetrics] = useState<CardMarketMetrics | null>(null);
@@ -100,6 +110,7 @@ export function useCardMarketMetrics() {
           .limit(50);
 
         const fetchedComps: SoldComp[] = (salesData || []).map((s: any) => ({
+          id: s.id,
           title: s.title || '',
           sold_price: s.sold_price || 0,
           shipping_price: s.shipping_price || 0,
@@ -111,7 +122,7 @@ export function useCardMarketMetrics() {
           confidence_score: s.confidence_score,
           card_identity_key: s.card_identity_key,
           url: s.url,
-          excluded: false,
+          excluded: s.confidence_score === 'excluded',
         }));
 
         metricsCache.set(key, { data: result, comps: fetchedComps, fetchedAt: Date.now() });
@@ -136,9 +147,9 @@ export function useCardMarketMetrics() {
         (m: any) => m.card_identity_key === key
       );
 
-      const returnedComps: SoldComp[] = (ingestData?.comps || []).filter(
-        (c: any) => c.card_identity_key === key
-      );
+      const returnedComps: SoldComp[] = (ingestData?.comps || [])
+        .filter((c: any) => c.card_identity_key === key)
+        .map((c: any) => ({ ...c, id: c.id || undefined }));
 
       if (matchingMetrics) {
         const result: CardMarketMetrics = {
@@ -171,5 +182,14 @@ export function useCardMarketMetrics() {
     }
   }, []);
 
-  return { metrics, comps, isLoading, error, fetchMetrics };
+  const refetch = useCallback(async (
+    title: string,
+    context?: { playerName?: string; brand?: string; year?: string }
+  ) => {
+    const normalized = normalizeCardTitle(title, context);
+    invalidateMetricsCache(normalized.card_identity_key);
+    return fetchMetrics(title, context);
+  }, [fetchMetrics]);
+
+  return { metrics, comps, isLoading, error, fetchMetrics, refetch };
 }
