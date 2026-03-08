@@ -657,8 +657,9 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   // 29 — Cloud Ring: cloud inside a thin circular ring, arcs breaking through
   variants[29] = (
     <>
+      {cloudDefs}
       <circle cx={cx} cy={cy} r={r * 0.95} fill="none" stroke={greyStroke} strokeWidth={sw * 0.6} opacity="0.3" />
-      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {signalArcs(greyStroke, sw, [0.7, 0.5, 0.35])}
     </>
   );
