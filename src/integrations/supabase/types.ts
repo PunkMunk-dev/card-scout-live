@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_market_metrics: {
+        Row: {
+          card_identity_key: string
+          id: string
+          population: number | null
+          psa10_comp_count: number | null
+          psa10_median_price: number | null
+          raw_comp_count: number | null
+          raw_median_price: number | null
+          spread_amount: number | null
+          spread_percent: number | null
+          updated_at: string
+        }
+        Insert: {
+          card_identity_key: string
+          id?: string
+          population?: number | null
+          psa10_comp_count?: number | null
+          psa10_median_price?: number | null
+          raw_comp_count?: number | null
+          raw_median_price?: number | null
+          spread_amount?: number | null
+          spread_percent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          card_identity_key?: string
+          id?: string
+          population?: number | null
+          psa10_comp_count?: number | null
+          psa10_median_price?: number | null
+          raw_comp_count?: number | null
+          raw_median_price?: number | null
+          spread_amount?: number | null
+          spread_percent?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_market_metrics_card_identity_key_fkey"
+            columns: ["card_identity_key"]
+            isOneToOne: true
+            referencedRelation: "cards_normalized"
+            referencedColumns: ["card_identity_key"]
+          },
+        ]
+      }
+      cards_normalized: {
+        Row: {
+          autograph_flag: boolean
+          brand: string | null
+          card_identity_key: string
+          card_number: string | null
+          category: string | null
+          character_name: string | null
+          created_at: string
+          id: string
+          memorabilia_flag: boolean
+          parallel: string | null
+          player_name: string | null
+          rookie_flag: boolean
+          set_name: string | null
+          sport: string
+          subset: string | null
+          updated_at: string
+          variation: string | null
+          year: string | null
+        }
+        Insert: {
+          autograph_flag?: boolean
+          brand?: string | null
+          card_identity_key: string
+          card_number?: string | null
+          category?: string | null
+          character_name?: string | null
+          created_at?: string
+          id?: string
+          memorabilia_flag?: boolean
+          parallel?: string | null
+          player_name?: string | null
+          rookie_flag?: boolean
+          set_name?: string | null
+          sport: string
+          subset?: string | null
+          updated_at?: string
+          variation?: string | null
+          year?: string | null
+        }
+        Update: {
+          autograph_flag?: boolean
+          brand?: string | null
+          card_identity_key?: string
+          card_number?: string | null
+          category?: string | null
+          character_name?: string | null
+          created_at?: string
+          id?: string
+          memorabilia_flag?: boolean
+          parallel?: string | null
+          player_name?: string | null
+          rookie_flag?: boolean
+          set_name?: string | null
+          sport?: string
+          subset?: string | null
+          updated_at?: string
+          variation?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           id: string
@@ -55,6 +165,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ruleset_versions"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      psa_population: {
+        Row: {
+          card_identity_key: string
+          id: string
+          last_synced: string | null
+          population_count: number | null
+          psa_grade: string | null
+          psa_set: string | null
+          psa_subject: string | null
+        }
+        Insert: {
+          card_identity_key: string
+          id?: string
+          last_synced?: string | null
+          population_count?: number | null
+          psa_grade?: string | null
+          psa_set?: string | null
+          psa_subject?: string | null
+        }
+        Update: {
+          card_identity_key?: string
+          id?: string
+          last_synced?: string | null
+          population_count?: number | null
+          psa_grade?: string | null
+          psa_set?: string | null
+          psa_subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psa_population_card_identity_key_fkey"
+            columns: ["card_identity_key"]
+            isOneToOne: false
+            referencedRelation: "cards_normalized"
+            referencedColumns: ["card_identity_key"]
           },
         ]
       }
@@ -259,6 +407,71 @@ export type Database = {
           version?: string
         }
         Relationships: []
+      }
+      sales_history: {
+        Row: {
+          card_identity_key: string
+          confidence_score: string
+          created_at: string
+          grade: string | null
+          grader: string | null
+          id: string
+          image_url: string | null
+          raw_or_graded: string
+          shipping_price: number | null
+          sold_at: string | null
+          sold_price: number | null
+          source: string
+          source_sale_id: string | null
+          title: string | null
+          total_price: number | null
+          url: string | null
+        }
+        Insert: {
+          card_identity_key: string
+          confidence_score?: string
+          created_at?: string
+          grade?: string | null
+          grader?: string | null
+          id?: string
+          image_url?: string | null
+          raw_or_graded?: string
+          shipping_price?: number | null
+          sold_at?: string | null
+          sold_price?: number | null
+          source?: string
+          source_sale_id?: string | null
+          title?: string | null
+          total_price?: number | null
+          url?: string | null
+        }
+        Update: {
+          card_identity_key?: string
+          confidence_score?: string
+          created_at?: string
+          grade?: string | null
+          grader?: string | null
+          id?: string
+          image_url?: string | null
+          raw_or_graded?: string
+          shipping_price?: number | null
+          sold_at?: string | null
+          sold_price?: number | null
+          source?: string
+          source_sale_id?: string | null
+          title?: string | null
+          total_price?: number | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_history_card_identity_key_fkey"
+            columns: ["card_identity_key"]
+            isOneToOne: false
+            referencedRelation: "cards_normalized"
+            referencedColumns: ["card_identity_key"]
+          },
+        ]
       }
       seller_blacklist: {
         Row: {

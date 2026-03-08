@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
 import { GemRateBadge } from './GemRateBadge';
 import { WatchlistStar } from './WatchlistStar';
+import { MarketIntelligencePanel } from './MarketIntelligencePanel';
+import { RoiCalculator } from './RoiCalculator';
 import { buildEbaySoldPsa10Url, buildGemRateUrl } from '@/lib/sportsCardsProUrl';
 import { cleanListingTitle } from '@/lib/cleanTitle';
 import type { EbayListing } from '@/types/sportsEbay';
@@ -86,6 +88,12 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
                 style={{ background: 'var(--om-bg-3)', color: 'var(--om-text-2)' }}>
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </button>
+            </div>
+            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <MarketIntelligencePanel title={listing.title} searchContext={listing.searchContext} />
+              {soldMarketValue !== null && (
+                <RoiCalculator psa10MedianPrice={soldMarketValue} />
+              )}
             </div>
           </div>
         </a>
