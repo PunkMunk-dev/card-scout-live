@@ -596,8 +596,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
       <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {[0.3, 0.5, 0.7].map((scale, i) => {
         const arcR = r * scale;
-        const startAngle = -70 * (Math.PI / 180);
-        const endAngle = 20 * (Math.PI / 180);
+        const startAngle = -80 * (Math.PI / 180);
+        const endAngle = 30 * (Math.PI / 180);
         const x1 = signalCenter.x + arcR * Math.cos(startAngle);
         const y1 = signalCenter.y + arcR * Math.sin(startAngle);
         const x2 = signalCenter.x + arcR * Math.cos(endAngle);
