@@ -119,7 +119,7 @@ function CompGroup({ label, comps, dimmed, onMutated }: { label: string; comps: 
 
 export function MarketIntelligencePanel({ title, searchContext }: MarketIntelligencePanelProps) {
   const { metrics, comps, isLoading, error, fetchMetrics, refetch } = useCardMarketMetrics();
-  const { certData, populationData, isLoading: psaLoading, fetchPsaData } = usePsaCertData();
+  const { certData, populationData, syncStatus, isLoading: psaLoading, fetchPsaData } = usePsaCertData();
   const fetchedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
