@@ -1,5 +1,5 @@
 interface OmniOrbProps {
-  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25;
+  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30;
   size?: number;
   className?: string;
   mono?: boolean;
@@ -533,6 +533,136 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
             ))}
           </g>
         </g>
+      </>
+    );
+  })();
+
+  // Cloud-Signal Series (26–30) — greyscale, theme-aware via mono
+  // Cloud path builder relative to cx/cy/r
+  const cloudPath = (() => {
+    const cw = r * 0.9;   // cloud width
+    const ch = r * 0.55;  // cloud height
+    const baseY = cy + r * 0.15;
+    const leftX = cx - cw * 0.5;
+    const rightX = cx + cw * 0.5;
+    return `M${leftX} ${baseY}
+      Q${leftX} ${baseY - ch * 0.6} ${cx - cw * 0.15} ${baseY - ch * 0.7}
+      Q${cx - cw * 0.05} ${baseY - ch * 1.2} ${cx + cw * 0.1} ${baseY - ch * 0.8}
+      Q${cx + cw * 0.35} ${baseY - ch * 1.1} ${cx + cw * 0.4} ${baseY - ch * 0.5}
+      Q${rightX + cw * 0.05} ${baseY - ch * 0.3} ${rightX} ${baseY}
+      Z`;
+  })();
+
+  // Signal arcs emanating from top-right of cloud
+  const signalCenter = { x: cx + r * 0.25, y: cy - r * 0.25 };
+  const signalArcs = (stroke: string, sw: number, opacities: number[]) =>
+    [0.28, 0.45, 0.62].map((scale, i) => {
+      const arcR = r * scale;
+      const startAngle = -70 * (Math.PI / 180);
+      const endAngle = 20 * (Math.PI / 180);
+      const x1 = signalCenter.x + arcR * Math.cos(startAngle);
+      const y1 = signalCenter.y + arcR * Math.sin(startAngle);
+      const x2 = signalCenter.x + arcR * Math.cos(endAngle);
+      const y2 = signalCenter.y + arcR * Math.sin(endAngle);
+      return (
+        <path
+          key={i}
+          d={`M${x1} ${y1} A${arcR} ${arcR} 0 0 1 ${x2} ${y2}`}
+          fill="none"
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinecap="round"
+          opacity={opacities[i] ?? 0.7}
+        />
+      );
+    });
+
+  const greyStroke = mono ? accent1 : '#9CA3AF'; // white in mono/dark, grey otherwise
+  const greyFill = mono ? accent1 : '#6B7280';
+  const sw = size * 0.02;
+
+  // 26 — Cloud Core: minimal cloud outline + 3 signal arcs, stroke only
+  variants[26] = (
+    <>
+      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      {signalArcs(greyStroke, sw, [0.8, 0.6, 0.4])}
+    </>
+  );
+
+  // 27 — Cloud Pulse: cloud + animated pulsing signal waves
+  variants[27] = (
+    <>
+      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      {[0.3, 0.5, 0.7].map((scale, i) => {
+        const arcR = r * scale;
+        const startAngle = -70 * (Math.PI / 180);
+        const endAngle = 20 * (Math.PI / 180);
+        const x1 = signalCenter.x + arcR * Math.cos(startAngle);
+        const y1 = signalCenter.y + arcR * Math.sin(startAngle);
+        const x2 = signalCenter.x + arcR * Math.cos(endAngle);
+        const y2 = signalCenter.y + arcR * Math.sin(endAngle);
+        return (
+          <path
+            key={i}
+            d={`M${x1} ${y1} A${arcR} ${arcR} 0 0 1 ${x2} ${y2}`}
+            fill="none"
+            stroke={greyStroke}
+            strokeWidth={sw}
+            strokeLinecap="round"
+            opacity="0"
+          >
+            <animate attributeName="opacity" values="0.7;0" dur="2.5s" begin={`${i * 0.6}s`} repeatCount="indefinite" />
+          </path>
+        );
+      })}
+    </>
+  );
+
+  // 28 — Cloud Lens: cloud + magnifying glass integrated at signal origin
+  variants[28] = (() => {
+    const lensR = r * 0.13;
+    const lensAngle = 45 * (Math.PI / 180);
+    const lx = signalCenter.x + lensR * Math.cos(lensAngle);
+    const ly = signalCenter.y + lensR * Math.sin(lensAngle);
+    const lx2 = signalCenter.x + (lensR + r * 0.2) * Math.cos(lensAngle);
+    const ly2 = signalCenter.y + (lensR + r * 0.2) * Math.sin(lensAngle);
+    return (
+      <>
+        <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+        {signalArcs(greyStroke, sw * 0.7, [0.5, 0.35, 0.2])}
+        <circle cx={signalCenter.x} cy={signalCenter.y} r={lensR} fill="none" stroke={greyStroke} strokeWidth={sw * 1.2} opacity="0.9" />
+        <line x1={lx} y1={ly} x2={lx2} y2={ly2} stroke={greyStroke} strokeWidth={sw * 1.3} strokeLinecap="round" opacity="0.8" />
+      </>
+    );
+  })();
+
+  // 29 — Cloud Ring: cloud inside a thin circular ring, arcs breaking through
+  variants[29] = (
+    <>
+      <circle cx={cx} cy={cy} r={r * 0.95} fill="none" stroke={greyStroke} strokeWidth={sw * 0.6} opacity="0.3" />
+      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      {signalArcs(greyStroke, sw, [0.7, 0.5, 0.35])}
+    </>
+  );
+
+  // 30 — Cloud Node: cloud + signal arcs with dots at tips
+  variants[30] = (() => {
+    const nodeR = size * 0.025;
+    const nodes = [0.28, 0.45, 0.62].map((scale) => {
+      const arcR = r * scale;
+      const endAngle = 20 * (Math.PI / 180);
+      return {
+        x: signalCenter.x + arcR * Math.cos(endAngle),
+        y: signalCenter.y + arcR * Math.sin(endAngle),
+      };
+    });
+    return (
+      <>
+        <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+        {signalArcs(greyStroke, sw, [0.7, 0.55, 0.4])}
+        {nodes.map((n, i) => (
+          <circle key={i} cx={n.x} cy={n.y} r={nodeR} fill={greyFill} opacity={0.9 - i * 0.15} />
+        ))}
       </>
     );
   })();

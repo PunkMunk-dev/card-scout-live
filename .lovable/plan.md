@@ -1,41 +1,118 @@
 
 
-## Plan: Create 5 Cloud-Signal Logo Variants
+## Plan: UI Audit Export Page + Snapshot System
 
-Inspired by the uploaded cloud + signal-waves icon, I'll create 5 new SVG logo variants (26–30) that blend the cloud-signal motif with OmniMarket's universal search identity. All greyscale, theme-aware for both light and dark mode.
+This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
 
-### The 5 Variants
+### New Files
 
-| # | Name | Description |
-|---|------|-------------|
-| 26 | **Cloud Core** | Minimal cloud outline with 3 concentric signal arcs emanating from top-right. Clean stroke-only. |
-| 27 | **Cloud Pulse** | Cloud with animated pulsing signal waves radiating outward. Subtle motion. |
-| 28 | **Cloud Lens** | Cloud shape with a small magnifying glass integrated where the signal meets the cloud — tying search into the mark. |
-| 29 | **Cloud Ring** | Cloud centered inside a thin circular ring with signal arcs breaking through the ring boundary. |
-| 30 | **Cloud Node** | Cloud with 3 small dots at the signal-arc tips, suggesting connected marketplace nodes. |
+**1. `src/lib/uiAuditData.ts`** — Static audit data module
+- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
+  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
+  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
+  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
+  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
+  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
+- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
+- All secrets/tokens replaced with `***REDACTED***`
 
-### Theme Handling
+**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
+- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
+- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
+- `exportSnapshotsJSON()` — serializes to downloadable JSON
 
-Each variant will detect `mono` prop state and use:
-- **Dark mode (default)**: white strokes/fills on transparent, with subtle white opacity layers
-- **Light mode**: black/dark-grey strokes on transparent
+**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
+- Props: `appId: string`, `getState: () => SnapshotPayload`
+- Renders a small pill button ("📸 Snapshot") in top-right area
+- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
 
-The existing `mono` prop already switches palettes — these variants will use `accent1` (white in mono, teal otherwise) and a new `darkStroke` derived from variant context for light-mode readability.
+**4. `src/pages/UIAudit.tsx`** — The audit page
+- "How to Use" card at top (4-step instructions)
+- Sections A–E rendered from `uiAuditData.ts` with code blocks
+- "Snapshots" section: lists snapshots grouped by app, with timestamps
+- Sticky footer bar with:
+  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
+  - "Download .md" — downloads as `ui-audit-report.md`
+  - "Copy Snapshots JSON" — copies just snapshots
+  - "Download snapshots.json"
+  - "Clear Snapshots" — with confirm dialog
 
-### Files to Change
+### Modified Files
 
-1. **`src/components/branding/OmniOrb.tsx`**
-   - Extend the `variant` type to include `26 | 27 | 28 | 29 | 30`
-   - Add 5 new variant entries using cloud + signal SVG geometry
-   - Cloud shape: rounded path with flat bottom, signal arcs: 3 concentric quarter-circle arcs at top-right
-   - Use `currentColor` approach for automatic theme adaptation via CSS
+**5. `src/App.tsx`** — Add route
+- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
+- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
+- No nav entry added (dev-only URL)
 
-2. **`src/pages/LogoShowcase.tsx`**
-   - Add a second showcase section titled "Cloud Signal Series"
-   - Display variants 26–30 with dark card + light card previews at 32px, 64px, 120px
-   - Same layout pattern as existing RENDITIONS grid
+**6. `src/pages/TcgLab.tsx`** — Add snapshot button
+- Import `CaptureSnapshotButton`
+- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
 
-### SVG Geometry Approach
+**7. `src/pages/SportsLab.tsx`** — Add snapshot button
+- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
 
-The cloud path will be computed relative to `cx`, `cy`, `r` (same as existing variants) so it scales properly at all sizes. Signal arcs will be 3 quarter-circle strokes at roughly 120°–30° arc, offset to the upper-right of the cloud body.
+**8. `src/pages/TopRoi.tsx`** — Add snapshot button
+- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
+
+**9. `src/pages/Index.tsx`** — Add snapshot button
+- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
+
+### Snapshot Payload Shape
+
+```text
+{
+  appId: "tcg" | "sports" | "roi" | "search",
+  timestamp: ISO string,
+  route: window.location.pathname + search,
+  searchInputs: { ... },
+  filters: { ... },
+  pagination: { ... },
+  loadingFlags: { ... },
+  errorState: null | { message },
+  resultsSchema: { itemKeys: string[], count: number },
+  layoutMode: { ... }
+}
+```
+
+### Export Format
+
+The "Copy All" output is a single markdown document:
+
+```text
+# UI Audit Report — OmniMarket
+Generated: {date}
+
+## A) Routing + Shell
+### Detected Components
+- ...
+### Code Excerpts
+\`\`\`tsx
+// App.tsx route definitions (redacted)
+...
+\`\`\`
+
+## B) App Entry Pages
+...
+
+## C) Global State + Data Plumbing
+...
+
+## D) Auth / Gating
+(Not implemented — skipped)
+
+## E) Styling / Design Tokens
+...
+
+## Snapshots
+\`\`\`json
+[...]
+\`\`\`
+```
+
+### What This Does NOT Change
+- No API behavior, search logic, or data schemas
+- No UI styling changes
+- No business logic modifications
+- No new database tables or edge functions
+- Snapshot buttons are small, unobtrusive, and easily removable
 
