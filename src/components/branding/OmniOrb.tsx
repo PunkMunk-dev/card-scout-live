@@ -1,5 +1,5 @@
 interface OmniOrbProps {
-  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+  variant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
   size?: number;
   className?: string;
   mono?: boolean;
@@ -260,6 +260,106 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
       </>
     ),
   };
+
+  // Hex-knot geometry — 3 interlocking ribbon bands at 120° intervals
+  const hexKnot = (() => {
+    const s = r * 0.95; // scale to fit
+    // 6 vertices of outer hex
+    const hv = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return [cx + s * Math.cos(a), cy + s * Math.sin(a)] as [number, number];
+    });
+    // 6 inner hex vertices (for ribbon width)
+    const ih = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return [cx + s * 0.5 * Math.cos(a), cy + s * 0.5 * Math.sin(a)] as [number, number];
+    });
+    // 3 ribbon bands: each connects two opposite edges with a parallelogram shape
+    const bands = [
+      // Band 0: top-right to bottom-left
+      [hv[0], hv[1], ih[1], ih[4], hv[4], hv[3], ih[3], ih[0]],
+      // Band 1: right to left
+      [hv[1], hv[2], ih[2], ih[5], hv[5], hv[4], ih[4], ih[1]],
+      // Band 2: bottom-right to top-left
+      [hv[2], hv[3], ih[3], ih[0], hv[0], hv[5], ih[5], ih[2]],
+    ];
+    return bands.map(pts =>
+      `M${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)} ` +
+      pts.slice(1).map(p => `L${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' ') + 'Z'
+    );
+  })();
+
+  // 16: Mono White — white strokes on transparent
+  variants[16] = (
+    <>
+      {hexKnot.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke="white" strokeWidth={size * 0.02} strokeLinejoin="round" opacity="0.9" />
+      ))}
+    </>
+  );
+
+  // 17: Teal→Blue gradient strokes
+  variants[17] = (
+    <>
+      <defs>
+        <linearGradient id={`${id}-hex-grad`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00E0C6" />
+          <stop offset="100%" stopColor="#3B82F6" />
+        </linearGradient>
+      </defs>
+      {hexKnot.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke={`url(#${id}-hex-grad)`} strokeWidth={size * 0.02} strokeLinejoin="round" opacity="0.9" />
+      ))}
+    </>
+  );
+
+  // 18: Glow — white strokes with teal glow behind
+  variants[18] = (
+    <>
+      <defs>
+        <filter id={`${id}-hex-glow`}>
+          <feGaussianBlur stdDeviation={size * 0.04} result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      {hexKnot.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke="#00E0C6" strokeWidth={size * 0.035} strokeLinejoin="round" opacity="0.35" filter={`url(#${id}-hex-glow)`} />
+      ))}
+      {hexKnot.map((d, i) => (
+        <path key={`f-${i}`} d={d} fill="none" stroke="white" strokeWidth={size * 0.02} strokeLinejoin="round" opacity="0.9" />
+      ))}
+    </>
+  );
+
+  // 19: Duotone — alternating teal and blue bands
+  const duoColors = ['#00E0C6', '#3B82F6', '#00E0C6'];
+  variants[19] = (
+    <>
+      {hexKnot.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke={duoColors[i]} strokeWidth={size * 0.02} strokeLinejoin="round" opacity="0.9" />
+      ))}
+    </>
+  );
+
+  // 20: Filled hex bg with white knot
+  variants[20] = (() => {
+    const s2 = r * 1.05;
+    const bgHex = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return `${(cx + s2 * Math.cos(a)).toFixed(2)},${(cy + s2 * Math.sin(a)).toFixed(2)}`;
+    }).join(' ');
+    return (
+      <>
+        <polygon points={bgHex} fill="#0B0B0C" />
+        {hexKnot.map((d, i) => (
+          <path key={i} d={d} fill="none" stroke="white" strokeWidth={size * 0.02} strokeLinejoin="round" opacity="0.9" />
+        ))}
+      </>
+    );
+  })();
 
   return (
     <svg
