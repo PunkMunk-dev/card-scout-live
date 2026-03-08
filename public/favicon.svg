@@ -1,16 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="128" fill="#0B0B0C"/>
-  <defs>
-    <radialGradient id="g" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="b"><feGaussianBlur stdDeviation="16"/></filter>
-  </defs>
-  <circle cx="256" cy="256" r="180" fill="url(#g)" filter="url(#b)"/>
-  <circle cx="256" cy="256" r="164" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.35"/>
-  <circle cx="256" cy="256" r="128" fill="none" stroke="#A0A0A0" stroke-width="2.5" opacity="0.45"/>
-  <circle cx="256" cy="256" r="91" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.55"/>
-  <circle cx="256" cy="256" r="55" fill="none" stroke="#A0A0A0" stroke-width="2.5" opacity="0.65"/>
-  <circle cx="256" cy="256" r="27" fill="#FFFFFF" opacity="0.8"/>
+  <!-- Puffy cloud — 3 large round bumps -->
+  <path d="
+    M 80 320
+    C 80 280, 100 220, 160 210
+    C 150 140, 220 100, 270 130
+    C 300 80, 390 80, 410 150
+    C 460 160, 480 220, 440 280
+    C 460 320, 440 340, 430 340
+    L 80 340
+    Z
+  " fill="#6FBA2C" stroke="#6FBA2C" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Flat bottom -->
+  <rect x="80" y="310" width="360" height="30" rx="15" fill="#6FBA2C"/>
+  <!-- Eye outer ring -->
+  <circle cx="260" cy="250" r="52" fill="none" stroke="#FFFFFF" stroke-width="14"/>
+  <!-- Eye inner dot -->
+  <circle cx="260" cy="250" r="16" fill="#FFFFFF"/>
 </svg>
