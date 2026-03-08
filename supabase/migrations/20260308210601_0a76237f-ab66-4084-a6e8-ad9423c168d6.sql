@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS sales_history_source_sale_id_unique ON public.sales_history (source, source_sale_id) WHERE source_sale_id IS NOT NULL;
