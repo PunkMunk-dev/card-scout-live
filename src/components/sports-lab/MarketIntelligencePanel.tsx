@@ -204,8 +204,8 @@ export function MarketIntelligencePanel({ title, searchContext }: MarketIntellig
           {/* Spread indicator - only when full confidence */}
           {showSpread && metrics.spread_percent !== null && metrics.spread_percent > 0 && (
             <div className="flex items-center gap-1 mt-1.5 pt-1.5" style={{ borderTop: '1px solid var(--om-divider)' }}>
-              <TrendingUp className="h-3 w-3 text-green-500" />
-              <span className="text-[10px] font-medium text-green-500">
+              <TrendingUp className="h-3 w-3" style={{ color: 'hsl(142 71% 45%)' }} />
+              <span className="text-[10px] font-medium" style={{ color: 'hsl(142 71% 45%)' }}>
                 {metrics.spread_percent >= 200 ? 'High ROI potential' : metrics.spread_percent >= 100 ? 'Good spread' : 'Moderate spread'}
               </span>
             </div>
