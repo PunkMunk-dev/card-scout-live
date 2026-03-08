@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
 import { GemRateBadge } from './GemRateBadge';
 import { WatchlistStar } from './WatchlistStar';
+import { MarketIntelligencePanel } from './MarketIntelligencePanel';
+import { RoiCalculator } from './RoiCalculator';
 import { buildEbaySoldPsa10Url, buildGemRateUrl } from '@/lib/sportsCardsProUrl';
 import { cleanListingTitle } from '@/lib/cleanTitle';
 import type { EbayListing } from '@/types/sportsEbay';
