@@ -600,7 +600,7 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   variants[26] = (
     <>
       {cloudDefs}
-      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {signalArcs(greyStroke, sw, [0.8, 0.6, 0.4])}
     </>
   );
