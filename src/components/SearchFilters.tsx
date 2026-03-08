@@ -17,7 +17,6 @@ export function SearchFilters({ sort, onSortChange }: SearchFiltersProps) {
         <SelectItem value="price_asc">Price: Low-High</SelectItem>
         <SelectItem value="auction_only">Auction</SelectItem>
         <SelectItem value="buy_now_only">Buy It Now</SelectItem>
-        <SelectItem value="ending_soonest">Ending Soonest</SelectItem>
         <SelectItem value="raw">Ungraded</SelectItem>
       </SelectContent>
     </Select>

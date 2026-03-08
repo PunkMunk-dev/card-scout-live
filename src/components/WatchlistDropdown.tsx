@@ -18,9 +18,9 @@ export function WatchlistDropdown({ onSearchItem }: WatchlistDropdownProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 shrink-0">
-          <Star className="h-4 w-4 text-[var(--om-accent)] fill-[var(--om-accent)]" />
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center leading-none">
+        <Button variant="ghost" size="icon" className="relative h-11 w-11 shrink-0">
+          <Star className="h-5 w-5 text-[var(--om-accent)] fill-[var(--om-accent)]" />
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
             {count > 99 ? '99+' : count}
           </span>
         </Button>

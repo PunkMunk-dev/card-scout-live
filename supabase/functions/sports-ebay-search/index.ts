@@ -3,7 +3,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 // ========== IN-MEMORY CACHE ==========
@@ -35,7 +34,6 @@ function getCacheKey(params: EbaySearchParams): string {
     brand: params.brand?.toLowerCase().trim(),
     traits: params.traits?.map(t => t.toLowerCase().trim()).sort(),
     year: params.year,
-    sort: params.sort,
     offset: params.offset,
     pageNumber: params.pageNumber,
   });
@@ -153,7 +151,6 @@ interface EbaySearchParams {
   traits?: string[];
   year?: string;
   freeFormSearch?: boolean;
-  sort?: string;
   offset?: number;
   pageNumber?: number;
 }
@@ -208,14 +205,6 @@ async function searchEbayBrowseApi(params: EbaySearchParams): Promise<Pagination
   url.searchParams.set('limit', String(limit));
   url.searchParams.set('offset', String(offset));
   url.searchParams.set('filter', 'buyingOptions:{FIXED_PRICE|AUCTION}');
-  const browseSortMap: Record<string, string> = {
-    ending_soonest: 'endingSoonest',
-    price_low: 'price',
-    price_high: '-price',
-    best_match: 'bestMatch',
-    newly_listed: 'newlyListed',
-  };
-  url.searchParams.set('sort', browseSortMap[params.sort || ''] || 'newlyListed');
 
   const response = await fetch(url.toString(), {
     method: 'GET',
@@ -302,13 +291,7 @@ async function searchEbayFindingApi(appId: string, params: EbaySearchParams): Pr
   url.searchParams.set('categoryId', '212');
   url.searchParams.set('paginationInput.entriesPerPage', '100');
   url.searchParams.set('paginationInput.pageNumber', String(pageNumber));
-  const findingSortMap: Record<string, string> = {
-    ending_soonest: 'EndTimeSoonest',
-    price_low: 'PricePlusShippingLowest',
-    price_high: 'PricePlusShippingHighest',
-    best_match: 'BestMatch',
-  };
-  url.searchParams.set('sortOrder', findingSortMap[params.sort || ''] || 'StartTimeNewest');
+  url.searchParams.set('sortOrder', 'StartTimeNewest');
   url.searchParams.set('itemFilter(0).name', 'ListingType');
   url.searchParams.set('itemFilter(0).value(0)', 'FixedPrice');
   url.searchParams.set('itemFilter(0).value(1)', 'AuctionWithBIN');
@@ -394,23 +377,16 @@ async function searchEbayFindingApi(appId: string, params: EbaySearchParams): Pr
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
     const EBAY_CLIENT_ID = Deno.env.get('EBAY_CLIENT_ID');
     if (!EBAY_CLIENT_ID) throw new Error('EBAY_CLIENT_ID is not configured');
 
-    const body = await req.json().catch(() => ({}));
-    const playerName = body.playerName || body.query || body.player || body.name || null;
-    if (!playerName) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'playerName is required', listings: [] }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-    const { brand, traits, year, offset, pageNumber, freeFormSearch, sort } = body;
+    const { playerName, brand, traits, year, offset, pageNumber, freeFormSearch } = await req.json();
+    if (!playerName) throw new Error('playerName is required');
 
-    const searchParams: EbaySearchParams = { playerName, brand, traits, year, freeFormSearch, sort, offset, pageNumber };
+    const searchParams: EbaySearchParams = { playerName, brand, traits, year, freeFormSearch, offset, pageNumber };
 
     const cacheKey = getCacheKey(searchParams);
     const cachedEntry = getFromCache(cacheKey);
@@ -449,7 +425,7 @@ serve(async (req) => {
 
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return new Response(JSON.stringify({ success: false, error: error.message, listings: [], rateLimited: true, retryAfter: 60 }), {
+      return new Response(JSON.stringify({ success: false, error: error.message, listings: [], retryAfter: 60 }), {
         status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
       });
     }

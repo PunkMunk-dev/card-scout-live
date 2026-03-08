@@ -9,13 +9,12 @@ interface QuickSearchInputProps {
   placeholder?: string;
   className?: string;
   debounceMs?: number;
-  suggestions?: string[];
 }
 
 const MAX_LENGTH = 200;
 
 export const QuickSearchInput = forwardRef<HTMLDivElement, QuickSearchInputProps>(
-  function QuickSearchInput({ value, onChange, placeholder = "Search any card, e.g. 'Mike Trout topps chrome refractor'", className, debounceMs = 600, suggestions = [] }, ref) {
+  function QuickSearchInput({ value, onChange, placeholder = "Search any card, e.g. 'Mike Trout topps chrome refractor'", className, debounceMs = 600 }, ref) {
     const [localValue, setLocalValue] = useState(value);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -45,17 +44,6 @@ export const QuickSearchInput = forwardRef<HTMLDivElement, QuickSearchInputProps
             style={{ color: 'var(--om-text-2)' }}>
             <X className="h-3.5 w-3.5" />
           </Button>
-        )}
-        {!localValue && suggestions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {suggestions.map((s) => (
-              <button key={s} type="button" onClick={() => { setLocalValue(s); if (debounceRef.current) clearTimeout(debounceRef.current); onChange(s); }}
-                className="om-pill text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors hover:brightness-125"
-                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-2)' }}>
-                {s}
-              </button>
-            ))}
-          </div>
         )}
       </div>
     );

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check, Star } from 'lucide-react';
-import { AuctionCountdownBadge } from '@/components/shared/AuctionCountdownBadge';
+import { Copy, Check, Star, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { EbayListing } from '@/types/tcg';
@@ -43,7 +42,6 @@ export function TerminalCard({ listing }: TerminalCardProps) {
           <img src={listing.image} alt={cleanTitle} className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]" loading="lazy" />
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
           <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-sm">eBay</span>
-          {isAuction && listing.timeRemaining && <AuctionCountdownBadge timeRemaining={listing.timeRemaining} />}
           <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleWatchlist(); }}
@@ -68,6 +66,12 @@ export function TerminalCard({ listing }: TerminalCardProps) {
                   <span className="text-[11px] text-white/50">+${listing.shipping.cost} ship</span>
                 )}
               </div>
+              {isAuction && listing.timeRemaining && (
+                <span className="text-[11px] font-medium text-white/60 flex items-center gap-1">
+                  <Clock className="h-2.5 w-2.5" />
+                  {listing.timeRemaining}
+                </span>
+              )}
             </div>
           </div>
         </div>

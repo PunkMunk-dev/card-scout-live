@@ -12,7 +12,7 @@ import type { SearchFilters } from '@/types/tcg';
 export type PriceRange = 'all' | '10-50' | '50-100' | '100-250' | '250-500' | '500+';
 
 export const PRICE_RANGES: { value: PriceRange; label: string; min: number; max: number }[] = [
-  { value: 'all', label: 'All Prices', min: 0, max: 0 },
+  { value: 'all', label: '$10+', min: 10, max: 0 },
   { value: '10-50', label: '$10–$50', min: 10, max: 50 },
   { value: '50-100', label: '$50–$100', min: 50, max: 100 },
   { value: '100-250', label: '$100–$250', min: 100, max: 250 },

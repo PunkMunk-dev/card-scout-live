@@ -1,1 +1,0 @@
-ALTER TABLE public.roi_live_auctions ADD CONSTRAINT roi_live_auctions_item_id_key UNIQUE (item_id);

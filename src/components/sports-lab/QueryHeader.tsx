@@ -29,7 +29,6 @@ export function QueryHeader({
   searchMode = 'guided', onSearchModeChange, quickSearchQuery = '', onQuickSearchChange,
 }: QueryHeaderProps) {
   const isMobile = useIsMobile();
-  const sportsSuggestions = ["Mike Trout Bowman Chrome", "Wander Franco 1st", "Ohtani Topps Chrome Refractor", "Jeter SP", "Griffey PSA 10"];
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
   const selectedSport = sports.find(s => s.key === sportKey);
   const brands = useMemo(() => ruleItems.filter(ri => ri.kind === 'brand'), [ruleItems]);
@@ -66,7 +65,7 @@ export function QueryHeader({
               <div className="flex items-center gap-2 mt-1.5">
                 {onSearchModeChange && <SearchModeToggle mode={searchMode} onModeChange={onSearchModeChange} className="scale-90 origin-left" />}
               </div>
-              {searchMode === 'quick' && <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} placeholder="Search any card..." className="mt-2" suggestions={sportsSuggestions} />}
+              {searchMode === 'quick' && <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} placeholder="Search any card..." className="mt-2" />}
             </div>
             <div className="flex items-center gap-2">
               <Sheet><SheetTrigger asChild><Button variant="ghost" size="sm" className="om-btn gap-1.5" style={{ color: 'var(--om-text-2)' }}><Filter className="h-3.5 w-3.5" />Filters</Button></SheetTrigger>
@@ -95,7 +94,7 @@ export function QueryHeader({
               {onSearchModeChange && <SearchModeToggle mode={searchMode} onModeChange={onSearchModeChange} />}
             </div>
             <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end flex-wrap">
-              {searchMode === 'quick' ? <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} className="max-w-lg" suggestions={sportsSuggestions} /> : filterControls}
+              {searchMode === 'quick' ? <QuickSearchInput value={quickSearchQuery} onChange={onQuickSearchChange || (() => {})} className="max-w-lg" /> : filterControls}
             </div>
           </div>
         </div>

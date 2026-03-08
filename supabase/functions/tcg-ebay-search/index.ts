@@ -105,21 +105,6 @@ function getTimeRemaining(endDate: string): string {
   return `${hours}h`;
 }
 
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const response = await fetch(url, options);
-    if (response.status === 429 && attempt < maxRetries) {
-      const delay = Math.pow(2, attempt + 1) * 1000 + Math.random() * 1000;
-      console.log(`[EBAY] 429 rate limit, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries})`);
-      await new Promise(r => setTimeout(r, delay));
-      continue;
-    }
-    return response;
-  }
-  // Return last 429 response instead of throwing
-  return new Response(JSON.stringify({ rateLimited: true }), { status: 429 });
-}
-
 async function searchActiveListings(query: string, limit = 100, sort = 'best_match', cardType = 'single', minPrice = 0, maxPrice = 0, buyingOptions = 'ALL', offset = 0) {
   const token = await getAccessToken();
 
@@ -144,30 +129,7 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   else if (cardType === 'sealed') intentSuffix = 'sealed';
   else if (cardType === 'packs') intentSuffix = 'pack';
 
-  // Clean query for eBay: strip parentheticals, colons, extract card number
-  const cardNumberMatch = searchQuery.match(/#?([A-Z]{2,5}\d{2,4})\b/i);
-  const cardNumber = cardNumberMatch ? cardNumberMatch[1] : '';
-
-  const cleanedForEbay = searchQuery
-    .replace(/\([^)]*\)/g, '')
-    .replace(/#[A-Za-z0-9]+/g, '')
-    .replace(/:/g, '')
-    .replace(/\b(scarlet|violet|black\s+star|obsidian\s+flames|elite\s+trainer\s+box|sword|shield|sun|moon|brilliant\s+stars|astral\s+radiance|paldea\s+evolved|temporal\s+forces|surging\s+sparks|twilight\s+masquerade|shrouded\s+fable|stellar\s+crown|prismatic\s+evolutions)\b/gi, '')
-    .replace(/\b(promo|promos)\b/gi, '')
-    .replace(/\b\d{4}\b/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-
-  let truncatedEbayQuery: string;
-  if (cardNumber && cleanedForEbay) {
-    const nameWords = cleanedForEbay.split(/\s+/).filter(w => w.length > 1).slice(0, 4);
-    truncatedEbayQuery = [...nameWords, cardNumber].join(' ');
-  } else {
-    const ebayWords = (cleanedForEbay || searchQuery).split(/\s+/).filter(w => w.length > 0);
-    truncatedEbayQuery = ebayWords.slice(0, 10).join(' ');
-  }
-
-  const fullQuery = `${truncatedEbayQuery} ${intentSuffix} ${exclusionString}`;
+  const fullQuery = `${searchQuery} ${intentSuffix} ${exclusionString}`;
   
   const url = new URL('https://api.ebay.com/buy/browse/v1/item_summary/search');
   url.searchParams.set('q', fullQuery);
@@ -194,7 +156,7 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   url.searchParams.set('filter', filterParts.join(','));
   url.searchParams.set('sort', ebaySort);
   
-  const response = await fetchWithRetry(url.toString(), {
+  const response = await fetch(url.toString(), {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
@@ -205,9 +167,6 @@ async function searchActiveListings(query: string, limit = 100, sort = 'best_mat
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Search error:', errorText);
-    if (response.status === 429) {
-      return { items: [], total: 0, hasMore: false, rateLimited: true };
-    }
     throw new Error(`eBay search failed: ${response.status}`);
   }
 
@@ -267,7 +226,7 @@ async function searchSoldListings(query: string, limit = 10) {
   findingUrl.searchParams.set('itemFilter(0).name', 'SoldItemsOnly');
   findingUrl.searchParams.set('itemFilter(0).value', 'true');
   
-  const response = await fetchWithRetry(findingUrl.toString(), {});
+  const response = await fetch(findingUrl.toString());
   
   if (!response.ok) {
     return { soldItems: [], metrics: null };
@@ -328,7 +287,7 @@ serve(async (req) => {
       );
     }
 
-    let result: any;
+    let result;
     if (action === 'active') {
       result = await searchActiveListings(query, limit || 100, sort || 'best_match', cardType || 'single', minPrice || 0, maxPrice || 0, buyingOptions || 'ALL', offset || 0);
     } else if (action === 'sold') {
@@ -347,18 +306,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('Edge function error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    // Graceful fallback for rate limiting
-    if (message.includes('429') || message.includes('rate limit') || message.includes('Too many requests')) {
-      console.warn('[tcg-ebay-search] Rate limited — returning empty result set');
-      const reqAction = (() => { try { return action; } catch { return 'active'; } })();
-      const emptyResult = reqAction === 'active'
-        ? { items: [], total: 0, hasMore: false, rateLimited: true }
-        : { soldItems: [], metrics: { salesLast7Days: 0, mostRecentSale: null, medianSoldPrice: '0.00' }, rateLimited: true };
-      return new Response(
-        JSON.stringify(emptyResult),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

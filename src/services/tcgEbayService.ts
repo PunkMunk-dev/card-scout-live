@@ -52,7 +52,6 @@ export interface PaginatedListings {
   total: number;
   hasMore: boolean;
   nextOffset: number;
-  rateLimited?: boolean;
 }
 
 export async function searchActiveListings(
@@ -80,17 +79,6 @@ export async function searchActiveListings(
   const items: EbayListing[] = data?.items || data || [];
   const total: number = data?.total ?? items.length;
   const hasMore: boolean = data?.hasMore ?? false;
-  const isRateLimited: boolean = data?.rateLimited ?? false;
-
-  if (isRateLimited) {
-    return {
-      listings: [],
-      total: 0,
-      hasMore: false,
-      nextOffset: offset,
-      rateLimited: true,
-    };
-  }
 
   const filtered = filterListings(items, filters);
   const sorted = sortListings(filtered, filters.sort);

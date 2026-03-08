@@ -1,44 +1,22 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import { TcgHeader } from '@/components/tcg-lab/TcgHeader';
-import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
-import { PageHeader } from '@/components/shared/PageHeader';
 import { TerminalView } from '@/components/tcg-lab/TerminalView';
-import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
+import { GuidedSearchEmptyState } from '@/components/shared/GuidedSearchEmptyState';
 import { useSets } from '@/hooks/useTcgData';
-import { useGlobalSearch } from '@/contexts/GlobalSearchContext';
-import { getSession, setSession } from '@/lib/sessionStore';
 import type { Game, TcgTarget } from '@/types/tcg';
 import psaMosaic from '@/assets/psa-mosaic.jpg';
 
 export default function TcgLab() {
-  const sessionMode = getSession().tcgMode;
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<TcgTarget | null>(null);
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const [setSelectorOpen, setSetSelectorOpen] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
-  const [mode, setMode] = useState<'guided' | 'quick'>(sessionMode || 'guided');
+  const [mode, setMode] = useState<'guided' | 'quick'>('guided');
   const [quickQuery, setQuickQuery] = useState('');
 
   const { data: sets = [] } = useSets(selectedGame);
-
-  // Register global search handler
-  const { register } = useGlobalSearch();
-  useEffect(() => {
-    return register({
-      onSubmit: (q: string) => {
-        setMode('quick');
-        setQuickQuery(q);
-        setSession({ tcgMode: 'quick' });
-      },
-    });
-  }, [register]);
-
-  const handleModeChange = (m: 'guided' | 'quick') => {
-    setMode(m);
-    setSession({ tcgMode: m });
-  };
 
   const handleGameChange = (game: Game) => {
     setSelectedGame(game);
@@ -47,16 +25,6 @@ export default function TcgLab() {
   };
 
   const selectedSet = sets.find(s => s.id === selectedSetId);
-
-  const getTcgSnapshotState = useCallback(() => ({
-    searchInputs: { selectedGame, selectedTarget: selectedTarget?.name ?? null, quickQuery, mode },
-    filters: { selectedSetId },
-    pagination: {},
-    loadingFlags: { isSearchLoading },
-    errorState: null,
-    resultsSchema: { itemKeys: [], count: totalCount },
-    layoutMode: { mode },
-  }), [selectedGame, selectedTarget, quickQuery, mode, selectedSetId, isSearchLoading, totalCount]);
 
   return (
     <div className="om-page-bg relative pb-16 sm:pb-0 min-h-screen">
@@ -73,13 +41,6 @@ export default function TcgLab() {
       />
 
       <div className="relative z-10">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pt-6">
-          <PageHeader
-            title="TCG Market"
-            subtitle="Guided or quick terminal search"
-            rightSlot={<CaptureSnapshotButton appId="tcg" getState={getTcgSnapshotState} />}
-          />
-        </div>
         <TcgHeader
           selectedGame={selectedGame}
           onGameChange={handleGameChange}
@@ -91,7 +52,7 @@ export default function TcgLab() {
           setSelectorOpen={setSelectorOpen}
           onSetSelectorOpenChange={setSetSelectorOpen}
           mode={mode}
-          onModeChange={handleModeChange}
+          onModeChange={setMode}
           quickQuery={quickQuery}
           onQuickQueryChange={setQuickQuery}
           totalCount={totalCount}
@@ -118,7 +79,7 @@ export default function TcgLab() {
               onLoadingChange={setIsSearchLoading}
             />
           ) : (
-            <UnifiedEmptyState variant="idle" />
+            <GuidedSearchEmptyState />
           )}
         </main>
       </div>

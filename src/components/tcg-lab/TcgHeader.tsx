@@ -40,7 +40,6 @@ export function TcgHeader({
 }: TcgHeaderProps) {
   const { data: targets = [] } = useTargets(selectedGame);
   const isMobile = useIsMobile();
-  const tcgSuggestions = ["Charizard VMAX", "Pikachu Gold Star", "Luffy Alternate Art", "Mewtwo GX", "Umbreon VMAX"];
 
   const handleTargetChange = (value: string) => {
     const target = targets.find(t => t.id === value);
@@ -82,7 +81,7 @@ export function TcgHeader({
                 <SearchModeToggle mode={mode} onModeChange={onModeChange} className="scale-90 origin-left" />
               </div>
               {mode === 'quick' && (
-                <QuickSearchInput value={quickQuery} onChange={onQuickQueryChange} placeholder="Search any card... (e.g. Charizard VMAX)" className="mt-2" suggestions={tcgSuggestions} />
+                <QuickSearchInput value={quickQuery} onChange={onQuickQueryChange} placeholder="Search any card... (e.g. Charizard VMAX)" className="mt-2" />
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -136,7 +135,7 @@ export function TcgHeader({
             </div>
             <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end flex-wrap">
               {mode === 'quick' ? (
-                <QuickSearchInput value={quickQuery} onChange={onQuickQueryChange} placeholder="Search any card... (e.g. Charizard VMAX)" className="max-w-lg" suggestions={tcgSuggestions} />
+                <QuickSearchInput value={quickQuery} onChange={onQuickQueryChange} placeholder="Search any card... (e.g. Charizard VMAX)" className="max-w-lg" />
               ) : (
                 guidedFilters
               )}

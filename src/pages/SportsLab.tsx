@@ -1,6 +1,4 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
-import { PageHeader } from '@/components/shared/PageHeader';
 import { ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,13 +9,10 @@ import { QueryHeader } from '@/components/sports-lab/QueryHeader';
 import { ResultsGrid } from '@/components/sports-lab/ResultsGrid';
 import { WatchlistPanel } from '@/components/sports-lab/WatchlistPanel';
 import { EbayResultsPanel } from '@/components/sports-lab/EbayResultsPanel';
-import { UnifiedEmptyState } from '@/components/shared/UnifiedEmptyState';
-import { UnifiedErrorState } from '@/components/shared/UnifiedErrorState';
+import { GuidedSearchEmptyState } from '@/components/shared/GuidedSearchEmptyState';
 import { useSportsRulesetSnapshot } from '@/hooks/useSportsRulesetSnapshot';
 import { useSportsQueryBuilderState } from '@/hooks/useSportsQueryBuilderState';
 import { useSportsWatchlist } from '@/contexts/SportsWatchlistContext';
-import { useGlobalSearch } from '@/contexts/GlobalSearchContext';
-import { getSession, setSession } from '@/lib/sessionStore';
 import type { SearchMode } from '@/components/sports-lab/SearchModeToggle';
 
 export default function SportsLab() {
@@ -27,22 +22,8 @@ export default function SportsLab() {
   const [watchlistOpen, setWatchlistOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const { count: watchlistCount } = useSportsWatchlist();
-
-  const sessionMode = getSession().sportsMode as SearchMode;
-  const [searchMode, setSearchMode] = useState<SearchMode>(sessionMode || 'guided');
+  const [searchMode, setSearchMode] = useState<SearchMode>('guided');
   const [quickSearchQuery, setQuickSearchQuery] = useState('');
-
-  // Register global search handler
-  const { register } = useGlobalSearch();
-  useEffect(() => {
-    return register({
-      onSubmit: (q: string) => {
-        setSearchMode('quick');
-        setQuickSearchQuery(q);
-        setSession({ sportsMode: 'quick' });
-      },
-    });
-  }, [register]);
 
   const quickSearchParams = useMemo(() => ({
     playerName: quickSearchQuery.trim(),
@@ -71,21 +52,7 @@ export default function SportsLab() {
 
   const handleResultCountChange = useCallback((count: number) => setResultCount(count), []);
   const handleLoadingChange = useCallback((loading: boolean) => setIsSearching(loading), []);
-  const handleSearchModeChange = useCallback((mode: SearchMode) => {
-    setSearchMode(mode);
-    setResultCount(undefined);
-    setSession({ sportsMode: mode });
-  }, []);
-
-  const getSportsSnapshotState = useCallback(() => ({
-    searchInputs: { sportKey: state.sport_key, playerIds: state.selected_player_ids, quickSearchQuery, searchMode },
-    filters: { brandId: selectedBrand?.id ?? null, showAllBrands: state.show_all_brands, traitIds: selectedTraitIds },
-    pagination: {},
-    loadingFlags: { isSearching },
-    errorState: null,
-    resultsSchema: { itemKeys: [], count: resultCount ?? 0 },
-    layoutMode: { searchMode, watchlistOpen },
-  }), [state, quickSearchQuery, searchMode, selectedBrand, selectedTraitIds, isSearching, resultCount, watchlistOpen]);
+  const handleSearchModeChange = useCallback((mode: SearchMode) => { setSearchMode(mode); setResultCount(undefined); }, []);
 
   if (isLoading) return (
     <div className="om-page-bg">
@@ -100,25 +67,22 @@ export default function SportsLab() {
 
   if (error) return (
     <div className="om-page-bg flex items-center justify-center p-4">
-      <UnifiedErrorState message="Failed to load ruleset. Please try again later." />
+      <div className="om-card max-w-md w-full p-6">
+        <p className="text-center" style={{ color: 'var(--om-danger)' }}>Failed to load ruleset. Please try again later.</p>
+      </div>
     </div>
   );
 
   if (!snapshot?.ruleset) return (
     <div className="om-page-bg flex items-center justify-center p-4">
-      <UnifiedEmptyState title="No ruleset available" message="No published ruleset available yet. An admin needs to create and publish a ruleset first." />
+      <div className="om-card max-w-md w-full p-6 text-center space-y-4">
+        <p style={{ color: 'var(--om-text-2)' }}>No published ruleset available yet. An admin needs to create and publish a ruleset first.</p>
+      </div>
     </div>
   );
 
   return (
-    <div className="om-page-bg flex flex-col pb-16 sm:pb-0 relative">
-      <div className="max-w-[1400px] mx-auto w-full px-4 md:px-6 lg:px-8 pt-6">
-        <PageHeader
-          title="Sports Market"
-          subtitle="Find targets fast"
-          rightSlot={<CaptureSnapshotButton appId="sports" getState={getSportsSnapshotState} />}
-        />
-      </div>
+    <div className="om-page-bg flex flex-col pb-16 sm:pb-0">
       <QueryHeader
         sports={snapshot.sports} players={filteredPlayers} ruleItems={filteredRuleItems}
         sportKey={state.sport_key} selectedPlayerId={state.selected_player_ids[0] ?? null}
@@ -133,11 +97,11 @@ export default function SportsLab() {
       <main className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 lg:px-8 py-6">
         {searchMode === 'quick' ? (
           !canSearchQuick ? (
-            <UnifiedEmptyState variant="idle" message="Type at least 3 characters to search." />
+            <GuidedSearchEmptyState />
           ) : <EbayResultsPanel searchParams={quickSearchParams} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />
         ) : (
           !canSearchGuided ? (
-            <UnifiedEmptyState variant="idle" />
+            <GuidedSearchEmptyState />
           ) : <ResultsGrid playerNames={selectedPlayerNames} brandLabel={state.show_all_brands ? undefined : selectedBrand?.label} traitLabels={selectedTraitLabels} sportKey={state.sport_key} onResultCountChange={handleResultCountChange} onLoadingChange={handleLoadingChange} />
         )}
       </main>

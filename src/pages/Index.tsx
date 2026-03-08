@@ -1,87 +1,55 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { CaptureSnapshotButton } from '@/components/ui-audit/CaptureSnapshotButton';
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, Star, X, Search, Layers, Trophy, TrendingUp, Sparkles } from "lucide-react";
+import { Loader2, ArrowRight, ChevronRight, Star, X } from "lucide-react";
+import psaMosaic from "@/assets/psa-mosaic.jpg";
 import { Button } from "@/components/ui/button";
-import { LandingHero } from "@/components/landing/LandingHero";
 import { SearchFilters } from "@/components/SearchFilters";
 import { ListingGrid } from "@/components/ListingGrid";
 import { LoadingGrid } from "@/components/LoadingGrid";
-import { UnifiedEmptyState } from "@/components/shared/UnifiedEmptyState";
-import { UnifiedErrorState } from "@/components/shared/UnifiedErrorState";
+import { EmptyState } from "@/components/EmptyState";
 import { ResultsHeader } from "@/components/ResultsHeader";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { searchEbay } from "@/lib/ebay-api";
 import { useSharedWatchlist } from "@/contexts/WatchlistContext";
-import { getSession, setSession, pushRecentSearch } from "@/lib/sessionStore";
 import type { EbayItem, SortOption } from "@/types/ebay";
 
 function deriveBuyingOptions(sort: SortOption): 'ALL' | 'AUCTION' | 'FIXED_PRICE' {
-  if (sort === 'auction_only' || sort === 'ending_soonest') return 'AUCTION';
+  if (sort === 'auction_only') return 'AUCTION';
   if (sort === 'buy_now_only') return 'FIXED_PRICE';
   return 'ALL';
 }
 
-/* ── Client-side fallback sort for ending_soonest ── */
-function sortItemsClientSide(items: EbayItem[], sort: SortOption): EbayItem[] {
-  if (sort !== 'ending_soonest') return items;
-  return [...items].sort((a, b) => {
-    if (!a.endDate) return 1;
-    if (!b.endDate) return -1;
-    return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
-  });
-}
-
-/* ── Recent-searches helpers (localStorage backward compat) ── */
+/* ── Recent-searches helpers ── */
 const RECENT_SEARCHES_KEY = "omni_recent_searches_v1";
 
-function getRecentSearches(): string[] {
-  // Merge sessionStore + localStorage for backward compat
+function pushRecentSearch(term: string) {
+  const t = (term || "").trim();
+  if (!t) return;
   try {
-    const session = getSession();
-    const local = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
-    const merged = [...session.recentSearches.map(s => s.term), ...local];
-    return [...new Set(merged)].slice(0, 12);
-  } catch {
-    return [];
-  }
+    const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
+    const next = [t, ...existing.filter((x) => x !== t)].slice(0, 12);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+  } catch {}
 }
 
-const SUGGESTED_SEARCHES = [
-  "Wembanyama Prizm Silver",
-  "Charizard VMAX",
-  "Shohei Ohtani Topps Chrome",
-  "Luka Doncic Mosaic",
-  "Pikachu VMAX Alt Art",
-  "Patrick Mahomes Prizm",
-  "Luffy Alt Art",
-  "Jaylen Brown Rookie",
-];
-
 export default function Index() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   const urlSrc = searchParams.get('src') || '';
-
-  // Restore sort from session
-  const sessionSort = getSession().indexSortKey as SortOption;
   const [query, setQuery] = useState(urlQuery);
   const [items, setItems] = useState<EbayItem[]>([]);
   const [total, setTotal] = useState(0);
   const [nextPage, setNextPage] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const hasSearched = useMemo(() => !!urlQuery, [urlQuery]);
-  const [sort, setSort] = useState<SortOption>(sessionSort || "best");
+  const [hasSearched, setHasSearched] = useState(!!urlQuery);
+  const [sort, setSort] = useState<SortOption>("best");
   const [error, setError] = useState<string | null>(null);
-  const [rateLimited, setRateLimited] = useState(false);
   const [fromWatchlist, setFromWatchlist] = useState(urlSrc === 'wl');
   const abortRef = useRef<AbortController | null>(null);
   const lastSearchedRef = useRef<string>('');
 
-
+  // Search when URL query changes (handles both mount and header-nav)
   useEffect(() => {
     if (urlQuery && urlQuery !== lastSearchedRef.current) {
       lastSearchedRef.current = urlQuery;
@@ -93,108 +61,135 @@ export default function Index() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlQuery, urlSrc]);
 
-  const { isInWatchlist, toggleWatchlist } = useSharedWatchlist();
+  const { watchlist, isInWatchlist, toggleWatchlist } = useSharedWatchlist();
 
   const performSearch = useCallback(async (
-    searchQuery: string,
-    page: number = 1,
+    searchQuery: string, 
+    page: number = 1, 
     append: boolean = false,
     overrideSort?: SortOption
   ) => {
     if (!searchQuery.trim()) return;
-    // Persist to both localStorage and sessionStore
-    try {
-      const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
-      const next = [searchQuery.trim(), ...existing.filter((x) => x !== searchQuery.trim())].slice(0, 12);
-      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
-    } catch {}
-    pushRecentSearch(searchQuery, '/');
 
+    pushRecentSearch(searchQuery);
+
+    // Abort previous in-flight request
     if (abortRef.current) abortRef.current.abort();
     const ac = new AbortController();
     abortRef.current = ac;
-    if (page === 1) { setIsLoading(true); setError(null); setRateLimited(false); } else { setIsLoadingMore(true); }
+
+    if (page === 1) {
+      setIsLoading(true);
+      setError(null);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     const activeSort = overrideSort ?? sort;
+
     try {
-      const response = await searchEbay({ query: searchQuery, page, limit: 48, sort: activeSort, buyingOptions: deriveBuyingOptions(activeSort) });
+      const response = await searchEbay({
+        query: searchQuery,
+        page,
+        limit: 48,
+        sort: activeSort,
+        buyingOptions: deriveBuyingOptions(activeSort),
+      });
+
       if (ac.signal.aborted) return;
-      if (response.rateLimited) {
-        setRateLimited(true);
-        if (!append) { setItems([]); setNextPage(null); }
-        toast.error('eBay rate limit reached. Please wait a moment and try again.');
+
+      if (append) {
+        setItems(prev => {
+          const existingIds = new Set(prev.map(item => item.itemId));
+          const newItems = response.items.filter(item => !existingIds.has(item.itemId));
+          return [...prev, ...newItems];
+        });
       } else {
-        if (append) {
-          setItems(prev => {
-            const existingIds = new Set(prev.map(item => item.itemId));
-            const merged = [...prev, ...response.items.filter(item => !existingIds.has(item.itemId))];
-            return sortItemsClientSide(merged, activeSort);
-          });
-        } else { setItems(sortItemsClientSide(response.items, activeSort)); }
-        setTotal(response.total);
-        setNextPage(response.items.length > 0 ? response.nextPage : null);
-        setError(null);
+        setItems(response.items);
       }
+      
+      setTotal(response.total);
+      setNextPage(response.items.length > 0 ? response.nextPage : null);
+      setHasSearched(true);
+      setError(null);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       const msg = err instanceof Error ? err.message : 'Failed to search eBay';
       console.error('Search error:', err);
       setError(msg);
-      if (!append) { setItems([]); setNextPage(null); }
+      if (!append) {
+        setItems([]);
+        setNextPage(null);
+      }
       toast.error(msg);
     } finally {
-      if (!ac.signal.aborted) { setIsLoading(false); setIsLoadingMore(false); }
+      if (!ac.signal.aborted) {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
     }
   }, [sort]);
 
-  const handleLoadMore = () => { if (nextPage && query && !isLoadingMore) performSearch(query, nextPage, true); };
-  const handleSortChange = (newSort: SortOption) => {
-    // Auto-switch to ending_soonest when selecting auction_only
-    const effectiveSort = newSort === 'auction_only' ? 'ending_soonest' : newSort;
-    setSort(effectiveSort);
-    setSession({ indexSortKey: effectiveSort });
-    if (query && hasSearched) { setError(null); performSearch(query, 1, false, effectiveSort); }
+  const handleLoadMore = () => {
+    if (nextPage && query && !isLoadingMore) {
+      performSearch(query, nextPage, true);
+    }
   };
-  const handleRetry = () => { if (query) { setError(null); performSearch(query, 1, false); } };
 
-  const getSearchSnapshotState = useCallback(() => ({
-    searchInputs: { query },
-    filters: { sort },
-    pagination: { nextPage, total },
-    loadingFlags: { isLoading, isLoadingMore },
-    errorState: error ? { message: error } : null,
-    resultsSchema: { itemKeys: items[0] ? Object.keys(items[0]) : [], count: items.length },
-    layoutMode: { hasSearched, fromWatchlist },
-  }), [query, sort, nextPage, total, isLoading, isLoadingMore, error, items, hasSearched, fromWatchlist]);
+  const handleSortChange = (newSort: SortOption) => {
+    setSort(newSort);
+    if (query && hasSearched) {
+      setError(null);
+      performSearch(query, 1, false, newSort);
+    }
+  };
 
-  const recentSearches = getRecentSearches();
+  const handleRetry = () => {
+    if (query) {
+      setError(null);
+      performSearch(query, 1, false);
+    }
+  };
 
-  const quickStartCards = [
-    { icon: Layers, title: "TCG Market", desc: "Pokémon & One Piece card explorer.", to: "/tcg" },
-    { icon: Trophy, title: "Sports Market", desc: "Sports cards by player, brand & trait.", to: "/sports" },
-    { icon: TrendingUp, title: "Top ROI Cards", desc: "See the best grading value plays.", to: "/roi" },
-  ];
+  const marketTilesRef = useRef<HTMLDivElement>(null);
 
-  // Merge recent + suggested into one list, recents first
-  const searchIdeas = [
-    ...recentSearches.slice(0, 6).map(t => ({ term: t, isRecent: true })),
-    ...SUGGESTED_SEARCHES.filter(t => !recentSearches.includes(t)).map(t => ({ term: t, isRecent: false })),
-  ];
+  const handleStartSearching = () => {
+    const input = document.querySelector<HTMLInputElement>('header input[type="text"], header input[type="search"]');
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => input.focus(), 400);
+    }
+  };
+
+  const handleExploreMarkets = () => marketTilesRef.current?.scrollIntoView({ behavior: 'smooth' });
 
   return (
-    <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0 relative">
+    <div className="min-h-[calc(100vh-48px)] bg-background pb-16 sm:pb-0">
       {/* Toolbar: sort + results count */}
       {hasSearched && (
         <div className="border-b border-border bg-card/50">
           <div className="container flex items-center gap-4 h-11">
             <SearchFilters sort={sort} onSortChange={handleSortChange} />
-            <ResultsHeader query={query} total={total} showing={items.length} hasMore={!!nextPage} isLoadingMore={isLoadingMore} onLoadMore={handleLoadMore} />
+            <ResultsHeader 
+              query={query} 
+              total={total} 
+              showing={items.length}
+              hasMore={!!nextPage}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={handleLoadMore}
+            />
           </div>
           {fromWatchlist && (
             <div className="container flex items-center gap-2 pb-2">
               <div className="inline-flex items-center gap-1.5 bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full text-xs">
                 <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
                 <span>Showing results for "<strong>{query}</strong>" (from starred card)</span>
-                <button onClick={() => setFromWatchlist(false)} className="ml-1 rounded-full p-0.5 hover:bg-secondary transition-colors"><X className="h-3 w-3" /></button>
+                <button
+                  onClick={() => setFromWatchlist(false)}
+                  className="ml-1 rounded-full p-0.5 hover:bg-secondary transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </div>
             </div>
           )}
@@ -207,7 +202,14 @@ export default function Index() {
           {isLoading && items.length === 0 ? (
             <LoadingGrid />
           ) : error && items.length === 0 ? (
-            <UnifiedErrorState message={error} onRetry={handleRetry} />
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="rounded-lg border shadow-sm bg-card px-10 py-12 max-w-md">
+                <p className="text-sm text-destructive mb-4">{error}</p>
+                <button onClick={handleRetry} className="text-sm font-medium text-primary hover:underline">
+                  Retry Search
+                </button>
+              </div>
+            </div>
           ) : items.length > 0 ? (
             <div className="relative">
               {isLoading && (
@@ -216,23 +218,107 @@ export default function Index() {
                 </div>
               )}
               <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-200" : "transition-opacity duration-200"}>
-                <ListingGrid items={items} isInWatchlist={isInWatchlist} onToggleWatchlist={toggleWatchlist} />
-                {nextPage && (
-                  <div className="flex justify-center pt-6">
-                    <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
-                      {isLoadingMore ? <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Loading…</> : 'Load more'}
-                    </Button>
-                  </div>
-                )}
+              <ListingGrid 
+                items={items}
+                isInWatchlist={isInWatchlist}
+                onToggleWatchlist={toggleWatchlist}
+              />
+              {nextPage && (
+                <div className="flex justify-center pt-6">
+                  <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
+                    {isLoadingMore ? (
+                      <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Loading…</>
+                    ) : (
+                      'Load more'
+                    )}
+                  </Button>
+                </div>
+              )}
               </div>
             </div>
           ) : (
-            <UnifiedEmptyState variant={rateLimited ? "rate-limited" : "no-results"} title={rateLimited ? undefined : "No results found"} message={rateLimited ? undefined : (query ? `No listings found for "${query}". Try adjusting your search.` : 'Enter a card name to start searching.')} onRetry={rateLimited ? handleRetry : undefined} />
+            <EmptyState query={query} />
           )}
         </main>
       ) : (
-        /* ── Landing Page ── */
-        <LandingHero />
+        <>
+          {/* ── Full-bleed Hero ── */}
+          <section
+            className="relative w-full min-h-[100vh] flex items-center overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 50%, var(--om-bg-0) 100%)', color: 'var(--om-text-0)' }}
+          >
+            <div className="omni-hero-spotlight" />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+            <div
+              className="pointer-events-none absolute inset-0 scale-110 blur-[28px] opacity-[0.07]"
+              style={{
+                backgroundImage: `url(${psaMosaic})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 75%)',
+              }}
+            />
+            <div className="pointer-events-none absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.10)' }} />
+            <div className="pointer-events-none absolute -bottom-40 -right-40 w-[700px] h-[700px] rounded-full blur-[160px]" style={{ background: 'rgba(10,132,255,0.08)' }} />
+
+            <div className="relative z-10 mx-auto w-full max-w-[1400px] px-6 md:px-10">
+              <div className="flex flex-col items-center text-center py-16 md:py-24">
+                <span className="text-[11px] font-medium uppercase tracking-[0.30em]" style={{ color: 'var(--om-text-1)' }}>OmniMarket Cards</span>
+                <h1 className="mt-6 text-[36px] md:text-[48px] font-semibold tracking-[-0.03em] leading-[1.08] max-w-[600px]" style={{ color: 'var(--om-text-0)' }}>
+                  Discover the market before it moves.
+                </h1>
+                <p className="mt-4 max-w-[480px] text-[14px] leading-[1.55]" style={{ color: 'var(--om-text-2)' }}>
+                  Search live eBay listings instantly—or jump into a market view built for finding undervalued cards fast.
+                </p>
+                <div className="mt-6 flex items-center gap-3">
+                  <button
+                    onClick={handleStartSearching}
+                    className="inline-flex items-center justify-center rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                    style={{ background: 'var(--om-accent)', color: '#fff', boxShadow: '0 10px 30px rgba(10,132,255,0.20)' }}
+                  >
+                    Start Searching
+                  </button>
+                  <button
+                    onClick={handleExploreMarkets}
+                    className="inline-flex items-center justify-center rounded-xl h-11 px-6 text-sm font-medium hover:-translate-y-px active:scale-[0.98] transition-all duration-200"
+                    style={{ background: 'var(--om-border-0)', border: '1px solid var(--om-border-1)', color: 'var(--om-text-0)' }}
+                  >
+                    Explore Markets <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Market Tiles Section ── */}
+          <section className="relative w-full" style={{ background: 'var(--om-bg-0)' }}>
+            <div ref={marketTilesRef} className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Link
+                to="/tcg"
+                className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>TCG Market</h3>
+                <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search Pokémon &amp; One Piece cards by chase, set, and more.</p>
+                <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
+                  Explore TCG Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </span>
+              </Link>
+              <Link
+                to="/sports"
+                className="group rounded-3xl p-10 hover:-translate-y-[3px] transition-all duration-200 flex flex-col"
+                style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', boxShadow: '0 20px 60px var(--glass-shadow)', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                <h3 className="text-[16px] font-semibold" style={{ color: 'var(--om-text-0)' }}>Sports Market</h3>
+                <p className="mt-1 text-[14px]" style={{ color: 'var(--om-text-2)' }}>Search sports cards by player, brand, and traits.</p>
+                <span className="mt-4 inline-flex items-center justify-center rounded-xl h-10 px-5 text-sm font-medium w-fit hover:-translate-y-px active:scale-[0.98] transition-all duration-200" style={{ background: 'var(--om-accent)', color: '#fff' }}>
+                  Explore Sports Market <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                </span>
+              </Link>
+            </div>
+          </section>
+        </>
       )}
     </div>
   );

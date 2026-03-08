@@ -161,11 +161,6 @@ function isGradedItem(title: string, condition?: string): boolean {
 function isJunkTitle(title: string): boolean {
   const lowerTitle = title.toLowerCase();
   return JUNK_KEYWORDS.some(keyword => {
-    // "box" is legitimate when preceded by "trainer" (e.g. "Elite Trainer Box")
-    if (keyword === 'box' || keyword === 'boxes') {
-      const boxRegex = new RegExp(`(?<!trainer\\s)\\b${keyword}\\b`, 'i');
-      return boxRegex.test(lowerTitle);
-    }
     const regex = new RegExp(`\\b${keyword}\\b`, 'i');
     return regex.test(lowerTitle);
   });
@@ -241,11 +236,10 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
     term.length <= 2 || /^\d+$/.test(term)
   );
   
-  // Relax threshold for long queries
+  // Require at least 60% of name-like terms to match
   const nameMatchCount = nameLikeTerms.filter(term => lowerTitle.includes(term)).length;
   const nameMatchRatio = nameLikeTerms.length === 0 ? 1 : nameMatchCount / nameLikeTerms.length;
-  const nameMatchThreshold = nameLikeTerms.length > 10 ? 0.25 : nameLikeTerms.length > 6 ? 0.40 : 0.60;
-  const nameTermsMatch = nameMatchRatio >= nameMatchThreshold;
+  const nameTermsMatch = nameMatchRatio >= 0.60;
   
   // At least 50% of other terms (numbers, short words) should match
   const otherMatchCount = otherTerms.filter(term => lowerTitle.includes(term)).length;
@@ -254,69 +248,11 @@ function titleMatchesQuery(title: string, keyTerms: string[]): boolean {
   return nameTermsMatch && otherTermsMatch;
 }
 
-function getSortParam(sort: string): string {
-  if (sort === 'ending_soonest' || sort === 'auction_only') return 'endingSoonest';
-  if (sort === 'price_asc') return 'price';
+function getSortParam(_sort: string): string {
   return 'bestMatch';
 }
 
-// --- Retry with exponential backoff ---
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const response = await fetch(url, options);
-    if (response.status === 429 && attempt < maxRetries) {
-      // Longer backoff: 3s, 6s, 12s + jitter
-      const delay = Math.pow(2, attempt) * 3000 + Math.random() * 1500;
-      console.warn(`[ebay-search] 429 rate limited, retry ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`);
-      await response.text(); // consume body
-      await new Promise(r => setTimeout(r, delay));
-      continue;
-    }
-    return response;
-  }
-  // Return last 429 response instead of throwing — caller handles gracefully
-  return new Response(JSON.stringify({ rateLimited: true }), { status: 429 });
-}
-
-// --- In-memory request-level cache ---
-interface SearchCacheEntry {
-  data: any;
-  expiresAt: number;
-}
-const searchResultCache = new Map<string, SearchCacheEntry>();
-const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const MAX_SEARCH_CACHE_SIZE = 50;
-
-function getSearchCacheKey(body: SearchRequest): string {
-  return `${body.query}|${body.page ?? 1}|${body.limit ?? 24}|${body.sort ?? 'best'}|${body.includeLots ?? false}|${body.buyingOptions ?? 'ALL'}`;
-}
-
-function getSearchCache(key: string): any | null {
-  const entry = searchResultCache.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    searchResultCache.delete(key);
-    return null;
-  }
-  return entry.data;
-}
-
-function setSearchCache(key: string, data: any): void {
-  if (searchResultCache.size >= MAX_SEARCH_CACHE_SIZE) {
-    const firstKey = searchResultCache.keys().next().value;
-    if (firstKey) searchResultCache.delete(firstKey);
-  }
-  searchResultCache.set(key, { data, expiresAt: Date.now() + SEARCH_CACHE_TTL_MS });
-}
-
-// --- In-memory OAuth token cache ---
-let tokenCache: { token: string; expiresAt: number } | null = null;
-
 async function getEbayToken(): Promise<string> {
-  if (tokenCache && Date.now() < tokenCache.expiresAt) {
-    return tokenCache.token;
-  }
-
   const clientId = Deno.env.get('EBAY_CLIENT_ID');
   const clientSecret = Deno.env.get('EBAY_CLIENT_SECRET');
   const oauthBase = Deno.env.get('EBAY_OAUTH_BASE') || 'https://api.ebay.com';
@@ -327,7 +263,7 @@ async function getEbayToken(): Promise<string> {
 
   const credentials = btoa(`${clientId}:${clientSecret}`);
   
-  const response = await fetchWithRetry(`${oauthBase}/identity/v1/oauth2/token`, {
+  const response = await fetch(`${oauthBase}/identity/v1/oauth2/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -343,8 +279,6 @@ async function getEbayToken(): Promise<string> {
   }
 
   const data = await response.json();
-  // Cache for 4 minutes (tokens valid ~2 hours)
-  tokenCache = { token: data.access_token, expiresAt: Date.now() + 4 * 60 * 1000 };
   return data.access_token;
 }
 
@@ -378,7 +312,7 @@ async function searchEbay(
   
   console.log('Searching eBay:', url);
 
-  const response = await fetchWithRetry(url, {
+  const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'X-EBAY-C-MARKETPLACE-ID': marketplaceId,
@@ -389,10 +323,6 @@ async function searchEbay(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('eBay Browse API error:', errorText);
-    // Return empty results on rate limit instead of crashing with 500
-    if (response.status === 429) {
-      return { items: [], total: 0, rateLimited: true };
-    }
     throw new Error(`eBay search failed: ${response.status}`);
   }
 
@@ -490,16 +420,6 @@ serve(async (req) => {
       buyingOptions = 'ALL',
     } = body;
 
-    // Check request-level cache
-    const cacheKey = getSearchCacheKey(body);
-    const cached = getSearchCache(cacheKey);
-    if (cached) {
-      console.log('[ebay-search] Cache hit for:', cacheKey);
-      return new Response(JSON.stringify(cached), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     if (!query || query.trim() === '') {
       return new Response(
         JSON.stringify({ error: 'Query is required' }),
@@ -524,43 +444,8 @@ serve(async (req) => {
     const { simplified, decorativeFound } = simplifyQuery(query);
     const searchQuery = simplified || query;
 
-    // Clean query for eBay: strip parentheticals, colons, filler set words
-    // Extract card number (e.g. SVP044, SWSH183) before stripping # so we can keep it
-    const cardNumberMatch = searchQuery.match(/#?([A-Z]{2,5}\d{2,4})\b/i);
-    const cardNumber = cardNumberMatch ? cardNumberMatch[1] : '';
+    const { items: rawItems, total } = await searchEbay(token, searchQuery, requestLimit, offset, sortParam, apiBuyingOptions);
 
-    const cleanedForEbay = searchQuery
-      .replace(/\([^)]*\)/g, '')           // Remove (parenthetical content)
-      .replace(/#[A-Za-z0-9]+/g, '')       // Remove #SVP044 style refs
-      .replace(/:/g, '')                   // Remove colons
-      .replace(/\b(scarlet|violet|black\s+star|obsidian\s+flames|elite\s+trainer\s+box|sword|shield|sun|moon|brilliant\s+stars|astral\s+radiance|paldea\s+evolved|temporal\s+forces|surging\s+sparks|twilight\s+masquerade|shrouded\s+fable|stellar\s+crown|prismatic\s+evolutions)\b/gi, '') // Remove set names
-      .replace(/\b(promo|promos)\b/gi, '') // Remove generic "promo"
-      .replace(/\b\d{4}\b/g, '')           // Remove standalone years
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-
-    // Build final query: character name + card number is most effective
-    let truncatedQuery: string;
-    if (cardNumber && cleanedForEbay) {
-      // Use cleaned name + card number for precision
-      const nameWords = cleanedForEbay.split(/\s+/).filter(w => w.length > 1).slice(0, 4);
-      truncatedQuery = [...nameWords, cardNumber].join(' ');
-    } else {
-      // Fallback: cap at 10 words
-      const searchWords = (cleanedForEbay || searchQuery).split(/\s+/).filter(w => w.length > 0);
-      truncatedQuery = searchWords.slice(0, 10).join(' ');
-    }
-
-    const searchResult = await searchEbay(token, truncatedQuery, requestLimit, offset, sortParam, apiBuyingOptions);
-    
-    if (searchResult.rateLimited) {
-      return new Response(
-        JSON.stringify({ query, page, limit: clampedLimit, total: 0, nextPage: null, items: [], rateLimited: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { items: rawItems, total } = searchResult;
     let normalizedItems = rawItems.map(normalizeItem);
 
     // For title matching, use simplified query (don't penalize missing decorative terms)
@@ -633,32 +518,20 @@ serve(async (req) => {
 
     const hasMore = offset + rawItems.length < total;
 
-    const responseData = {
-      query,
-      page,
-      limit: clampedLimit,
-      total,
-      nextPage: hasMore ? page + 1 : null,
-      items: normalizedItems,
-    };
-
-    setSearchCache(cacheKey, responseData);
-
     return new Response(
-      JSON.stringify(responseData),
+      JSON.stringify({
+        query,
+        page,
+        limit: clampedLimit,
+        total,
+        nextPage: hasMore ? page + 1 : null,
+        items: normalizedItems,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Edge function error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-    // Graceful fallback for rate limiting
-    if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('Too many requests')) {
-      console.warn('[ebay-search] Rate limited — returning empty result set');
-      return new Response(
-        JSON.stringify({ query: query || '', page: 1, limit: 24, total: 0, nextPage: null, items: [], rateLimited: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

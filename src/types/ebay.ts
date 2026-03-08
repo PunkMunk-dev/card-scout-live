@@ -23,7 +23,6 @@ export interface SearchResponse {
   total: number;
   nextPage: number | null;
   items: EbayItem[];
-  rateLimited?: boolean;
 }
 
 export interface SearchParams {
@@ -34,4 +33,4 @@ export interface SearchParams {
   buyingOptions?: 'ALL' | 'AUCTION' | 'FIXED_PRICE';
 }
 
-export type SortOption = 'best' | 'price_asc' | 'raw' | 'auction_only' | 'buy_now_only' | 'ending_soonest';
+export type SortOption = 'best' | 'price_asc' | 'raw' | 'auction_only' | 'buy_now_only';

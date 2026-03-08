@@ -73,14 +73,13 @@
     --om-border-0: rgba(0,0,0,0.08);
     --om-border-1: rgba(0,0,0,0.12);
     --om-divider: rgba(0,0,0,0.06);
-    --om-accent: #00E0C6;
-    --om-accent-blue: #3B82F6;
-    --om-focus-ring: rgba(0,224,198,0.18);
+    --om-accent: #0A84FF;
+    --om-focus-ring: rgba(10,132,255,0.18);
 
     /* Premium accent tokens */
-    --accent-cyan: #00E0C6;
-    --accent-blue: #3B82F6;
-    --focus-ring: rgba(0,224,198,0.20);
+    --accent-cyan: #00B9FF;
+    --accent-blue: #0A84FF;
+    --focus-ring: rgba(10,132,255,0.20);
     --om-success: #16A34A;
     --om-warning: #D97706;
     --om-danger: #DC2626;
@@ -153,9 +152,8 @@
     --om-border-0: rgba(255,255,255,0.08);
     --om-border-1: rgba(255,255,255,0.12);
     --om-divider: rgba(255,255,255,0.06);
-    --om-accent: #00E0C6;
-    --om-accent-blue: #3B82F6;
-    --om-focus-ring: rgba(0,224,198,0.18);
+    --om-accent: #00B9FF;
+    --om-focus-ring: rgba(0,185,255,0.18);
 
     --om-success: #2EE59D;
     --om-warning: #FFCC66;
@@ -357,12 +355,4 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-}
-
-/* OmniMarket wordmark */
-.om-wordmark {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }

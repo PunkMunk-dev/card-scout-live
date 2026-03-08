@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { ExternalLink, Gavel, ShoppingCart, Star, Copy, Check } from "lucide-react";
+import { ExternalLink, Clock, Gavel, ShoppingCart, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { EbayItem } from "@/types/ebay";
 import { cn } from "@/lib/utils";
-import { AuctionCountdownBadge } from "@/components/shared/AuctionCountdownBadge";
-import { cleanListingTitle } from "@/lib/cleanTitle";
+import { useCountdown } from "@/hooks/useCountdown";
 
 interface ListingCardProps {
   item: EbayItem;
@@ -14,17 +12,43 @@ interface ListingCardProps {
   onToggleWatchlist?: (item: EbayItem) => void;
 }
 
+function AuctionCountdown({ endDate }: { endDate: string }) {
+  const countdown = useCountdown(endDate);
+
+  if (!countdown) return null;
+
+  const { days, hours, minutes, seconds, isEnded, isUrgent, isWarning } = countdown;
+
+  const colorClass = isEnded
+    ? "text-muted-foreground"
+    : isUrgent
+    ? "text-destructive animate-pulse"
+    : isWarning
+    ? "text-auction"
+    : "text-muted-foreground";
+
+  let label: string;
+  if (isEnded) {
+    label = "Ended";
+  } else if (days > 0) {
+    label = `${days}d ${hours}h`;
+  } else if (hours > 0) {
+    label = `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    label = `${minutes}m ${seconds}s`;
+  } else {
+    label = `${seconds}s`;
+  }
+
+  return (
+    <span className={cn("flex items-center gap-1 font-medium tabular-nums text-[10px]", colorClass)}>
+      <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+      {label}
+    </span>
+  );
+}
+
 export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: ListingCardProps) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(cleanListingTitle(item.title));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  };
-
   const formatPrice = (value: string, currency: string) => {
     const num = parseFloat(value);
     return new Intl.NumberFormat('en-US', {
@@ -85,11 +109,6 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
             <Star className={cn("h-3.5 w-3.5", isInWatchlist && "fill-current")} />
           </button>
         )}
-
-        {/* Auction countdown overlay */}
-        {item.endDate && item.buyingOption === 'AUCTION' && (
-          <AuctionCountdownBadge endDate={item.endDate} />
-        )}
       </div>
 
       {/* Content */}
@@ -118,29 +137,23 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
         </div>
 
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-          <span className="truncate">{item.condition}</span>
+          <span className="truncate max-w-[60%]">{item.condition}</span>
+          {item.endDate && item.buyingOption === 'AUCTION' && (
+            <AuctionCountdown endDate={item.endDate} />
+          )}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 h-7 text-[11px] group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-            asChild
-          >
-            <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
-              View on eBay
-              <ExternalLink className="h-3 w-3 ml-1.5" />
-            </a>
-          </Button>
-          <button
-            onClick={handleCopy}
-            className="w-7 h-7 flex items-center justify-center rounded-md border border-border/40 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Copy title"
-          >
-            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-          </button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-7 text-[11px] group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+          asChild
+        >
+          <a href={item.itemUrl} target="_blank" rel="noopener noreferrer">
+            View on eBay
+            <ExternalLink className="h-3 w-3 ml-1.5" />
+          </a>
+        </Button>
       </div>
     </div>
   );
