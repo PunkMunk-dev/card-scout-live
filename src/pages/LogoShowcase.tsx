@@ -89,6 +89,12 @@ export default function LogoShowcase() {
       />
 
       <VariantSection
+        title="Negative Space Search"
+        subtitle="5 hex-knot marks with a magnifying glass cut out as negative space."
+        variants={SEARCH_VARIANTS}
+      />
+
+      <VariantSection
         title="Split Sphere"
         subtitle="5 gradient sphere marks."
         variants={SPLIT_VARIANTS}
