@@ -578,14 +578,29 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
       );
     });
 
-  const greyStroke = mono ? accent1 : '#9CA3AF'; // white in mono/dark, grey otherwise
+  const greyStroke = mono ? accent1 : '#9CA3AF';
   const greyFill = mono ? accent1 : '#6B7280';
   const sw = size * 0.02;
 
-  // 26 — Cloud Core: minimal cloud outline + 3 signal arcs, stroke only
+  // Cloud fill gradient — subtle grey, top-to-bottom
+  const cloudGradId = `cloudFill-${variant}-${size}`;
+  const cloudFillTop = mono ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+  const cloudFillBot = mono ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+  const cloudDefs = (
+    <defs>
+      <linearGradient id={cloudGradId} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor={cloudFillTop} />
+        <stop offset="100%" stopColor={cloudFillBot} />
+      </linearGradient>
+    </defs>
+  );
+  const cloudFillUrl = `url(#${cloudGradId})`;
+
+  // 26 — Cloud Core: filled cloud + 3 signal arcs
   variants[26] = (
     <>
-      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      {cloudDefs}
+      <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {signalArcs(greyStroke, sw, [0.8, 0.6, 0.4])}
     </>
   );
@@ -593,7 +608,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   // 27 — Cloud Pulse: cloud + animated pulsing signal waves
   variants[27] = (
     <>
-      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      {cloudDefs}
+      <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {[0.3, 0.5, 0.7].map((scale, i) => {
         const arcR = r * scale;
         const startAngle = -80 * (Math.PI / 180);
@@ -629,7 +645,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     const ly2 = signalCenter.y + (lensR + r * 0.2) * Math.sin(lensAngle);
     return (
       <>
-        <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+        {cloudDefs}
+        <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
         {signalArcs(greyStroke, sw * 0.7, [0.5, 0.35, 0.2])}
         <circle cx={signalCenter.x} cy={signalCenter.y} r={lensR} fill="none" stroke={greyStroke} strokeWidth={sw * 1.2} opacity="0.9" />
         <line x1={lx} y1={ly} x2={lx2} y2={ly2} stroke={greyStroke} strokeWidth={sw * 1.3} strokeLinecap="round" opacity="0.8" />
@@ -640,8 +657,9 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   // 29 — Cloud Ring: cloud inside a thin circular ring, arcs breaking through
   variants[29] = (
     <>
+      {cloudDefs}
       <circle cx={cx} cy={cy} r={r * 0.95} fill="none" stroke={greyStroke} strokeWidth={sw * 0.6} opacity="0.3" />
-      <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+      <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {signalArcs(greyStroke, sw, [0.7, 0.5, 0.35])}
     </>
   );
@@ -659,7 +677,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     });
     return (
       <>
-        <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+        {cloudDefs}
+        <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
         {signalArcs(greyStroke, sw, [0.7, 0.55, 0.4])}
         {nodes.map((n, i) => (
           <circle key={i} cx={n.x} cy={n.y} r={nodeR} fill={greyFill} opacity={0.9 - i * 0.15} />
