@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { TrendingUp, BarChart3, ChevronDown, ChevronUp, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useCardMarketMetrics, getConfidenceLevel, RAW_THRESHOLD, PSA10_THRESHOLD, type SoldComp } from '@/hooks/useCardMarketMetrics';
+import { usePsaCertData } from '@/hooks/usePsaCertData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CompManagementControls } from './CompManagementControls';
+import { PsaDataSection } from './PsaDataSection';
+import { PsaMappingControls } from './PsaMappingControls';
 import { cn } from '@/lib/utils';
 
 interface MarketIntelligencePanelProps {
