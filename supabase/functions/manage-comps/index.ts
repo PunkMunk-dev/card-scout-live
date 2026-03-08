@@ -97,13 +97,16 @@ serve(async (req) => {
         break;
       }
       case 'map_psa_population': {
-        const { card_identity_key, psa_set_name, psa_subject, psa_card_number } = body;
+        const { card_identity_key, psa_set_name, psa_subject, psa_card_number, psa_search_query, psa_population_url, notes: mappingNotes } = body;
         if (!card_identity_key) throw new Error('card_identity_key required');
         await adminClient.from('psa_population_mapping').upsert({
           card_identity_key,
           psa_set_name: psa_set_name || null,
           psa_subject: psa_subject || null,
           psa_card_number: psa_card_number || null,
+          psa_search_query: psa_search_query || null,
+          psa_population_url: psa_population_url || null,
+          notes: mappingNotes || null,
           psa_population_source: 'manual',
           mapping_confidence: 'manual',
         }, { onConflict: 'card_identity_key' });
