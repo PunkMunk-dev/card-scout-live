@@ -361,22 +361,29 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     );
   })();
 
-  // Edge-positioned search mask — subtle, lower-right
+  // Per-variant search mask positions — each gets a unique edge placement
+  const searchPositions: Record<number, { cx: number; cy: number; handleAngle: number }> = {
+    21: { cx: cx + r * 0.52, cy: cy - r * 0.38, handleAngle: 45 },   // top-right
+    22: { cx: cx - r * 0.48, cy: cy + r * 0.44, handleAngle: 225 },  // bottom-left
+    23: { cx: cx + r * 0.50, cy: cy + r * 0.42, handleAngle: 135 },  // bottom-right
+    24: { cx: cx - r * 0.46, cy: cy - r * 0.40, handleAngle: 315 },  // top-left
+    25: { cx: cx + r * 0.55, cy: cy + r * 0.05, handleAngle: 90 },   // right-center
+  };
+
+  const sp = searchPositions[variant] ?? searchPositions[21];
   const searchMaskId = `${id}-search-mask`;
-  const eCx = cx + r * 0.42; // lens at lower-right edge
-  const eCy = cy + r * 0.42;
-  const eR = r * 0.18; // smaller lens
-  const eAngle = (135 * Math.PI) / 180;
-  const ehx1 = eCx + eR * Math.cos(eAngle);
-  const ehy1 = eCy + eR * Math.sin(eAngle);
-  const ehx2 = eCx + (eR + r * 0.22) * Math.cos(eAngle);
-  const ehy2 = eCy + (eR + r * 0.22) * Math.sin(eAngle);
+  const eR = r * 0.14; // even smaller lens
+  const eAngle = (sp.handleAngle * Math.PI) / 180;
+  const ehx1 = sp.cx + eR * Math.cos(eAngle);
+  const ehy1 = sp.cy + eR * Math.sin(eAngle);
+  const ehx2 = sp.cx + (eR + r * 0.18) * Math.cos(eAngle);
+  const ehy2 = sp.cy + (eR + r * 0.18) * Math.sin(eAngle);
 
   const edgeSearchMask = (
     <mask id={searchMaskId}>
       <rect x="0" y="0" width={size} height={size} fill="white" />
-      <circle cx={eCx} cy={eCy} r={eR} fill="black" />
-      <line x1={ehx1} y1={ehy1} x2={ehx2} y2={ehy2} stroke="black" strokeWidth={r * 0.09} strokeLinecap="round" />
+      <circle cx={sp.cx} cy={sp.cy} r={eR} fill="black" />
+      <line x1={ehx1} y1={ehy1} x2={ehx2} y2={ehy2} stroke="black" strokeWidth={r * 0.065} strokeLinecap="round" />
     </mask>
   );
 
@@ -414,7 +421,7 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
           <mask id={breakMaskId}>
             <rect x="0" y="0" width={size} height={size} fill="white" />
             {/* Remove a wedge from band 1 near the search icon */}
-            <circle cx={eCx - r * 0.1} cy={eCy - r * 0.1} r={r * 0.22} fill="black" />
+            <circle cx={sp.cx - r * 0.1} cy={sp.cy - r * 0.1} r={r * 0.22} fill="black" />
           </mask>
         </defs>
         <g mask={`url(#${searchMaskId})`}>
