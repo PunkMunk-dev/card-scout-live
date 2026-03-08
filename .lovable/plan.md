@@ -1,118 +1,30 @@
 
 
-## Plan: UI Audit Export Page + Snapshot System
+## Plan: 5 Structural Renditions of #22
 
-This adds a `/ui-audit` page that introspects the app architecture, displays code excerpts, and provides export buttons -- plus a snapshot capture button in each of the 3 app pages.
+Strip the showcase page to only show 5 new variants based on #22 (teal-to-blue gradient hex-knot with negative-space search). Each rendition repositions the search icon to the edge and introduces a significant structural change.
 
-### New Files
+### Variant Changes (replace 21–25)
 
-**1. `src/lib/uiAuditData.ts`** — Static audit data module
-- Hardcoded architecture map (since we can't read files at runtime in a bundled SPA):
-  - Section A: Route map (`/`, `/tcg`, `/sports`, `/roi`), shell components (`App.tsx`, `TabNavigation`), layout wrappers
-  - Section B: Three app entry pages (`Index`, `TcgLab`, `SportsLab`, `TopRoi`) with key child components, state hooks, and JSX outlines
-  - Section C: Providers (`ThemeProvider`, `QueryClientProvider`, `WatchlistProvider`, `TooltipProvider`), shared hooks (`useTcgData`, `useSportsEbaySearch`, `useRoiCards`, etc.), one representative fetch pathway (tcgEbayService → supabase.functions.invoke, redacted)
-  - Section D: Placeholder noting no auth/gating exists (skipped per user request)
-  - Section E: Tailwind config summary, `index.css` design tokens, `cn()` utility
-- Each section returns `{ title, detectedComponents, codeExcerpts, notes }` arrays
-- All secrets/tokens replaced with `***REDACTED***`
+All share the teal→blue gradient fill on hex-knot bands. The search mask moves to the lower-right edge (lens near corner, handle extending outward/clipped). The search icon becomes smaller (~20% of radius vs current 28%) so it reads as a subtle detail rather than a focal element.
 
-**2. `src/lib/uiAuditSnapshots.ts`** — Snapshot capture + storage utilities
-- `captureSnapshot(appId, statePayload)` — creates a snapshot object with timestamp, route, filters, loading flags, results schema shape (Object.keys only), redacts IDs/tokens
-- `getSnapshots()` / `clearSnapshots()` — localStorage CRUD (`ui_audit_snapshots_v1`)
-- `exportSnapshotsJSON()` — serializes to downloadable JSON
+**Search icon repositioned**: Lens center moves to `cx + r*0.38, cy + r*0.38` (lower-right edge of the knot), radius reduced to `r * 0.18`, handle extends outward at 135° and gets clipped by the viewBox boundary.
 
-**3. `src/components/ui-audit/CaptureSnapshotButton.tsx`** — Small floating button
-- Props: `appId: string`, `getState: () => SnapshotPayload`
-- Renders a small pill button ("📸 Snapshot") in top-right area
-- On click: calls `captureSnapshot(appId, getState())`, shows toast "Snapshot captured"
+Five structural variations:
 
-**4. `src/pages/UIAudit.tsx`** — The audit page
-- "How to Use" card at top (4-step instructions)
-- Sections A–E rendered from `uiAuditData.ts` with code blocks
-- "Snapshots" section: lists snapshots grouped by app, with timestamps
-- Sticky footer bar with:
-  - "Copy All" — copies full markdown report (sections A–E + snapshots JSON) to clipboard
-  - "Download .md" — downloads as `ui-audit-report.md`
-  - "Copy Snapshots JSON" — copies just snapshots
-  - "Download snapshots.json"
-  - "Clear Snapshots" — with confirm dialog
+1. **22a — Open Knot**: Hex-knot bands rendered as thick strokes (not filled), creating an open wireframe feel. Gradient strokes, subtle edge search cutout.
 
-### Modified Files
+2. **22b — Broken Band**: One of the three bands has a gap/break near the search icon, as if the search is "cutting through" the geometry. The other two bands remain solid fills.
 
-**5. `src/App.tsx`** — Add route
-- Add lazy import: `const UIAudit = lazy(() => import("./pages/UIAudit"))`
-- Add route: `<Route path="/ui-audit" element={<UIAudit />} />`
-- No nav entry added (dev-only URL)
+3. **22c — Rounded Knot**: All band corners use rounded joins and the band paths use quadratic curves instead of sharp angles — softer, more organic version of the geometric mark.
 
-**6. `src/pages/TcgLab.tsx`** — Add snapshot button
-- Import `CaptureSnapshotButton`
-- Add it inside the header area, passing current state: `selectedGame`, `selectedTarget`, `selectedSetId`, `mode`, `quickQuery`, `totalCount`, `isSearchLoading`
+4. **22d — Layered Depth**: Bands rendered with varying opacity (back band at 40%, middle at 65%, front at 90%) creating a 3D layered depth effect. Subtle drop shadow on the front band.
 
-**7. `src/pages/SportsLab.tsx`** — Add snapshot button
-- Same pattern: pass `sportKey`, `selectedPlayerId`, `selectedBrandId`, `selectedTraitIds`, `searchMode`, `quickSearchQuery`, `resultCount`, `isLoading`
+5. **22e — Partial Fill**: Only the halves of each band nearest the search icon are filled; the far halves fade to stroke-only outlines, creating a reveal/scan effect radiating from the search point.
 
-**8. `src/pages/TopRoi.tsx`** — Add snapshot button
-- Pass `sortKey`, `searchQuery`, `visibleCount`, `isLoading`, `filteredAndSorted.length`
+### Files to edit
 
-**9. `src/pages/Index.tsx`** — Add snapshot button
-- Pass `query`, `sort`, `total`, `items.length`, `isLoading`, `error`
+- **`src/components/branding/OmniOrb.tsx`**: Replace variants 16–25 with 5 new variants (16–20 reassigned). Remove old hex-knot and search mask code, build new geometry for each rendition. Keep variants 1–15 untouched.
 
-### Snapshot Payload Shape
-
-```text
-{
-  appId: "tcg" | "sports" | "roi" | "search",
-  timestamp: ISO string,
-  route: window.location.pathname + search,
-  searchInputs: { ... },
-  filters: { ... },
-  pagination: { ... },
-  loadingFlags: { ... },
-  errorState: null | { message },
-  resultsSchema: { itemKeys: string[], count: number },
-  layoutMode: { ... }
-}
-```
-
-### Export Format
-
-The "Copy All" output is a single markdown document:
-
-```text
-# UI Audit Report — OmniMarket
-Generated: {date}
-
-## A) Routing + Shell
-### Detected Components
-- ...
-### Code Excerpts
-\`\`\`tsx
-// App.tsx route definitions (redacted)
-...
-\`\`\`
-
-## B) App Entry Pages
-...
-
-## C) Global State + Data Plumbing
-...
-
-## D) Auth / Gating
-(Not implemented — skipped)
-
-## E) Styling / Design Tokens
-...
-
-## Snapshots
-\`\`\`json
-[...]
-\`\`\`
-```
-
-### What This Does NOT Change
-- No API behavior, search logic, or data schemas
-- No UI styling changes
-- No business logic modifications
-- No new database tables or edge functions
-- Snapshot buttons are small, unobtrusive, and easily removable
+- **`src/pages/LogoShowcase.tsx`**: Remove all existing sections. Show a single section with the 5 new renditions. Update variant arrays and labels.
 
