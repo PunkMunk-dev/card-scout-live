@@ -578,9 +578,23 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
       );
     });
 
-  const greyStroke = mono ? accent1 : '#9CA3AF'; // white in mono/dark, grey otherwise
+  const greyStroke = mono ? accent1 : '#9CA3AF';
   const greyFill = mono ? accent1 : '#6B7280';
   const sw = size * 0.02;
+
+  // Cloud fill gradient — subtle grey, top-to-bottom
+  const cloudGradId = `cloudFill-${variant}-${size}`;
+  const cloudFillTop = mono ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+  const cloudFillBot = mono ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+  const cloudDefs = (
+    <defs>
+      <linearGradient id={cloudGradId} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor={cloudFillTop} />
+        <stop offset="100%" stopColor={cloudFillBot} />
+      </linearGradient>
+    </defs>
+  );
+  const cloudFillUrl = `url(#${cloudGradId})`;
 
   // 26 — Cloud Core: minimal cloud outline + 3 signal arcs, stroke only
   variants[26] = (
