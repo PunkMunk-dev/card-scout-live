@@ -89,8 +89,12 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </button>
             </div>
-          </div>
-        </a>
+            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <MarketIntelligencePanel title={listing.title} searchContext={listing.searchContext} />
+              {soldMarketValue !== null && (
+                <RoiCalculator psa10MedianPrice={soldMarketValue} />
+              )}
+            </div>
       </div>
       <SoldCompsDialog open={showComps} onOpenChange={setShowComps} soldComps={soldComps} marketValue={soldMarketValue} confidence={soldConfidence} />
     </>
