@@ -596,9 +596,10 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   );
   const cloudFillUrl = `url(#${cloudGradId})`;
 
-  // 26 — Cloud Core: minimal cloud outline + 3 signal arcs, stroke only
+  // 26 — Cloud Core: filled cloud + 3 signal arcs
   variants[26] = (
     <>
+      {cloudDefs}
       <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
       {signalArcs(greyStroke, sw, [0.8, 0.6, 0.4])}
     </>
