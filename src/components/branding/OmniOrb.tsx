@@ -540,17 +540,17 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
   // Cloud-Signal Series (26–30) — greyscale, theme-aware via mono
   // Cloud path builder relative to cx/cy/r
   const cloudPath = (() => {
-    const cw = r * 1.05;  // wider cloud
-    const ch = r * 0.65;  // taller puffs
-    const baseY = cy + r * 0.2;
-    const leftX = cx - cw * 0.5;
-    const rightX = cx + cw * 0.5;
-    // 3 puffy bumps across the top, rounder curves
+    const cw = r * 1.3;   // much wider cloud to fill viewBox
+    const ch = r * 0.85;  // taller puffs
+    const baseY = cy + r * 0.25;
+    const leftX = cx - cw * 0.48;
+    const rightX = cx + cw * 0.48;
+    // 3 large, round puffy bumps — matching reference image
     return `M${leftX} ${baseY}
-      C${leftX - cw * 0.08} ${baseY - ch * 0.5} ${leftX + cw * 0.05} ${baseY - ch * 0.9} ${cx - cw * 0.18} ${baseY - ch * 0.75}
-      C${cx - cw * 0.12} ${baseY - ch * 1.35} ${cx + cw * 0.05} ${baseY - ch * 1.35} ${cx + cw * 0.08} ${baseY - ch * 0.85}
-      C${cx + cw * 0.18} ${baseY - ch * 1.2} ${cx + cw * 0.42} ${baseY - ch * 1.0} ${cx + cw * 0.42} ${baseY - ch * 0.5}
-      C${rightX + cw * 0.08} ${baseY - ch * 0.15} ${rightX} ${baseY} ${rightX} ${baseY}
+      C${leftX - cw * 0.05} ${baseY - ch * 0.6} ${leftX + cw * 0.08} ${baseY - ch * 1.05} ${cx - cw * 0.15} ${baseY - ch * 0.8}
+      C${cx - cw * 0.1} ${baseY - ch * 1.45} ${cx + cw * 0.1} ${baseY - ch * 1.45} ${cx + cw * 0.15} ${baseY - ch * 0.8}
+      C${cx + cw * 0.22} ${baseY - ch * 1.15} ${cx + cw * 0.45} ${baseY - ch * 1.0} ${cx + cw * 0.42} ${baseY - ch * 0.45}
+      C${rightX + cw * 0.05} ${baseY - ch * 0.1} ${rightX} ${baseY} ${rightX} ${baseY}
       Z`;
   })();
 
