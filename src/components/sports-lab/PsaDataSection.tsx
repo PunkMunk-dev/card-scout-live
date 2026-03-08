@@ -1,11 +1,12 @@
 import { Shield, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PsaCertData, PsaPopulationData } from '@/hooks/usePsaCertData';
+import type { PsaCertData, PsaPopulationData, PsaSyncStatus } from '@/hooks/usePsaCertData';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PsaDataSectionProps {
   certData: PsaCertData[] | null;
   populationData: PsaPopulationData | null;
+  syncStatus: PsaSyncStatus;
   isLoading: boolean;
 }
 
@@ -20,7 +21,18 @@ function MetricRow({ label, value, dimmed }: { label: string; value: string; dim
   );
 }
 
-export function PsaDataSection({ certData, populationData, isLoading }: PsaDataSectionProps) {
+function PopulationStatusRow({ syncStatus }: { syncStatus: PsaSyncStatus }) {
+  const labels: Record<PsaSyncStatus, string> = {
+    cached: '',
+    pending_sync: 'Population pending sync',
+    sync_failed: 'Population sync failed',
+    unavailable: 'Population unavailable',
+  };
+  if (syncStatus === 'cached') return null;
+  return <MetricRow label="Population" value={labels[syncStatus]} dimmed />;
+}
+
+export function PsaDataSection({ certData, populationData, syncStatus, isLoading }: PsaDataSectionProps) {
   if (isLoading) {
     return (
       <div className="mt-1.5 pt-1.5" style={{ borderTop: '1px solid var(--om-divider)' }}>
@@ -36,21 +48,6 @@ export function PsaDataSection({ certData, populationData, isLoading }: PsaDataS
 
   const hasAnyCert = certData && certData.length > 0;
   const hasPop = populationData !== null;
-
-  // Don't render the section at all if there's no data
-  if (!hasAnyCert && !hasPop) {
-    return (
-      <div className="mt-1.5 pt-1.5" style={{ borderTop: '1px solid var(--om-divider)' }}>
-        <div className="flex items-center gap-1.5 mb-1">
-          <Shield className="h-3 w-3" style={{ color: 'var(--om-text-3)' }} />
-          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--om-text-3)' }}>PSA Data</span>
-        </div>
-        <MetricRow label="Cert Status" value="Not Verified" dimmed />
-        <MetricRow label="Population" value="Unavailable" dimmed />
-      </div>
-    );
-  }
-
   const latestCert = hasAnyCert ? certData![0] : null;
 
   return (
@@ -75,12 +72,21 @@ export function PsaDataSection({ certData, populationData, isLoading }: PsaDataS
       )}
 
       {hasPop ? (
-        <MetricRow
-          label="Population"
-          value={populationData!.total_population.toLocaleString()}
-        />
+        <>
+          {populationData!.psa10_population !== null && (
+            <MetricRow label="PSA 10 Pop" value={populationData!.psa10_population.toLocaleString()} />
+          )}
+          <MetricRow label="Total Pop" value={populationData!.total_population.toLocaleString()} />
+          {populationData!.last_synced && (
+            <MetricRow
+              label="Last Synced"
+              value={new Date(populationData!.last_synced).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              dimmed
+            />
+          )}
+        </>
       ) : (
-        <MetricRow label="Population" value="Unavailable" dimmed />
+        <PopulationStatusRow syncStatus={syncStatus} />
       )}
     </div>
   );
