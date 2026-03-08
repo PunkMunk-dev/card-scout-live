@@ -168,6 +168,51 @@ export type Database = {
           },
         ]
       }
+      psa_cert_cache: {
+        Row: {
+          card_identity_key: string | null
+          card_number: string | null
+          cert_number: string
+          created_at: string | null
+          grade: string | null
+          id: string
+          image_url: string | null
+          last_verified_at: string | null
+          player_name: string | null
+          raw_response_json: Json | null
+          set_name: string | null
+          year: string | null
+        }
+        Insert: {
+          card_identity_key?: string | null
+          card_number?: string | null
+          cert_number: string
+          created_at?: string | null
+          grade?: string | null
+          id?: string
+          image_url?: string | null
+          last_verified_at?: string | null
+          player_name?: string | null
+          raw_response_json?: Json | null
+          set_name?: string | null
+          year?: string | null
+        }
+        Update: {
+          card_identity_key?: string | null
+          card_number?: string | null
+          cert_number?: string
+          created_at?: string | null
+          grade?: string | null
+          id?: string
+          image_url?: string | null
+          last_verified_at?: string | null
+          player_name?: string | null
+          raw_response_json?: Json | null
+          set_name?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       psa_population: {
         Row: {
           card_identity_key: string
@@ -205,6 +250,45 @@ export type Database = {
             referencedColumns: ["card_identity_key"]
           },
         ]
+      }
+      psa_population_mapping: {
+        Row: {
+          card_identity_key: string
+          created_at: string | null
+          id: string
+          is_admin_verified: boolean | null
+          last_synced_at: string | null
+          mapping_confidence: string | null
+          psa_card_number: string | null
+          psa_population_source: string | null
+          psa_set_name: string | null
+          psa_subject: string | null
+        }
+        Insert: {
+          card_identity_key: string
+          created_at?: string | null
+          id?: string
+          is_admin_verified?: boolean | null
+          last_synced_at?: string | null
+          mapping_confidence?: string | null
+          psa_card_number?: string | null
+          psa_population_source?: string | null
+          psa_set_name?: string | null
+          psa_subject?: string | null
+        }
+        Update: {
+          card_identity_key?: string
+          created_at?: string | null
+          id?: string
+          is_admin_verified?: boolean | null
+          last_synced_at?: string | null
+          mapping_confidence?: string | null
+          psa_card_number?: string | null
+          psa_population_source?: string | null
+          psa_set_name?: string | null
+          psa_subject?: string | null
+        }
+        Relationships: []
       }
       roi_cards: {
         Row: {
