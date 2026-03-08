@@ -687,6 +687,25 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     );
   })();
 
+  // 31 — Cloud Eye: solid filled cloud with centered eye (ring + dot)
+  variants[31] = (() => {
+    const cloudColor = mono ? '#FFFFFF' : '#6FBA2C';
+    const eyeRingColor = mono ? '#6FBA2C' : '#FFFFFF';
+    const eyeDotColor = '#FFFFFF';
+    const eyeCx = cx;
+    const eyeCy = cy - r * 0.08;
+    const eyeOuterR = r * 0.22;
+    const eyeInnerR = r * 0.08;
+    const eyeStrokeW = sw * 1.8;
+    return (
+      <>
+        <path d={cloudPath} fill={cloudColor} stroke={cloudColor} strokeWidth={sw * 0.5} strokeLinejoin="round" />
+        <circle cx={eyeCx} cy={eyeCy} r={eyeOuterR} fill="none" stroke={eyeRingColor} strokeWidth={eyeStrokeW} />
+        <circle cx={eyeCx} cy={eyeCy} r={eyeInnerR} fill={mono ? '#6FBA2C' : eyeDotColor} />
+      </>
+    );
+  })();
+
   return (
     <svg
       width={size}

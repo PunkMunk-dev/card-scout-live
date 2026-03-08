@@ -6,5 +6,5 @@ interface OmniIconProps {
 }
 
 export function OmniIcon({ size = 36 }: OmniIconProps) {
-  return <OmniOrb variant={6} size={size} mono />;
+  return <OmniOrb variant={31} size={size} mono />;
 }

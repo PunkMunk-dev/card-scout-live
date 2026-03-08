@@ -77,9 +77,23 @@ function VariantCard({ variant, name, desc }: { variant: any; name: string; desc
 export default function LogoShowcase() {
   return (
     <div className="min-h-screen bg-background p-8 md:p-12 space-y-16">
-      {/* Cloud Signal Series */}
+      {/* Cloud Eye — Featured */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
+          Cloud Eye — Active Logo
+        </h1>
+        <p className="text-muted-foreground">The current app icon used across all surfaces.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+        {CLOUD_EYE.map(({ variant, name, desc }) => (
+          <VariantCard key={variant} variant={variant} name={name} desc={desc} />
+        ))}
+      </div>
+
+      {/* Cloud Signal Series */}
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
           Cloud Signal Series
         </h1>
         <p className="text-muted-foreground">
