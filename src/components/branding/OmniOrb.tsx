@@ -645,7 +645,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     const ly2 = signalCenter.y + (lensR + r * 0.2) * Math.sin(lensAngle);
     return (
       <>
-        <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+        {cloudDefs}
+        <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
         {signalArcs(greyStroke, sw * 0.7, [0.5, 0.35, 0.2])}
         <circle cx={signalCenter.x} cy={signalCenter.y} r={lensR} fill="none" stroke={greyStroke} strokeWidth={sw * 1.2} opacity="0.9" />
         <line x1={lx} y1={ly} x2={lx2} y2={ly2} stroke={greyStroke} strokeWidth={sw * 1.3} strokeLinecap="round" opacity="0.8" />
