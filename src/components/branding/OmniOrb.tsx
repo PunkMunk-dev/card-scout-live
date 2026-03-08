@@ -677,7 +677,8 @@ export function OmniOrb({ variant = 1, size = 40, className = '', mono = false }
     });
     return (
       <>
-        <path d={cloudPath} fill="none" stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
+        {cloudDefs}
+        <path d={cloudPath} fill={cloudFillUrl} stroke={greyStroke} strokeWidth={sw} strokeLinejoin="round" opacity="0.85" />
         {signalArcs(greyStroke, sw, [0.7, 0.55, 0.4])}
         {nodes.map((n, i) => (
           <circle key={i} cx={n.x} cy={n.y} r={nodeR} fill={greyFill} opacity={0.9 - i * 0.15} />
