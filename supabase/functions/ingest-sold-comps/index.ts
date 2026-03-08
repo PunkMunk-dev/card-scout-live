@@ -16,16 +16,31 @@ const BRAND_SYNONYMS: Record<string, string> = {
   'topps': 'Topps', 'donruss': 'Donruss', 'upper deck': 'Upper Deck',
   'hoops': 'NBA Hoops', 'contenders': 'Panini Contenders',
   'national treasures': 'National Treasures', 'immaculate': 'Panini Immaculate',
+  'finest': 'Topps Finest', 'heritage': 'Topps Heritage',
+  'revolution': 'Panini Revolution', 'chronicles': 'Panini Chronicles',
+  'flux': 'Panini Flux', 'obsidian': 'Panini Obsidian',
+  'phoenix': 'Panini Phoenix', 'spectra': 'Panini Spectra',
 };
 
 const GRADER_PATTERNS = [
+  { regex: /\bPSA\s*GEM\s*(?:MT|MINT)\s*(\d+)\b/i, grader: 'PSA' },
   { regex: /\bPSA\s*(?:GEM\s*(?:MT|MINT)\s*)?(\d+\.?\d*)\b/i, grader: 'PSA' },
   { regex: /\bBGS\s*(\d+\.?\d*)\b/i, grader: 'BGS' },
   { regex: /\bSGC\s*(\d+\.?\d*)\b/i, grader: 'SGC' },
   { regex: /\bCGC\s*(\d+\.?\d*)\b/i, grader: 'CGC' },
+  { regex: /\bGMA\s*(\d+\.?\d*)\b/i, grader: 'GMA' },
+  { regex: /\bHGA\s*(\d+\.?\d*)\b/i, grader: 'HGA' },
+  { regex: /\bCSG\s*(\d+\.?\d*)\b/i, grader: 'CSG' },
 ];
 
-const EXCLUDE_TERMS = ['lot', 'bundle', 'reprint', 'custom', 'proxy', 'fake', 'replica', 'digital', 'mystery', 'break', 'random', 'mixed', 'grab bag'];
+const EXCLUDE_TERMS = [
+  'lot', 'bundle', 'reprint', 'custom', 'proxy', 'fake', 'replica',
+  'digital', 'mystery', 'break', 'random', 'mixed', 'grab bag',
+  'repack', 'repacks', 'pack rip', 'case break', 'group break',
+  'spot', 'random team', 'random player',
+  'not a card', 'non-card', 'sticker', 'magnet', 'poster',
+  'x2', 'x3', 'x4', 'x5', 'x10', 'playset',
+];
 
 function extractYear(title: string): string | null {
   const m = title.match(/\b(19[5-9]\d|20[0-2]\d)\b/);
@@ -79,7 +94,7 @@ function shouldExclude(title: string): boolean {
   const tl = title.toLowerCase();
   if (EXCLUDE_TERMS.some(t => tl.includes(t))) return true;
   if (/\b\d+\s*cards?\b/i.test(title)) return true;
-  if (/\b(?:damaged|poor|creased|torn|water\s*damage|bent)\b/i.test(title)) return true;
+  if (/\b(?:damaged|poor|creased|torn|water\s*damage|bent|trimmed|miscut|off[- ]?center)\b/i.test(title)) return true;
   return false;
 }
 
@@ -102,6 +117,13 @@ function calculateMedian(values: number[]): number {
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
+// Freshness window: 2 hours
+const FRESHNESS_MS = 2 * 60 * 60 * 1000;
+
+// Comp count thresholds
+const RAW_THRESHOLD = 3;
+const PSA10_THRESHOLD = 2;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -118,6 +140,36 @@ serve(async (req) => {
     const year = body.year || null;
     const sport = body.sport || 'sports';
     if (!playerName) throw new Error('playerName is required');
+
+    // Build a tentative key for freshness check
+    const tentativeKey = buildKey(year || extractYear(playerName), playerName, brand, null, null);
+
+    // Check freshness: if we have recent metrics, return them without re-fetching
+    const { data: existingMetrics } = await supabase
+      .from('card_market_metrics')
+      .select('*')
+      .eq('card_identity_key', tentativeKey)
+      .maybeSingle();
+
+    if (existingMetrics) {
+      const updatedAt = new Date(existingMetrics.updated_at).getTime();
+      if (Date.now() - updatedAt < FRESHNESS_MS) {
+        // Fetch comps for this key so we can return them for inspection
+        const { data: comps } = await supabase
+          .from('sales_history')
+          .select('*')
+          .eq('card_identity_key', tentativeKey)
+          .order('sold_at', { ascending: false })
+          .limit(50);
+
+        return new Response(JSON.stringify({
+          success: true,
+          cached: true,
+          metrics: [existingMetrics],
+          comps: comps || [],
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
 
     // Search eBay for sold items (raw + PSA 10)
     const queries = [
@@ -182,7 +234,6 @@ serve(async (req) => {
             grader: grading.grader,
             grade: grading.grade,
             confidence_score: confidence,
-            // For upserting the normalized card
             _year: itemYear,
             _brand: itemBrand,
             _cardNum: cardNum,
@@ -192,8 +243,6 @@ serve(async (req) => {
       } catch { /* skip failed query */ }
     }
 
-    // Only process exact + high confidence comps
-    const goodComps = allComps.filter(c => c.confidence_score === 'exact' || c.confidence_score === 'high');
     const allValidComps = allComps.filter(c => c.confidence_score !== 'low');
 
     // Upsert normalized cards
@@ -219,7 +268,7 @@ serve(async (req) => {
       }, { onConflict: 'card_identity_key' });
     }
 
-    // Insert sales history (upsert on source + source_sale_id)
+    // Insert sales history
     let insertedCount = 0;
     for (const comp of allValidComps) {
       const { _year, _brand, _cardNum, _parallel, ...saleData } = comp;
@@ -232,18 +281,30 @@ serve(async (req) => {
       if (!error) insertedCount++;
     }
 
-    // Compute metrics for each unique card_identity_key
+    // Compute metrics per unique key with exact/broad split
     const metricsResults: any[] = [];
     for (const key of uniqueKeys) {
-      const compsForKey = goodComps.filter(c => c.card_identity_key === key);
-      const rawComps = compsForKey.filter(c => c.raw_or_graded === 'raw');
-      const psa10Comps = compsForKey.filter(c => c.raw_or_graded === 'graded' && c.grader === 'PSA' && c.grade === '10');
+      const compsForKey = allValidComps.filter(c => c.card_identity_key === key);
+      const exactComps = compsForKey.filter(c => c.confidence_score === 'exact');
+      const broadComps = compsForKey.filter(c => c.confidence_score === 'high');
 
-      const rawPrices = rawComps.map(c => c.total_price);
-      const psa10Prices = psa10Comps.map(c => c.total_price);
+      // Raw comps
+      const exactRaw = exactComps.filter(c => c.raw_or_graded === 'raw');
+      const broadRaw = broadComps.filter(c => c.raw_or_graded === 'raw');
+      const useRaw = exactRaw.length >= RAW_THRESHOLD ? exactRaw : [...exactRaw, ...broadRaw];
+      const rawMatchType = exactRaw.length >= RAW_THRESHOLD ? 'exact' : 'broad';
 
-      const rawMedian = rawPrices.length > 0 ? calculateMedian(rawPrices) : null;
-      const psa10Median = psa10Prices.length > 0 ? calculateMedian(psa10Prices) : null;
+      // PSA10 comps
+      const exactPsa10 = exactComps.filter(c => c.raw_or_graded === 'graded' && c.grader === 'PSA' && c.grade === '10');
+      const broadPsa10 = broadComps.filter(c => c.raw_or_graded === 'graded' && c.grader === 'PSA' && c.grade === '10');
+      const usePsa10 = exactPsa10.length >= PSA10_THRESHOLD ? exactPsa10 : [...exactPsa10, ...broadPsa10];
+      const psa10MatchType = exactPsa10.length >= PSA10_THRESHOLD ? 'exact' : 'broad';
+
+      const rawPrices = useRaw.map(c => c.total_price);
+      const psa10Prices = usePsa10.map(c => c.total_price);
+
+      const rawMedian = rawPrices.length >= RAW_THRESHOLD ? calculateMedian(rawPrices) : null;
+      const psa10Median = psa10Prices.length >= PSA10_THRESHOLD ? calculateMedian(psa10Prices) : null;
 
       const spreadAmount = (rawMedian !== null && psa10Median !== null) ? psa10Median - rawMedian : null;
       const spreadPercent = (spreadAmount !== null && rawMedian && rawMedian > 0) ? (spreadAmount / rawMedian) * 100 : null;
@@ -251,24 +312,56 @@ serve(async (req) => {
       const metrics = {
         card_identity_key: key,
         raw_median_price: rawMedian ? Math.round(rawMedian * 100) / 100 : null,
-        raw_comp_count: rawComps.length,
+        raw_comp_count: useRaw.length,
         psa10_median_price: psa10Median ? Math.round(psa10Median * 100) / 100 : null,
-        psa10_comp_count: psa10Comps.length,
+        psa10_comp_count: usePsa10.length,
         spread_amount: spreadAmount ? Math.round(spreadAmount * 100) / 100 : null,
         spread_percent: spreadPercent ? Math.round(spreadPercent * 100) / 100 : null,
-        population: null, // Will be populated when PSA sync is implemented
+        population: null,
       };
 
       await supabase.from('card_market_metrics').upsert(metrics, { onConflict: 'card_identity_key' });
       metricsResults.push(metrics);
     }
 
+    // Return comps for UI inspection
+    const responseComps = allValidComps.map(c => ({
+      title: c.title,
+      sold_price: c.sold_price,
+      shipping_price: c.shipping_price,
+      total_price: c.total_price,
+      sold_at: c.sold_at,
+      raw_or_graded: c.raw_or_graded,
+      grader: c.grader,
+      grade: c.grade,
+      confidence_score: c.confidence_score,
+      card_identity_key: c.card_identity_key,
+      url: c.url,
+      excluded: false,
+    }));
+
+    // Also include excluded comps for transparency
+    const excludedComps = allComps
+      .filter(c => c.confidence_score === 'low' || !allValidComps.includes(c))
+      .map(c => ({
+        title: c.title,
+        sold_price: c.sold_price,
+        total_price: c.total_price,
+        sold_at: c.sold_at,
+        raw_or_graded: c.raw_or_graded,
+        confidence_score: c.confidence_score || 'excluded',
+        excluded: true,
+        url: c.url,
+      }));
+
     return new Response(JSON.stringify({
       success: true,
+      cached: false,
       totalCompsFound: allComps.length,
       validCompsInserted: insertedCount,
       normalizedCards: uniqueKeys.length,
       metrics: metricsResults,
+      comps: [...responseComps, ...excludedComps],
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {

@@ -29,12 +29,35 @@ const BRAND_SYNONYMS: Record<string, string> = {
   'nt': 'National Treasures',
   'immaculate': 'Panini Immaculate',
   'spectra': 'Panini Spectra',
+  'revolution': 'Panini Revolution',
+  'chronicles': 'Panini Chronicles',
+  'court kings': 'Panini Court Kings',
+  'crown royale': 'Panini Crown Royale',
+  'absolute': 'Panini Absolute',
+  'elite': 'Donruss Elite',
+  'finest': 'Topps Finest',
+  'stadium club': 'Topps Stadium Club',
+  'heritage': 'Topps Heritage',
+  'gypsy queen': 'Topps Gypsy Queen',
+  'clearly donruss': 'Clearly Donruss',
+  'flux': 'Panini Flux',
+  'score': 'Panini Score',
+  'certified': 'Panini Certified',
+  'illusions': 'Panini Illusions',
+  'noir': 'Panini Noir',
+  'obsidian': 'Panini Obsidian',
+  'origins': 'Panini Origins',
+  'photogenic': 'Panini Photogenic',
+  'phoenix': 'Panini Phoenix',
+  'prestige': 'Panini Prestige',
+  'recon': 'Panini Recon',
+  'threads': 'Panini Threads',
 };
 
 // Grader normalization
 const GRADER_PATTERNS: { regex: RegExp; grader: string; gradeGroup: number }[] = [
-  { regex: /\b(?:PSA)\s*(?:GEM\s*(?:MT|MINT)\s*)?(\d+\.?\d*)\b/i, grader: 'PSA', gradeGroup: 1 },
   { regex: /\bPSA\s*GEM\s*(?:MT|MINT)\s*(\d+)\b/i, grader: 'PSA', gradeGroup: 1 },
+  { regex: /\b(?:PSA)\s*(?:GEM\s*(?:MT|MINT)\s*)?(\d+\.?\d*)\b/i, grader: 'PSA', gradeGroup: 1 },
   { regex: /\bBGS\s*(\d+\.?\d*)\b/i, grader: 'BGS', gradeGroup: 1 },
   { regex: /\bSGC\s*(\d+\.?\d*)\b/i, grader: 'SGC', gradeGroup: 1 },
   { regex: /\bCGC\s*(\d+\.?\d*)\b/i, grader: 'CGC', gradeGroup: 1 },
@@ -87,7 +110,6 @@ function extractYear(title: string): string | null {
 
 function extractBrand(title: string): string | null {
   const titleLower = title.toLowerCase();
-  // Check multi-word brands first
   const sortedKeys = Object.keys(BRAND_SYNONYMS).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     if (titleLower.includes(key)) {
@@ -106,7 +128,6 @@ function extractCardNumber(title: string): string | null {
   for (const pattern of patterns) {
     const match = title.match(pattern);
     if (match?.[1]) {
-      // Avoid matching grader grades (PSA 10, BGS 9.5)
       const beforeMatch = title.substring(0, match.index || 0);
       if (/\b(?:PSA|BGS|SGC|CGC)\s*$/i.test(beforeMatch)) continue;
       if (match[1] === '10' && /PSA\s*$/i.test(beforeMatch)) continue;
@@ -131,10 +152,8 @@ function extractGrading(title: string): { grader: string | null; grade: string |
 
 function extractParallel(title: string): string | null {
   const titleLower = title.toLowerCase();
-  // Check numbered parallels first (e.g., /25, /99)
   const numberedMatch = titleLower.match(/\/(\d+)\b/);
   if (numberedMatch) {
-    // Also try to get the color/name before it
     const beforeSlash = titleLower.substring(0, titleLower.indexOf('/' + numberedMatch[1]));
     const colorMatch = beforeSlash.match(/(\w+)\s*$/);
     if (colorMatch) {
@@ -145,11 +164,10 @@ function extractParallel(title: string): string | null {
     }
     return `/${numberedMatch[1]}`;
   }
-  
-  // Check named parallels
+
   const found: string[] = [];
   for (const kw of PARALLEL_KEYWORDS) {
-    if (kw.startsWith('/')) continue; // skip numbered ones
+    if (kw.startsWith('/')) continue;
     if (titleLower.includes(kw.toLowerCase())) {
       found.push(kw);
     }
@@ -206,7 +224,6 @@ function computeConfidence(fields: NormalizedCard): NormalizedCard['confidence']
 
 /**
  * Parse a listing title into structured card fields.
- * Optionally accepts search context for additional hints.
  */
 export function normalizeCardTitle(
   title: string,
@@ -219,7 +236,7 @@ export function normalizeCardTitle(
   const parallel = extractParallel(title);
   const flags = extractFlags(title);
   const player_name = context?.playerName || null;
-  const set_name = brand; // In many cases brand == set for sports cards
+  const set_name = brand;
 
   const card: NormalizedCard = {
     card_identity_key: '',
@@ -249,19 +266,33 @@ export function normalizeCardTitle(
 }
 
 /**
+ * Expanded exclusion list for junk filtering.
+ */
+const EXCLUDE_TERMS = [
+  'lot', 'bundle', 'reprint', 'custom', 'proxy', 'fake', 'replica',
+  'digital', 'mystery', 'break', 'random', 'mixed', 'grab bag',
+  'repack', 'repacks', 'pack rip', 'case break', 'group break',
+  'spot', 'random team', 'random player',
+  'pwe only', 'not a card', 'non-card', 'sticker', 'magnet',
+  'poster', 'print', 'photo', 'art card', 'promo card',
+  'test print', 'error card',
+  'x2', 'x3', 'x4', 'x5', 'x10', 'playset',
+];
+
+/**
  * Check if a title should be excluded from sold comps.
  */
 export function shouldExcludeFromComps(title: string): boolean {
-  const excludeTerms = [
-    'lot', 'bundle', 'reprint', 'custom', 'proxy', 'fake', 'replica',
-    'digital', 'mystery', 'break', 'random', 'mixed', 'grab bag',
-    'x2', 'x3', 'x4', 'x5', 'x10', 'playset',
-  ];
   const titleLower = title.toLowerCase();
-  if (excludeTerms.some(t => titleLower.includes(t))) return true;
-  // Check for multi-card patterns
+  if (EXCLUDE_TERMS.some(t => titleLower.includes(t))) return true;
+  // Multi-card patterns
   if (/\b\d+\s*cards?\b/i.test(title)) return true;
-  // Check for damaged condition
-  if (/\b(?:damaged|poor|creased|torn|water\s*damage|bent)\b/i.test(title)) return true;
+  // Damaged condition
+  if (/\b(?:damaged|poor|creased|torn|water\s*damage|bent|trimmed|miscut|off[- ]?center)\b/i.test(title)) return true;
+  // Generic "card" only titles (too ambiguous)
+  if (/^\s*(card|trading card|sports card)\s*$/i.test(title.trim())) return true;
   return false;
 }
+
+// Re-export brand synonyms for edge function use
+export { BRAND_SYNONYMS };

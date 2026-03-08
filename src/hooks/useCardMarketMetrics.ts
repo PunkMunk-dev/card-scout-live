@@ -13,12 +13,43 @@ export interface CardMarketMetrics {
   population: number | null;
 }
 
-// Simple in-memory cache to avoid refetching
-const metricsCache = new Map<string, { data: CardMarketMetrics | null; fetchedAt: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+export interface SoldComp {
+  title: string;
+  sold_price: number;
+  shipping_price?: number;
+  total_price: number;
+  sold_at: string | null;
+  raw_or_graded: string;
+  grader?: string | null;
+  grade?: string | null;
+  confidence_score: string;
+  card_identity_key: string;
+  url?: string;
+  excluded: boolean;
+}
+
+// Minimum comp thresholds
+export const RAW_THRESHOLD = 3;
+export const PSA10_THRESHOLD = 2;
+
+export type ConfidenceLevel = 'full' | 'limited' | 'insufficient';
+
+export function getConfidenceLevel(metrics: CardMarketMetrics | null): ConfidenceLevel {
+  if (!metrics) return 'insufficient';
+  const hasRaw = metrics.raw_comp_count >= RAW_THRESHOLD && metrics.raw_median_price !== null;
+  const hasPsa10 = metrics.psa10_comp_count >= PSA10_THRESHOLD && metrics.psa10_median_price !== null;
+  if (hasRaw && hasPsa10) return 'full';
+  if (hasRaw || hasPsa10) return 'limited';
+  return 'insufficient';
+}
+
+// Simple in-memory cache
+const metricsCache = new Map<string, { data: CardMarketMetrics | null; comps: SoldComp[]; fetchedAt: number }>();
+const CACHE_TTL = 5 * 60 * 1000;
 
 export function useCardMarketMetrics() {
   const [metrics, setMetrics] = useState<CardMarketMetrics | null>(null);
+  const [comps, setComps] = useState<SoldComp[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +64,7 @@ export function useCardMarketMetrics() {
     const cached = metricsCache.get(key);
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
       setMetrics(cached.data);
+      setComps(cached.comps);
       return cached.data;
     }
 
@@ -40,7 +72,7 @@ export function useCardMarketMetrics() {
     setError(null);
 
     try {
-      // First try to get from the database
+      // First try DB
       const { data, error: dbError } = await supabase
         .from('card_market_metrics')
         .select('*')
@@ -58,13 +90,38 @@ export function useCardMarketMetrics() {
           spread_percent: data.spread_percent,
           population: data.population,
         };
-        metricsCache.set(key, { data: result, fetchedAt: Date.now() });
+
+        // Fetch associated comps from sales_history
+        const { data: salesData } = await supabase
+          .from('sales_history')
+          .select('*')
+          .eq('card_identity_key', key)
+          .order('sold_at', { ascending: false })
+          .limit(50);
+
+        const fetchedComps: SoldComp[] = (salesData || []).map((s: any) => ({
+          title: s.title || '',
+          sold_price: s.sold_price || 0,
+          shipping_price: s.shipping_price || 0,
+          total_price: s.total_price || 0,
+          sold_at: s.sold_at,
+          raw_or_graded: s.raw_or_graded,
+          grader: s.grader,
+          grade: s.grade,
+          confidence_score: s.confidence_score,
+          card_identity_key: s.card_identity_key,
+          url: s.url,
+          excluded: false,
+        }));
+
+        metricsCache.set(key, { data: result, comps: fetchedComps, fetchedAt: Date.now() });
         setMetrics(result);
+        setComps(fetchedComps);
         setIsLoading(false);
         return result;
       }
 
-      // If not in DB, trigger on-demand ingestion
+      // Trigger on-demand ingestion
       const { data: ingestData, error: ingestError } = await supabase.functions.invoke('ingest-sold-comps', {
         body: {
           playerName: context?.playerName || normalized.player_name,
@@ -75,9 +132,12 @@ export function useCardMarketMetrics() {
 
       if (ingestError) throw ingestError;
 
-      // Find the matching metrics from the response
       const matchingMetrics = ingestData?.metrics?.find(
         (m: any) => m.card_identity_key === key
+      );
+
+      const returnedComps: SoldComp[] = (ingestData?.comps || []).filter(
+        (c: any) => c.card_identity_key === key
       );
 
       if (matchingMetrics) {
@@ -91,15 +151,16 @@ export function useCardMarketMetrics() {
           spread_percent: matchingMetrics.spread_percent,
           population: matchingMetrics.population,
         };
-        metricsCache.set(key, { data: result, fetchedAt: Date.now() });
+        metricsCache.set(key, { data: result, comps: returnedComps, fetchedAt: Date.now() });
         setMetrics(result);
+        setComps(returnedComps);
         setIsLoading(false);
         return result;
       }
 
-      // No data available
-      metricsCache.set(key, { data: null, fetchedAt: Date.now() });
+      metricsCache.set(key, { data: null, comps: [], fetchedAt: Date.now() });
       setMetrics(null);
+      setComps([]);
       setIsLoading(false);
       return null;
 
@@ -110,5 +171,5 @@ export function useCardMarketMetrics() {
     }
   }, []);
 
-  return { metrics, isLoading, error, fetchMetrics };
+  return { metrics, comps, isLoading, error, fetchMetrics };
 }
