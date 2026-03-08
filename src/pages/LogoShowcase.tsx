@@ -8,6 +8,10 @@ const RENDITIONS: { variant: 21|22|23|24|25; name: string; desc: string }[] = [
   { variant: 25, name: 'Partial Fill', desc: 'Stroke fading to fill near search' },
 ];
 
+const CLOUD_EYE: { variant: 31; name: string; desc: string }[] = [
+  { variant: 31, name: 'Cloud Eye', desc: 'Solid cloud with centered eye mark' },
+];
+
 const CLOUD_SERIES: { variant: 26|27|28|29|30; name: string; desc: string }[] = [
   { variant: 26, name: 'Cloud Core', desc: 'Minimal cloud outline with signal arcs' },
   { variant: 27, name: 'Cloud Pulse', desc: 'Animated pulsing signal waves' },
