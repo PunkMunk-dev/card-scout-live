@@ -91,51 +91,55 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
     return { listings: final, removedCount, dupsRemoved: result.duplicatesRemoved };
   }, [allListings, game, sort]);
 
+  const handleRefresh = useCallback(async () => { await refetch(); }, [refetch]);
+
   return (
-    <div className="space-y-4">
-      <div className="relative w-full sm:max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: 'var(--om-text-3)' }} />
-        <Input
-          type="text"
-          placeholder="Search variants, numbers..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          maxLength={50}
-          className="h-8 pl-9 pr-8 text-xs om-input rounded-lg font-mono"
+    <PullToRefresh onRefresh={handleRefresh} disabled={isLoading}>
+      <div className="space-y-4">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: 'var(--om-text-3)' }} />
+          <Input
+            type="text"
+            placeholder="Search variants, numbers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            maxLength={50}
+            className="h-8 pl-9 pr-8 text-xs om-input rounded-lg font-mono"
+          />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 transition-colors" style={{ color: 'var(--om-text-2)' }}>
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        <ResultsToolbar
+          resultCount={processedResults?.listings.length ?? 0}
+          totalCount={totalFromApi}
+          showAuctionsOnly={showAuctionsOnly}
+          onToggleAuctions={() => {
+            setShowAuctionsOnly(prev => {
+              const next = !prev;
+              setSort(next ? 'ending_soonest' : 'best_match');
+              return next;
+            });
+          }}
+          priceRange={priceRange}
+          onPriceRangeChange={setPriceRange}
+          sortOption={sort}
+          onSortChange={setSort}
+          filteredOutCount={processedResults?.removedCount}
         />
-        {searchTerm && (
-          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 transition-colors" style={{ color: 'var(--om-text-2)' }}>
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
+
+        <TerminalGrid
+          listings={processedResults?.listings}
+          isLoading={isLoading}
+          error={error}
+          hasMore={!!hasNextPage}
+          isLoadingMore={isFetchingNextPage}
+          onLoadMore={() => fetchNextPage()}
+        />
       </div>
-
-      <ResultsToolbar
-        resultCount={processedResults?.listings.length ?? 0}
-        totalCount={totalFromApi}
-        showAuctionsOnly={showAuctionsOnly}
-        onToggleAuctions={() => {
-          setShowAuctionsOnly(prev => {
-            const next = !prev;
-            setSort(next ? 'ending_soonest' : 'best_match');
-            return next;
-          });
-        }}
-        priceRange={priceRange}
-        onPriceRangeChange={setPriceRange}
-        sortOption={sort}
-        onSortChange={setSort}
-        filteredOutCount={processedResults?.removedCount}
-      />
-
-      <TerminalGrid
-        listings={processedResults?.listings}
-        isLoading={isLoading}
-        error={error}
-        hasMore={!!hasNextPage}
-        isLoadingMore={isFetchingNextPage}
-        onLoadMore={() => fetchNextPage()}
-      />
-    </div>
+    </PullToRefresh>
   );
 }
