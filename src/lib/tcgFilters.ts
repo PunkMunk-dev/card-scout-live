@@ -83,8 +83,8 @@ export function computeImageQualityScore(listing: EbayListing): number {
 function normalizeTitle(title: string): string {
   let t = title.toLowerCase();
   t = t.replace(/[^\w\s]/g, ' ');
-  for (const sw of STOP_WORDS) {
-    t = t.replace(new RegExp(`\\b${sw}\\b`, 'gi'), '');
+  for (const re of STOP_WORD_REGEXES) {
+    t = t.replace(re, '');
   }
   t = t.replace(/\s+/g, ' ').trim();
   return t;

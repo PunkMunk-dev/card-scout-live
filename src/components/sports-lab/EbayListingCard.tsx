@@ -107,4 +107,6 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
       <SoldCompsDialog open={showComps} onOpenChange={setShowComps} soldComps={soldComps} marketValue={soldMarketValue} confidence={soldConfidence} />
     </>
   );
-}
+});
+
+export const MemoizedEbayListingCard = memo(EbayListingCard, (prev, next) => prev.listing.itemId === next.listing.itemId && prev.sportKey === next.sportKey && prev.isAuctionMode === next.isAuctionMode);

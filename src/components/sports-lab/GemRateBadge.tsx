@@ -48,4 +48,4 @@ export const GemRateBadge = memo(function GemRateBadge({ searchContext, fallback
       </Tooltip>
     </TooltipProvider>
   );
-}
+});
