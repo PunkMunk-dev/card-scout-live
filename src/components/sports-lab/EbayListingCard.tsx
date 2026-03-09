@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Copy, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
