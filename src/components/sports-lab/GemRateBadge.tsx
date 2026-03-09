@@ -5,7 +5,7 @@ import type { EbayListing } from '@/types/sportsEbay';
 
 interface GemRateBadgeProps { searchContext: EbayListing['searchContext']; fallbackUrl: string; }
 
-export function GemRateBadge({ searchContext, fallbackUrl }: GemRateBadgeProps) {
+export const GemRateBadge = memo(function GemRateBadge({ searchContext, fallbackUrl }: GemRateBadgeProps) {
   const containerRef = useRef<HTMLAnchorElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
