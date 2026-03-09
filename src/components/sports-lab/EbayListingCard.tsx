@@ -107,6 +107,6 @@ function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: E
       <SoldCompsDialog open={showComps} onOpenChange={setShowComps} soldComps={soldComps} marketValue={soldMarketValue} confidence={soldConfidence} />
     </>
   );
-});
+}
 
-export const MemoizedEbayListingCard = memo(EbayListingCard, (prev, next) => prev.listing.itemId === next.listing.itemId && prev.sportKey === next.sportKey && prev.isAuctionMode === next.isAuctionMode);
+export const EbayListingCard = memo(EbayListingCardInner, (prev, next) => prev.listing.itemId === next.listing.itemId && prev.sportKey === next.sportKey && prev.isAuctionMode === next.isAuctionMode);
