@@ -10,7 +10,7 @@ import type { EbayListing } from '@/types/sportsEbay';
 
 const GRADING_COST = 25;
 
-export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing: EbayListing; sportKey?: string | null; isAuctionMode?: boolean }) {
+function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: EbayListing; sportKey?: string | null; isAuctionMode?: boolean }) {
   const [showComps, setShowComps] = useState(false);
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
