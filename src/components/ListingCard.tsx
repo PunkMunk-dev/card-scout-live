@@ -101,7 +101,7 @@ export function ListingCard({ item, index, isInWatchlist, onToggleWatchlist }: L
               onToggleWatchlist(item);
             }}
             className={cn(
-              "absolute top-2 right-2 relative w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors before:absolute before:inset-[-6px] before:content-['']",
+              "absolute top-2 right-2 w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors",
               isInWatchlist ? "text-[var(--om-accent)]" : "text-white/70 hover:text-white"
             )}
             aria-label={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
