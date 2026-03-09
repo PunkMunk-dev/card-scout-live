@@ -48,11 +48,11 @@ export const TerminalCard = memo(function TerminalCard({ listing }: TerminalCard
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleWatchlist(); }}
               className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors",
+                "relative w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors before:absolute before:inset-[-6px] before:content-['']",
                 watched ? "text-[var(--om-accent)]" : "text-white/70 hover:text-white"
               )}
             >
-              <Star className={cn("h-3.5 w-3.5", watched && "fill-current")} />
+              <Star className={cn("h-4 w-4 sm:h-3.5 sm:w-3.5", watched && "fill-current")} />
             </button>
             {isAuction && <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-orange-400 bg-black/50 backdrop-blur-sm">Auction</span>}
           </div>
