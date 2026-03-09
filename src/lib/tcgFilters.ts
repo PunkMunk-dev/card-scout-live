@@ -37,6 +37,8 @@ const STOP_WORDS = [
   'for', 'in', 'on', 'with', 'to', 'is', 'it',
 ];
 
+const STOP_WORD_REGEXES = STOP_WORDS.map(sw => new RegExp(`\\b${sw}\\b`, 'gi'));
+
 export function extractCardNumber(title: string, game: Game): string | null {
   if (game === 'pokemon') {
     const m = title.match(POKEMON_CARD_NUMBER_RE);
@@ -81,8 +83,8 @@ export function computeImageQualityScore(listing: EbayListing): number {
 function normalizeTitle(title: string): string {
   let t = title.toLowerCase();
   t = t.replace(/[^\w\s]/g, ' ');
-  for (const sw of STOP_WORDS) {
-    t = t.replace(new RegExp(`\\b${sw}\\b`, 'gi'), '');
+  for (const re of STOP_WORD_REGEXES) {
+    t = t.replace(re, '');
   }
   t = t.replace(/\s+/g, ' ').trim();
   return t;

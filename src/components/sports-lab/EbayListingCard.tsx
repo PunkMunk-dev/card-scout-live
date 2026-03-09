@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Copy, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
@@ -10,7 +10,7 @@ import type { EbayListing } from '@/types/sportsEbay';
 
 const GRADING_COST = 25;
 
-export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing: EbayListing; sportKey?: string | null; isAuctionMode?: boolean }) {
+function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: EbayListing; sportKey?: string | null; isAuctionMode?: boolean }) {
   const [showComps, setShowComps] = useState(false);
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
@@ -108,3 +108,5 @@ export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing:
     </>
   );
 }
+
+export const EbayListingCard = memo(EbayListingCardInner, (prev, next) => prev.listing.itemId === next.listing.itemId && prev.sportKey === next.sportKey && prev.isAuctionMode === next.isAuctionMode);

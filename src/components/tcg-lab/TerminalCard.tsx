@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Copy, Check, Star, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import type { EbayListing } from '@/types/tcg';
 import { useSharedWatchlist } from '@/contexts/WatchlistContext';
 import { tcgListingToEbayItem } from '@/lib/watchlistAdapters';
@@ -11,7 +10,7 @@ interface TerminalCardProps {
   listing: EbayListing;
 }
 
-export function TerminalCard({ listing }: TerminalCardProps) {
+export const TerminalCard = memo(function TerminalCard({ listing }: TerminalCardProps) {
   const { isInWatchlist, toggleWatchlist } = useSharedWatchlist();
   const watched = isInWatchlist(listing.itemId);
   const [copied, setCopied] = useState(false);
@@ -20,15 +19,18 @@ export function TerminalCard({ listing }: TerminalCardProps) {
     toggleWatchlist(tcgListingToEbayItem(listing));
   };
 
-  const cleanTitle = listing.title
-    .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
-    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
-    .replace(/[\u{2600}-\u{26FF}]/gu, '')
-    .replace(/[\u{2700}-\u{27BF}]/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 60);
+  const cleanTitle = useMemo(() =>
+    listing.title
+      .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
+      .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+      .replace(/[\u{2600}-\u{26FF}]/gu, '')
+      .replace(/[\u{2700}-\u{27BF}]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60),
+    [listing.title]
+  );
 
   const isAuction = listing.listingType === 'AUCTION';
 
@@ -100,4 +102,4 @@ export function TerminalCard({ listing }: TerminalCardProps) {
       </a>
     </div>
   );
-}
+});

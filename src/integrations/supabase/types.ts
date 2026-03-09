@@ -14,6 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_market_metrics: {
+        Row: {
+          card_identity_key: string
+          id: string
+          pop_last_synced_at: string | null
+          population: number | null
+          psa10_comp_count: number | null
+          psa10_median_price: number | null
+          psa10_population: number | null
+          raw_comp_count: number | null
+          raw_median_price: number | null
+          spread_amount: number | null
+          spread_percent: number | null
+          updated_at: string
+        }
+        Insert: {
+          card_identity_key: string
+          id?: string
+          pop_last_synced_at?: string | null
+          population?: number | null
+          psa10_comp_count?: number | null
+          psa10_median_price?: number | null
+          psa10_population?: number | null
+          raw_comp_count?: number | null
+          raw_median_price?: number | null
+          spread_amount?: number | null
+          spread_percent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          card_identity_key?: string
+          id?: string
+          pop_last_synced_at?: string | null
+          population?: number | null
+          psa10_comp_count?: number | null
+          psa10_median_price?: number | null
+          psa10_population?: number | null
+          raw_comp_count?: number | null
+          raw_median_price?: number | null
+          spread_amount?: number | null
+          spread_percent?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_market_metrics_card_identity_key_fkey"
+            columns: ["card_identity_key"]
+            isOneToOne: true
+            referencedRelation: "cards_normalized"
+            referencedColumns: ["card_identity_key"]
+          },
+        ]
+      }
+      cards_normalized: {
+        Row: {
+          autograph_flag: boolean
+          brand: string | null
+          card_identity_key: string
+          card_number: string | null
+          category: string | null
+          character_name: string | null
+          created_at: string
+          id: string
+          memorabilia_flag: boolean
+          parallel: string | null
+          player_name: string | null
+          rookie_flag: boolean
+          set_name: string | null
+          sport: string
+          subset: string | null
+          updated_at: string
+          variation: string | null
+          year: string | null
+        }
+        Insert: {
+          autograph_flag?: boolean
+          brand?: string | null
+          card_identity_key: string
+          card_number?: string | null
+          category?: string | null
+          character_name?: string | null
+          created_at?: string
+          id?: string
+          memorabilia_flag?: boolean
+          parallel?: string | null
+          player_name?: string | null
+          rookie_flag?: boolean
+          set_name?: string | null
+          sport: string
+          subset?: string | null
+          updated_at?: string
+          variation?: string | null
+          year?: string | null
+        }
+        Update: {
+          autograph_flag?: boolean
+          brand?: string | null
+          card_identity_key?: string
+          card_number?: string | null
+          category?: string | null
+          character_name?: string | null
+          created_at?: string
+          id?: string
+          memorabilia_flag?: boolean
+          parallel?: string | null
+          player_name?: string | null
+          rookie_flag?: boolean
+          set_name?: string | null
+          sport?: string
+          subset?: string | null
+          updated_at?: string
+          variation?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           id: string
@@ -54,6 +170,310 @@ export type Database = {
             columns: ["ruleset_version_id"]
             isOneToOne: false
             referencedRelation: "ruleset_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      psa_cert_cache: {
+        Row: {
+          card_identity_key: string | null
+          card_number: string | null
+          cert_number: string
+          created_at: string | null
+          grade: string | null
+          id: string
+          image_url: string | null
+          last_verified_at: string | null
+          player_name: string | null
+          raw_response_json: Json | null
+          set_name: string | null
+          year: string | null
+        }
+        Insert: {
+          card_identity_key?: string | null
+          card_number?: string | null
+          cert_number: string
+          created_at?: string | null
+          grade?: string | null
+          id?: string
+          image_url?: string | null
+          last_verified_at?: string | null
+          player_name?: string | null
+          raw_response_json?: Json | null
+          set_name?: string | null
+          year?: string | null
+        }
+        Update: {
+          card_identity_key?: string | null
+          card_number?: string | null
+          cert_number?: string
+          created_at?: string | null
+          grade?: string | null
+          id?: string
+          image_url?: string | null
+          last_verified_at?: string | null
+          player_name?: string | null
+          raw_response_json?: Json | null
+          set_name?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
+      psa_population: {
+        Row: {
+          card_identity_key: string
+          id: string
+          last_synced: string | null
+          population_count: number | null
+          psa_grade: string | null
+          psa_set: string | null
+          psa_subject: string | null
+          source_label: string | null
+          source_last_synced_at: string | null
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          card_identity_key: string
+          id?: string
+          last_synced?: string | null
+          population_count?: number | null
+          psa_grade?: string | null
+          psa_set?: string | null
+          psa_subject?: string | null
+          source_label?: string | null
+          source_last_synced_at?: string | null
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          card_identity_key?: string
+          id?: string
+          last_synced?: string | null
+          population_count?: number | null
+          psa_grade?: string | null
+          psa_set?: string | null
+          psa_subject?: string | null
+          source_label?: string | null
+          source_last_synced_at?: string | null
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psa_population_card_identity_key_fkey"
+            columns: ["card_identity_key"]
+            isOneToOne: false
+            referencedRelation: "cards_normalized"
+            referencedColumns: ["card_identity_key"]
+          },
+        ]
+      }
+      psa_population_mapping: {
+        Row: {
+          card_identity_key: string
+          created_at: string | null
+          id: string
+          is_admin_verified: boolean | null
+          last_synced_at: string | null
+          mapping_confidence: string | null
+          notes: string | null
+          psa_card_number: string | null
+          psa_population_source: string | null
+          psa_population_url: string | null
+          psa_search_query: string | null
+          psa_set_name: string | null
+          psa_subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          card_identity_key: string
+          created_at?: string | null
+          id?: string
+          is_admin_verified?: boolean | null
+          last_synced_at?: string | null
+          mapping_confidence?: string | null
+          notes?: string | null
+          psa_card_number?: string | null
+          psa_population_source?: string | null
+          psa_population_url?: string | null
+          psa_search_query?: string | null
+          psa_set_name?: string | null
+          psa_subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          card_identity_key?: string
+          created_at?: string | null
+          id?: string
+          is_admin_verified?: boolean | null
+          last_synced_at?: string | null
+          mapping_confidence?: string | null
+          notes?: string | null
+          psa_card_number?: string | null
+          psa_population_source?: string | null
+          psa_population_url?: string | null
+          psa_search_query?: string | null
+          psa_set_name?: string | null
+          psa_subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      psa_sync_runs: {
+        Row: {
+          created_at: string
+          error_log: Json | null
+          finished_at: string | null
+          id: string
+          records_failed: number | null
+          records_seen: number | null
+          records_updated: number | null
+          source_type: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_log?: Json | null
+          finished_at?: string | null
+          id?: string
+          records_failed?: number | null
+          records_seen?: number | null
+          records_updated?: number | null
+          source_type?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_log?: Json | null
+          finished_at?: string | null
+          id?: string
+          records_failed?: number | null
+          records_seen?: number | null
+          records_updated?: number | null
+          source_type?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      roi_cards: {
+        Row: {
+          card_name: string
+          created_at: string | null
+          id: string
+          multiplier: number | null
+          psa10_avg: number | null
+          psa10_profit: number | null
+          psa9_avg: number | null
+          psa9_gain: number | null
+          raw_avg: number | null
+          sport: string
+        }
+        Insert: {
+          card_name: string
+          created_at?: string | null
+          id?: string
+          multiplier?: number | null
+          psa10_avg?: number | null
+          psa10_profit?: number | null
+          psa9_avg?: number | null
+          psa9_gain?: number | null
+          raw_avg?: number | null
+          sport: string
+        }
+        Update: {
+          card_name?: string
+          created_at?: string | null
+          id?: string
+          multiplier?: number | null
+          psa10_avg?: number | null
+          psa10_profit?: number | null
+          psa9_avg?: number | null
+          psa9_gain?: number | null
+          raw_avg?: number | null
+          sport?: string
+        }
+        Relationships: []
+      }
+      roi_ebay_cache: {
+        Row: {
+          card_name: string
+          expires_at: string
+          fetched_at: string | null
+          id: string
+          listings: Json
+          query_hash: string | null
+          query_text: string
+          query_version: number
+          refreshing_until: string | null
+        }
+        Insert: {
+          card_name: string
+          expires_at?: string
+          fetched_at?: string | null
+          id?: string
+          listings?: Json
+          query_hash?: string | null
+          query_text?: string
+          query_version?: number
+          refreshing_until?: string | null
+        }
+        Update: {
+          card_name?: string
+          expires_at?: string
+          fetched_at?: string | null
+          id?: string
+          listings?: Json
+          query_hash?: string | null
+          query_text?: string
+          query_version?: number
+          refreshing_until?: string | null
+        }
+        Relationships: []
+      }
+      roi_live_auctions: {
+        Row: {
+          current_bid: number | null
+          end_time: string | null
+          id: string
+          image_url: string | null
+          item_id: string
+          last_seen_at: string
+          listing_url: string
+          roi_card_id: string
+          shipping: number | null
+        }
+        Insert: {
+          current_bid?: number | null
+          end_time?: string | null
+          id?: string
+          image_url?: string | null
+          item_id: string
+          last_seen_at?: string
+          listing_url: string
+          roi_card_id: string
+          shipping?: number | null
+        }
+        Update: {
+          current_bid?: number | null
+          end_time?: string | null
+          id?: string
+          image_url?: string | null
+          item_id?: string
+          last_seen_at?: string
+          listing_url?: string
+          roi_card_id?: string
+          shipping?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roi_live_auctions_roi_card_id_fkey"
+            columns: ["roi_card_id"]
+            isOneToOne: false
+            referencedRelation: "roi_cards"
             referencedColumns: ["id"]
           },
         ]
@@ -140,6 +560,71 @@ export type Database = {
           version?: string
         }
         Relationships: []
+      }
+      sales_history: {
+        Row: {
+          card_identity_key: string
+          confidence_score: string
+          created_at: string
+          grade: string | null
+          grader: string | null
+          id: string
+          image_url: string | null
+          raw_or_graded: string
+          shipping_price: number | null
+          sold_at: string | null
+          sold_price: number | null
+          source: string
+          source_sale_id: string | null
+          title: string | null
+          total_price: number | null
+          url: string | null
+        }
+        Insert: {
+          card_identity_key: string
+          confidence_score?: string
+          created_at?: string
+          grade?: string | null
+          grader?: string | null
+          id?: string
+          image_url?: string | null
+          raw_or_graded?: string
+          shipping_price?: number | null
+          sold_at?: string | null
+          sold_price?: number | null
+          source?: string
+          source_sale_id?: string | null
+          title?: string | null
+          total_price?: number | null
+          url?: string | null
+        }
+        Update: {
+          card_identity_key?: string
+          confidence_score?: string
+          created_at?: string
+          grade?: string | null
+          grader?: string | null
+          id?: string
+          image_url?: string | null
+          raw_or_graded?: string
+          shipping_price?: number | null
+          sold_at?: string | null
+          sold_price?: number | null
+          source?: string
+          source_sale_id?: string | null
+          title?: string | null
+          total_price?: number | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_history_card_identity_key_fkey"
+            columns: ["card_identity_key"]
+            isOneToOne: false
+            referencedRelation: "cards_normalized"
+            referencedColumns: ["card_identity_key"]
+          },
+        ]
       }
       seller_blacklist: {
         Row: {
