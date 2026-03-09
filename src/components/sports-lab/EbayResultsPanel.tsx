@@ -8,6 +8,7 @@ import { useSportsEbaySearch } from '@/hooks/useSportsEbaySearch';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { EbaySearchParams, SortOption, EbayListing } from '@/types/sportsEbay';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 function sortListings(listings: EbayListing[], sortOption: SortOption): EbayListing[] {
   const sorted = [...listings];

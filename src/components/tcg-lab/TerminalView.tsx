@@ -7,6 +7,7 @@ import { searchActiveListings } from '@/services/tcgEbayService';
 import { filterTcgListings, dedupeTcgListings } from '@/lib/tcgFilters';
 import type { TcgTarget, TcgSet, Game, SearchFilters } from '@/types/tcg';
 import { Input } from '@/components/ui/input';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 interface TerminalViewProps {
   target?: TcgTarget;
