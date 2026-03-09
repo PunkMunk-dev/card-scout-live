@@ -58,7 +58,7 @@ export function TerminalView({ target, game, freeQuery, selectedSetId, sets, onT
   };
 
   const {
-    data, isLoading, error, hasNextPage, fetchNextPage, isFetchingNextPage,
+    data, isLoading, error, hasNextPage, fetchNextPage, isFetchingNextPage, refetch,
   } = useInfiniteQuery({
     queryKey: ['terminal-listings', 'tcg', game, activeQuery, filters, showAuctionsOnly],
     queryFn: ({ pageParam = 0 }) => searchActiveListings(activeQuery, filters, 100, pageParam),
