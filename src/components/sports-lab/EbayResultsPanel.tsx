@@ -93,6 +93,8 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
     }
   }, [isLoading, listings.length > 0, hasMore, error]);
 
+  const handleRefresh = useCallback(async () => { retry(); }, [retry]);
+
   const sortedListings = useMemo(() => sortListings(filteredListings, sortOption), [filteredListings, sortOption]);
 
   if (isLoading) return (
