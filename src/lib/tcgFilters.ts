@@ -37,6 +37,8 @@ const STOP_WORDS = [
   'for', 'in', 'on', 'with', 'to', 'is', 'it',
 ];
 
+const STOP_WORD_REGEXES = STOP_WORDS.map(sw => new RegExp(`\\b${sw}\\b`, 'gi'));
+
 export function extractCardNumber(title: string, game: Game): string | null {
   if (game === 'pokemon') {
     const m = title.match(POKEMON_CARD_NUMBER_RE);
