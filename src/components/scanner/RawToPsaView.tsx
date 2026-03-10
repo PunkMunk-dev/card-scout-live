@@ -71,7 +71,7 @@ export function RawToPsaView() {
 
   const anyLoading = Array.from(psaMap.values()).some(p => p.isLoading);
 
-  if (!state.results.length && !state.isLoading) {
+  if (!results.length && !isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8" style={{ color: 'var(--om-text-3)' }}>
         <p className="text-sm">Search for a card to see Raw → PSA 10 analysis</p>
