@@ -36,7 +36,8 @@ type Action =
   | { type: 'SAVE_SEARCH'; preset: SavedScannerPreset }
   | { type: 'REMOVE_SAVED'; id: string }
   | { type: 'TOGGLE_SIDEBAR' }
-  | { type: 'SET_RECENT'; recent: string[] };
+  | { type: 'SET_RECENT'; recent: string[] }
+  | { type: 'SET_VIEW_MODE'; mode: 'scanner' | 'rawToPsa' };
 
 const initialState: ScannerState = {
   query: '',
