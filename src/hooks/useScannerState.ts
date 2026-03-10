@@ -1,22 +1,10 @@
-import { createContext, useContext, useReducer, useCallback, useEffect, useRef, useMemo, type Dispatch } from 'react';
-import type { ScannerFilters, ScannerSort, NormalizedListing, SavedScannerPreset } from '@/types/scanner';
+import { createContext, useContext, useReducer, useCallback, useRef, useMemo, type Dispatch } from 'react';
+import type { ScannerFilters, ScannerSort, NormalizedListing, SavedScannerPreset, ScannerMode, ModeSlice, ScannerState } from '@/types/scanner';
 import { DEFAULT_FILTERS } from '@/types/scanner';
 import { searchEbay } from '@/lib/ebay-api';
 import { transformEbayItems, sortResults } from '@/lib/transformEbayListings';
 import { loadSavedSearches, persistSavedSearches } from '@/lib/scannerPresets';
-import type { EbayItem, SortOption } from '@/types/ebay';
-
-// ─── Types ──────────────────────────────────────────────
-export type ScannerMode = 'scanner' | 'rawToPsa';
-
-export interface ModeSlice {
-  results: NormalizedListing[];
-  isLoading: boolean;
-  error: string | null;
-  hasSearched: boolean;
-  hasMore: boolean;
-  currentPage: number;
-}
+import type { SortOption } from '@/types/ebay';
 
 const EMPTY_SLICE: ModeSlice = {
   results: [],
