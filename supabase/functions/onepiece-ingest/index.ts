@@ -101,10 +101,13 @@ function buildNormalizedCardKey(parsed: {
   variant: string | null;
 }): string | null {
   if (!parsed.cardNumber) return null;
+  // Derive set from card number prefix as fallback (e.g. OP01-001 → OP01)
+  const setFallback = parsed.cardNumber.match(/^([A-Z]+\d+)/i)?.[1]?.toUpperCase() || "unknown";
+  const setKey = (parsed.setName || setFallback).toLowerCase().replace(/\s+/g, "_");
   const parts = [
     "onepiece",
     parsed.cardNumber,
-    (parsed.setName || "unknown").toLowerCase().replace(/\s+/g, "_"),
+    setKey,
     (parsed.language || "unknown").toLowerCase(),
     (parsed.variant || "base").toLowerCase().replace(/\s+/g, "_"),
   ];
@@ -173,7 +176,7 @@ const SEED_LISTINGS = [
   { title: "One Piece OP05-119 Shanks Alt Art Japanese", sold_price_usd: 30, sold_date: "2026-03-02T11:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-119b" },
   { title: "PSA 10 OP05-119 Shanks Alt Art Japanese One Piece", sold_price_usd: 120, sold_date: "2026-03-03T13:00:00Z", search_type: "psa10" as const, ebay_item_id: "seed-psa-119a" },
   // ST21-014 Zoro EN base — 2 raw + 1 PSA 10
-  { title: "ST21-014 Roronoa Zoro One Piece Starter Deck English", sold_price_usd: 5, sold_date: "2026-03-01T08:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-014a" },
+  { title: "ST21-014 Roronoa Zoro One Piece Card Game ST21 English", sold_price_usd: 5, sold_date: "2026-03-01T08:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-014a" },
   { title: "One Piece ST21-014 Zoro EN Card", sold_price_usd: 6, sold_date: "2026-03-02T15:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-014b" },
   { title: "PSA 10 ST21-014 Roronoa Zoro One Piece English", sold_price_usd: 35, sold_date: "2026-03-04T10:00:00Z", search_type: "psa10" as const, ebay_item_id: "seed-psa-014a" },
 ];
