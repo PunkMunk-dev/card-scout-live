@@ -30,6 +30,24 @@ export function StickyFilterBar() {
   const { state, dispatch, runSearch } = useScanner();
   const { filters, sortBy, query } = state;
 
+  // Check if any filter/sort differs from defaults (ignoring marketMode)
+  const isDirty =
+    filters.listingType !== DEFAULT_FILTERS.listingType ||
+    filters.endingSoonOnly !== DEFAULT_FILTERS.endingSoonOnly ||
+    filters.rawOnly !== DEFAULT_FILTERS.rawOnly ||
+    filters.excludeGraded !== DEFAULT_FILTERS.excludeGraded ||
+    filters.excludeLots !== DEFAULT_FILTERS.excludeLots ||
+    filters.minPrice !== DEFAULT_FILTERS.minPrice ||
+    filters.maxPrice !== DEFAULT_FILTERS.maxPrice ||
+    sortBy !== 'bestOpportunity';
+
+  const resetFilters = () => {
+    const resetted = { ...DEFAULT_FILTERS, marketMode: filters.marketMode };
+    dispatch({ type: 'UPDATE_FILTERS', filters: resetted });
+    dispatch({ type: 'SET_SORT', sortBy: 'bestOpportunity' });
+    if (query) runSearch(query, 1, resetted, 'bestOpportunity');
+  };
+
   const updateFilter = (partial: Record<string, any>) => {
     dispatch({ type: 'UPDATE_FILTERS', filters: partial });
     if (query) runSearch(query, 1, { ...filters, ...partial });
