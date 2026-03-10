@@ -260,6 +260,172 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ─── FETCH: pull live sold listings from eBay ───
+    if (action === "fetch") {
+      const ebayAppId = Deno.env.get("EBAY_CLIENT_ID");
+      if (!ebayAppId) {
+        return new Response(JSON.stringify({ error: "EBAY_CLIENT_ID not configured" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const searchType: "raw" | "psa10" | "both" = body.searchType || "both";
+      const defaultRawQueries = ["One Piece TCG card -lot -bundle -PSA -BGS -CGC -SGC -graded -slab"];
+      const defaultPsa10Queries = ["One Piece TCG PSA 10 card -lot -bundle -BGS -CGC -SGC"];
+      const rawQueries: string[] = searchType !== "psa10" ? (body.rawQueries || defaultRawQueries) : [];
+      const psa10Queries: string[] = searchType !== "raw" ? (body.psa10Queries || defaultPsa10Queries) : [];
+
+      let fetched = 0;
+      let parsedCount = 0;
+      let inserted = 0;
+      let skipped = 0;
+      const errors: string[] = [];
+
+      async function fetchEbayCompleted(keywords: string, listingType: "raw" | "psa10") {
+        const url = new URL("https://svcs.ebay.com/services/search/FindingService/v1");
+        url.searchParams.set("OPERATION-NAME", "findCompletedItems");
+        url.searchParams.set("SERVICE-VERSION", "1.0.0");
+        url.searchParams.set("SECURITY-APPNAME", ebayAppId!);
+        url.searchParams.set("RESPONSE-DATA-FORMAT", "JSON");
+        url.searchParams.set("REST-PAYLOAD", "");
+        url.searchParams.set("keywords", keywords);
+        url.searchParams.set("categoryId", "212");
+        url.searchParams.set("paginationInput.entriesPerPage", "100");
+        url.searchParams.set("sortOrder", "EndTimeSoonest");
+        url.searchParams.set("itemFilter(0).name", "SoldItemsOnly");
+        url.searchParams.set("itemFilter(0).value", "true");
+
+        const resp = await fetch(url.toString(), {
+          headers: { "X-EBAY-SOA-SECURITY-APPNAME": ebayAppId! },
+        });
+        if (!resp.ok) {
+          errors.push(`eBay API ${resp.status} for "${keywords}"`);
+          return [];
+        }
+
+        const data = await resp.json();
+        const searchResult = data.findCompletedItemsResponse?.[0];
+        if (searchResult?.ack?.[0] !== "Success") {
+          errors.push(`eBay returned non-success for "${keywords}"`);
+          return [];
+        }
+
+        const items = searchResult?.searchResult?.[0]?.item || [];
+        // Only keep items that actually sold
+        return items.filter((item: any) => {
+          const sellingState = item.sellingStatus?.[0]?.sellingState?.[0];
+          return sellingState === "EndedWithSales";
+        }).map((item: any) => ({ ...item, _listingType: listingType }));
+      }
+
+      // Fetch all queries
+      const allItems: any[] = [];
+      for (const q of rawQueries) {
+        try {
+          const items = await fetchEbayCompleted(q, "raw");
+          allItems.push(...items);
+        } catch (e) {
+          errors.push(`Raw fetch error: ${e}`);
+        }
+      }
+      for (const q of psa10Queries) {
+        try {
+          const items = await fetchEbayCompleted(q, "psa10");
+          allItems.push(...items);
+        } catch (e) {
+          errors.push(`PSA10 fetch error: ${e}`);
+        }
+      }
+
+      fetched = allItems.length;
+      console.log(`Fetch: got ${fetched} sold items from eBay`);
+
+      // Parse and filter
+      const parsed: Array<Record<string, unknown>> = [];
+
+      for (const item of allItems) {
+        const title = item.title?.[0] || "";
+        const itemId = item.itemId?.[0] || null;
+        const viewUrl = item.viewItemURL?.[0] || null;
+        const imageUrl = item.galleryURL?.[0] || null;
+        const priceStr = item.sellingStatus?.[0]?.currentPrice?.[0]?.__value__;
+        const soldPrice = priceStr ? parseFloat(priceStr) : null;
+        const soldDate = item.listingInfo?.[0]?.endTime?.[0] || null;
+        const lt: "raw" | "psa10" = item._listingType;
+
+        if (!title || !soldPrice || soldPrice <= 0) { skipped++; continue; }
+        if (isJunk(title)) { skipped++; continue; }
+        if (lt === "raw" && isRawExcluded(title)) { skipped++; continue; }
+        if (lt === "psa10") {
+          if (!PSA10_REQUIRE.test(title)) { skipped++; continue; }
+          if (isPsa10Excluded(title)) { skipped++; continue; }
+        }
+
+        const cardNumber = parseCardNumber(title);
+        const character = parseCharacter(title);
+        const setName = parseSetName(title);
+        const variant = parseVariant(title);
+        const language = detectLanguage(title);
+        const grade = parseGrade(title);
+        const normalizedKey = buildNormalizedCardKey({ cardNumber, character, setName, language, variant });
+
+        parsed.push({
+          ebay_item_id: itemId,
+          title,
+          listing_url: viewUrl,
+          sold_price_usd: soldPrice,
+          sold_date: soldDate,
+          image_url: imageUrl,
+          condition_text: null,
+          is_graded: grade.isGraded,
+          grader: grade.grader,
+          grade_value: grade.gradeValue,
+          listing_type: lt,
+          game: "onepiece",
+          parsed_character: character,
+          parsed_card_number: cardNumber,
+          parsed_set_name: setName,
+          parsed_rarity: null,
+          parsed_variant: variant,
+          language_detected: language,
+          normalized_card_key: normalizedKey,
+          parse_confidence: cardNumber ? "high" : "low",
+          junk_flag: false,
+          outlier_flag: false,
+        });
+      }
+
+      parsedCount = parsed.length;
+      console.log(`Fetch: parsed ${parsedCount}, skipped ${skipped}`);
+
+      // Upsert using ebay_item_id dedup — delete existing then insert
+      if (parsed.length) {
+        const ebayIds = parsed.map(p => p.ebay_item_id).filter(Boolean) as string[];
+        if (ebayIds.length) {
+          await supabase
+            .from("ebay_listing_cache")
+            .delete()
+            .in("ebay_item_id", ebayIds);
+        }
+
+        const { error: insertErr } = await supabase
+          .from("ebay_listing_cache")
+          .insert(parsed);
+        if (insertErr) {
+          console.error("Fetch insert error:", insertErr);
+          errors.push(`Insert error: ${insertErr.message}`);
+        } else {
+          inserted = parsed.length;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ action: "fetch", fetched, parsed: parsedCount, inserted, skipped, errors }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // ─── INGEST: accept listings from caller ───
     if (action === "ingest") {
       const listings: Array<{
