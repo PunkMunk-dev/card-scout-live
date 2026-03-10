@@ -101,10 +101,13 @@ function buildNormalizedCardKey(parsed: {
   variant: string | null;
 }): string | null {
   if (!parsed.cardNumber) return null;
+  // Derive set from card number prefix as fallback (e.g. OP01-001 → OP01)
+  const setFallback = parsed.cardNumber.match(/^([A-Z]+\d+)/i)?.[1]?.toUpperCase() || "unknown";
+  const setKey = (parsed.setName || setFallback).toLowerCase().replace(/\s+/g, "_");
   const parts = [
     "onepiece",
     parsed.cardNumber,
-    (parsed.setName || "unknown").toLowerCase().replace(/\s+/g, "_"),
+    setKey,
     (parsed.language || "unknown").toLowerCase(),
     (parsed.variant || "base").toLowerCase().replace(/\s+/g, "_"),
   ];
