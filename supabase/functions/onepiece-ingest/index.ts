@@ -104,7 +104,6 @@ function buildNormalizedCardKey(parsed: {
   const parts = [
     "onepiece",
     parsed.cardNumber,
-    (parsed.character || "unknown").toLowerCase().replace(/\s+/g, "_"),
     (parsed.setName || "unknown").toLowerCase().replace(/\s+/g, "_"),
     (parsed.language || "unknown").toLowerCase(),
     (parsed.variant || "base").toLowerCase().replace(/\s+/g, "_"),
