@@ -578,10 +578,22 @@ Deno.serve(async (req: Request) => {
 
         const sample = listings[0];
 
+        // Pick most common character name from grouped listings
+        const charCounts = new Map<string, number>();
+        for (const l of listings) {
+          const c = (l as Record<string, unknown>).parsed_character as string | null;
+          if (c) charCounts.set(c, (charCounts.get(c) || 0) + 1);
+        }
+        let bestChar = sample.parsed_character;
+        let bestCount = 0;
+        for (const [c, count] of charCounts) {
+          if (count > bestCount) { bestChar = c; bestCount = count; }
+        }
+
         upsertRows.push({
           normalized_card_key: key,
           game: "onepiece",
-          character: sample.parsed_character,
+          character: bestChar,
           card_number: sample.parsed_card_number,
           set_name: sample.parsed_set_name,
           rarity: sample.parsed_rarity,
