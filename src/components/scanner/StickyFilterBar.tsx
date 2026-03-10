@@ -15,12 +15,13 @@ const LISTING_TYPES: { value: ListingType; label: string }[] = [
 ];
 
 const SORTS: { value: ScannerSort; label: string }[] = [
-  { value: 'bestOpportunity', label: 'Best Opportunity' },
-  { value: 'biggestActiveDiscount', label: 'Biggest Discount' },
+  { value: 'bestOpportunity', label: 'Best ROI' },
+  { value: 'biggestActiveDiscount', label: 'Biggest Spread' },
+  { value: 'priceDesc', label: 'Highest PSA 10 Premium' },
+  { value: 'relevance', label: 'Most Liquid' },
+  { value: 'priceAsc', label: 'Lowest Raw Price' },
   { value: 'endingSoon', label: 'Ending Soon' },
-  { value: 'priceAsc', label: 'Price ↑' },
-  { value: 'priceDesc', label: 'Price ↓' },
-  { value: 'relevance', label: 'Relevance' },
+  { value: 'newlyListed', label: 'Newest' },
 ];
 
 export function StickyFilterBar() {
@@ -105,20 +106,23 @@ export function StickyFilterBar() {
         <div className="w-px h-5 mx-1" style={{ background: 'var(--om-border-0)' }} />
 
         {/* Sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => {
-            const s = e.target.value as ScannerSort;
-            dispatch({ type: 'SET_SORT', sortBy: s });
-            if (query) runSearch(query, 1, undefined, s);
-          }}
-          className="om-input h-7 text-[11px] px-2 pr-6 rounded-lg cursor-pointer"
-          style={{ minWidth: 130 }}
-        >
-          {SORTS.map(s => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] font-medium whitespace-nowrap" style={{ color: 'var(--om-text-3)' }}>Sort:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              const s = e.target.value as ScannerSort;
+              dispatch({ type: 'SET_SORT', sortBy: s });
+              if (query) runSearch(query, 1, undefined, s);
+            }}
+            className="om-input h-7 text-[11px] px-2 pr-6 rounded-lg cursor-pointer"
+            style={{ minWidth: 140 }}
+          >
+            {SORTS.map(s => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Price range */}
         <input
