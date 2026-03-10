@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 
 const TcgLab = lazy(() => import("./pages/TcgLab"));
 const SportsLab = lazy(() => import("./pages/SportsLab"));
+const AdminOnepieceMarket = lazy(() => import("./pages/AdminOnepieceMarket"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
