@@ -7,11 +7,11 @@ import { computeMetrics, deriveConfidence } from '@/lib/computeRawToPsaMetrics';
 export function RawToPsaView() {
   const { state } = useScanner();
 
-  const [gradingCost, setGradingCost] = useState(25);
+  const [gradingCost, setGradingCost] = useState(150);
   const [sellFee, setSellFee] = useState(13);
-  const [desiredProfit, setDesiredProfit] = useState(20);
-  const [minSales, setMinSales] = useState(3);
-  const [minRoi, setMinRoi] = useState(0);
+  const [desiredProfit, setDesiredProfit] = useState(300);
+  const [minSales, setMinSales] = useState(2);
+  const [minRoi, setMinRoi] = useState(50);
 
   // Filter to non-junk raw listings only
   const rawListings = useMemo(
