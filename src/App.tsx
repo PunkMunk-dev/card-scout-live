@@ -32,6 +32,7 @@ const App = () => (
                   <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
                   <Route path="/tcg" element={<ErrorBoundary><TcgLab /></ErrorBoundary>} />
                   <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
+                  <Route path="/admin/onepiece-market" element={<ErrorBoundary><AdminOnepieceMarket /></ErrorBoundary>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
