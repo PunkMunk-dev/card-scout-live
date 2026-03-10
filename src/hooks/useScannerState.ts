@@ -54,6 +54,7 @@ const initialState: ScannerState = {
   currentPage: 1,
   sidebarOpen: false,
   drawerMode: null,
+  viewMode: 'scanner' as const,
 };
 
 function reducer(state: ScannerState, action: Action): ScannerState {
