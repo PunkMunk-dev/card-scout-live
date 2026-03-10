@@ -31,15 +31,18 @@ export function StickyFilterBar() {
   const { filters, sortBy, query } = state;
 
   // Check if any filter/sort differs from defaults (ignoring marketMode)
-  const isDirty =
-    filters.listingType !== DEFAULT_FILTERS.listingType ||
-    filters.endingSoonOnly !== DEFAULT_FILTERS.endingSoonOnly ||
-    filters.rawOnly !== DEFAULT_FILTERS.rawOnly ||
-    filters.excludeGraded !== DEFAULT_FILTERS.excludeGraded ||
-    filters.excludeLots !== DEFAULT_FILTERS.excludeLots ||
-    filters.minPrice !== DEFAULT_FILTERS.minPrice ||
-    filters.maxPrice !== DEFAULT_FILTERS.maxPrice ||
-    sortBy !== 'bestOpportunity';
+  const activeCount = [
+    filters.listingType !== DEFAULT_FILTERS.listingType,
+    filters.endingSoonOnly,
+    filters.rawOnly,
+    filters.excludeGraded,
+    filters.excludeLots,
+    filters.minPrice != null,
+    filters.maxPrice != null,
+    sortBy !== 'bestOpportunity',
+  ].filter(Boolean).length;
+
+  const isDirty = activeCount > 0;
 
   const resetFilters = () => {
     const resetted = { ...DEFAULT_FILTERS, marketMode: filters.marketMode };
@@ -171,6 +174,12 @@ export function StickyFilterBar() {
             >
               <RotateCcw size={12} />
               <span className="text-[11px]">Reset</span>
+              <span
+                className="ml-0.5 inline-flex items-center justify-center rounded-full text-[9px] font-bold leading-none min-w-[16px] h-4 px-1"
+                style={{ background: 'var(--om-accent)', color: '#fff' }}
+              >
+                {activeCount}
+              </span>
             </button>
           </>
         )}
