@@ -62,9 +62,35 @@ function parseSetName(title: string): string | null {
 
 const CHARACTER_RE = /(?:Monkey\s*D\.?\s*Luffy|Luffy|Roronoa\s*Zoro|Zoro|Nami|Sanji|Nico\s*Robin|Robin|Franky|Brook|Jinbe|Chopper|Usopp|Shanks|Yamato|Uta|Sabo|Ace|Portgas|Kaido|Big\s*Mom|Trafalgar|Law|Kid|Eustass|Boa\s*Hancock|Hancock|Doflamingo|Crocodile|Mihawk|Whitebeard|Buggy|Blackbeard|Teach|Akainu|Aokiji|Kizaru|Garp|Koby|Smoker|Vivi|Carrot|Perona|Katakuri|Marco|Newgate|Roger|Rayleigh)/i;
 
+const CHARACTER_ALIASES: Record<string, string> = {
+  "luffy": "Monkey D. Luffy",
+  "monkey d. luffy": "Monkey D. Luffy",
+  "monkey d luffy": "Monkey D. Luffy",
+  "zoro": "Roronoa Zoro",
+  "roronoa zoro": "Roronoa Zoro",
+  "robin": "Nico Robin",
+  "nico robin": "Nico Robin",
+  "ace": "Portgas D. Ace",
+  "portgas": "Portgas D. Ace",
+  "law": "Trafalgar Law",
+  "trafalgar": "Trafalgar Law",
+  "hancock": "Boa Hancock",
+  "boa hancock": "Boa Hancock",
+  "kid": "Eustass Kid",
+  "eustass": "Eustass Kid",
+  "whitebeard": "Edward Newgate",
+  "newgate": "Edward Newgate",
+  "blackbeard": "Marshall D. Teach",
+  "teach": "Marshall D. Teach",
+  "roger": "Gol D. Roger",
+  "big mom": "Big Mom",
+};
+
 function parseCharacter(title: string): string | null {
   const m = title.match(CHARACTER_RE);
-  return m ? m[0].trim() : null;
+  if (!m) return null;
+  const raw = m[0].trim().toLowerCase();
+  return CHARACTER_ALIASES[raw] || m[0].trim();
 }
 
 function buildNormalizedCardKey(parsed: {
