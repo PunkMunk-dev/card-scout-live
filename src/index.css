@@ -281,11 +281,11 @@
     transform: scale(0.98);
   }
 
-  /* OmniMarket page background gradient */
+  /* OmniMarket page background — flat */
   .om-page-bg {
-    background: linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 40%, var(--om-bg-0) 100%);
+    background: var(--om-bg-0);
     color: var(--om-text-0);
-    min-height: calc(100vh - 48px);
+    min-height: calc(100vh - 44px);
   }
 
   /* OmniMarket dropdown panel */
