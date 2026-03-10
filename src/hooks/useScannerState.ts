@@ -15,26 +15,6 @@ const EMPTY_SLICE: ModeSlice = {
   currentPage: 1,
 };
 
-export interface ScannerState {
-  query: string;
-  recentQueries: string[];
-  sortBy: ScannerSort;
-  filters: ScannerFilters;
-  viewMode: ScannerMode;
-  // Per-mode state slices
-  scanner: ModeSlice;
-  rawToPsa: ModeSlice;
-  // Shared UI state
-  selectedListingId: string | null;
-  comparisonListingId: string | null;
-  savedSearches: SavedScannerPreset[];
-  sidebarOpen: boolean;
-  drawerMode: 'details' | 'compare' | null;
-
-  // ── Convenience getters (computed in selectors, not stored) ──
-  // Legacy compat: these are derived in useScanner()
-}
-
 // ─── Recent queries ─────────────────────────────────────
 const RECENT_KEY = 'omni_recent_searches_v1';
 function loadRecent(): string[] {
