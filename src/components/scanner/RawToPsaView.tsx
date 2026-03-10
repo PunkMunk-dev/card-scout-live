@@ -5,7 +5,8 @@ import { useRawToPsa } from '@/hooks/useRawToPsa';
 import { computeMetrics, deriveConfidence } from '@/lib/computeRawToPsaMetrics';
 
 export function RawToPsaView() {
-  const { state } = useScanner();
+  const { state, activeModeState } = useScanner();
+  const { results, isLoading } = activeModeState;
 
   const [gradingCost, setGradingCost] = useState(150);
   const [sellFee, setSellFee] = useState(13);
@@ -15,8 +16,8 @@ export function RawToPsaView() {
 
   // Filter to non-junk raw listings only
   const rawListings = useMemo(
-    () => state.results.filter(r => !r.isLikelyJunk),
-    [state.results],
+    () => results.filter(r => !r.isLikelyJunk),
+    [results],
   );
 
   const psaMap = useRawToPsa(rawListings);
