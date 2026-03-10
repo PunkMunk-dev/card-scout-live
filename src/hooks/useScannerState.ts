@@ -36,7 +36,8 @@ type Action =
   | { type: 'SAVE_SEARCH'; preset: SavedScannerPreset }
   | { type: 'REMOVE_SAVED'; id: string }
   | { type: 'TOGGLE_SIDEBAR' }
-  | { type: 'SET_RECENT'; recent: string[] };
+  | { type: 'SET_RECENT'; recent: string[] }
+  | { type: 'SET_VIEW_MODE'; mode: 'scanner' | 'rawToPsa' };
 
 const initialState: ScannerState = {
   query: '',
@@ -53,6 +54,7 @@ const initialState: ScannerState = {
   currentPage: 1,
   sidebarOpen: false,
   drawerMode: null,
+  viewMode: 'scanner' as const,
 };
 
 function reducer(state: ScannerState, action: Action): ScannerState {
@@ -98,6 +100,8 @@ function reducer(state: ScannerState, action: Action): ScannerState {
       return { ...state, sidebarOpen: !state.sidebarOpen };
     case 'SET_RECENT':
       return { ...state, recentQueries: action.recent };
+    case 'SET_VIEW_MODE':
+      return { ...state, viewMode: action.mode };
     default:
       return state;
   }

@@ -67,8 +67,34 @@ export function StickyScannerHeader() {
           </div>
         </form>
 
-        {/* Utility */}
+        {/* Mode toggle + Utility */}
         <div className="flex items-center gap-1 shrink-0">
+          <div
+            className="flex h-7 rounded-md overflow-hidden text-[11px] font-medium"
+            style={{ border: '1px solid var(--om-border-0)' }}
+          >
+            <button
+              onClick={() => dispatch({ type: 'SET_VIEW_MODE', mode: 'scanner' })}
+              className="px-2.5 transition-colors"
+              style={{
+                background: state.viewMode === 'scanner' ? 'var(--om-bg-3)' : 'transparent',
+                color: state.viewMode === 'scanner' ? 'var(--om-text-0)' : 'var(--om-text-3)',
+              }}
+            >
+              Scanner
+            </button>
+            <button
+              onClick={() => dispatch({ type: 'SET_VIEW_MODE', mode: 'rawToPsa' })}
+              className="px-2.5 transition-colors"
+              style={{
+                background: state.viewMode === 'rawToPsa' ? 'var(--om-bg-3)' : 'transparent',
+                color: state.viewMode === 'rawToPsa' ? 'var(--om-text-0)' : 'var(--om-text-3)',
+                borderLeft: '1px solid var(--om-border-0)',
+              }}
+            >
+              Raw → PSA 10
+            </button>
+          </div>
           <button
             onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
             className="flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-[var(--om-bg-2)]"
