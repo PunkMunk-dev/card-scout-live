@@ -62,9 +62,35 @@ function parseSetName(title: string): string | null {
 
 const CHARACTER_RE = /(?:Monkey\s*D\.?\s*Luffy|Luffy|Roronoa\s*Zoro|Zoro|Nami|Sanji|Nico\s*Robin|Robin|Franky|Brook|Jinbe|Chopper|Usopp|Shanks|Yamato|Uta|Sabo|Ace|Portgas|Kaido|Big\s*Mom|Trafalgar|Law|Kid|Eustass|Boa\s*Hancock|Hancock|Doflamingo|Crocodile|Mihawk|Whitebeard|Buggy|Blackbeard|Teach|Akainu|Aokiji|Kizaru|Garp|Koby|Smoker|Vivi|Carrot|Perona|Katakuri|Marco|Newgate|Roger|Rayleigh)/i;
 
+const CHARACTER_ALIASES: Record<string, string> = {
+  "luffy": "Monkey D. Luffy",
+  "monkey d. luffy": "Monkey D. Luffy",
+  "monkey d luffy": "Monkey D. Luffy",
+  "zoro": "Roronoa Zoro",
+  "roronoa zoro": "Roronoa Zoro",
+  "robin": "Nico Robin",
+  "nico robin": "Nico Robin",
+  "ace": "Portgas D. Ace",
+  "portgas": "Portgas D. Ace",
+  "law": "Trafalgar Law",
+  "trafalgar": "Trafalgar Law",
+  "hancock": "Boa Hancock",
+  "boa hancock": "Boa Hancock",
+  "kid": "Eustass Kid",
+  "eustass": "Eustass Kid",
+  "whitebeard": "Edward Newgate",
+  "newgate": "Edward Newgate",
+  "blackbeard": "Marshall D. Teach",
+  "teach": "Marshall D. Teach",
+  "roger": "Gol D. Roger",
+  "big mom": "Big Mom",
+};
+
 function parseCharacter(title: string): string | null {
   const m = title.match(CHARACTER_RE);
-  return m ? m[0].trim() : null;
+  if (!m) return null;
+  const raw = m[0].trim().toLowerCase();
+  return CHARACTER_ALIASES[raw] || m[0].trim();
 }
 
 function buildNormalizedCardKey(parsed: {
@@ -78,7 +104,6 @@ function buildNormalizedCardKey(parsed: {
   const parts = [
     "onepiece",
     parsed.cardNumber,
-    (parsed.character || "unknown").toLowerCase().replace(/\s+/g, "_"),
     (parsed.setName || "unknown").toLowerCase().replace(/\s+/g, "_"),
     (parsed.language || "unknown").toLowerCase(),
     (parsed.variant || "base").toLowerCase().replace(/\s+/g, "_"),
@@ -553,10 +578,22 @@ Deno.serve(async (req: Request) => {
 
         const sample = listings[0];
 
+        // Pick most common character name from grouped listings
+        const charCounts = new Map<string, number>();
+        for (const l of listings) {
+          const c = (l as Record<string, unknown>).parsed_character as string | null;
+          if (c) charCounts.set(c, (charCounts.get(c) || 0) + 1);
+        }
+        let bestChar = sample.parsed_character;
+        let bestCount = 0;
+        for (const [c, count] of charCounts) {
+          if (count > bestCount) { bestChar = c; bestCount = count; }
+        }
+
         upsertRows.push({
           normalized_card_key: key,
           game: "onepiece",
-          character: sample.parsed_character,
+          character: bestChar,
           card_number: sample.parsed_card_number,
           set_name: sample.parsed_set_name,
           rarity: sample.parsed_rarity,
