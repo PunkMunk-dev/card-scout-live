@@ -1,10 +1,51 @@
 import { createContext, useContext, useReducer, useCallback, useEffect, useRef, useMemo, type Dispatch } from 'react';
-import type { ScannerState, ScannerFilters, ScannerSort, NormalizedListing, SavedScannerPreset } from '@/types/scanner';
+import type { ScannerFilters, ScannerSort, NormalizedListing, SavedScannerPreset } from '@/types/scanner';
 import { DEFAULT_FILTERS } from '@/types/scanner';
 import { searchEbay } from '@/lib/ebay-api';
 import { transformEbayItems, sortResults } from '@/lib/transformEbayListings';
 import { loadSavedSearches, persistSavedSearches } from '@/lib/scannerPresets';
 import type { EbayItem, SortOption } from '@/types/ebay';
+
+// ─── Types ──────────────────────────────────────────────
+export type ScannerMode = 'scanner' | 'rawToPsa';
+
+export interface ModeSlice {
+  results: NormalizedListing[];
+  isLoading: boolean;
+  error: string | null;
+  hasSearched: boolean;
+  hasMore: boolean;
+  currentPage: number;
+}
+
+const EMPTY_SLICE: ModeSlice = {
+  results: [],
+  isLoading: false,
+  error: null,
+  hasSearched: false,
+  hasMore: false,
+  currentPage: 1,
+};
+
+export interface ScannerState {
+  query: string;
+  recentQueries: string[];
+  sortBy: ScannerSort;
+  filters: ScannerFilters;
+  viewMode: ScannerMode;
+  // Per-mode state slices
+  scanner: ModeSlice;
+  rawToPsa: ModeSlice;
+  // Shared UI state
+  selectedListingId: string | null;
+  comparisonListingId: string | null;
+  savedSearches: SavedScannerPreset[];
+  sidebarOpen: boolean;
+  drawerMode: 'details' | 'compare' | null;
+
+  // ── Convenience getters (computed in selectors, not stored) ──
+  // Legacy compat: these are derived in useScanner()
+}
 
 // ─── Recent queries ─────────────────────────────────────
 const RECENT_KEY = 'omni_recent_searches_v1';
@@ -26,9 +67,9 @@ type Action =
   | { type: 'SET_QUERY'; query: string }
   | { type: 'SET_SORT'; sortBy: ScannerSort }
   | { type: 'UPDATE_FILTERS'; filters: Partial<ScannerFilters> }
-  | { type: 'SEARCH_START' }
-  | { type: 'SEARCH_SUCCESS'; results: NormalizedListing[]; hasMore: boolean; page: number; append?: boolean }
-  | { type: 'SEARCH_ERROR'; error: string }
+  | { type: 'MODE_LOADING'; mode: ScannerMode }
+  | { type: 'MODE_SUCCESS'; mode: ScannerMode; results: NormalizedListing[]; hasMore: boolean; page: number; append?: boolean }
+  | { type: 'MODE_ERROR'; mode: ScannerMode; error: string }
   | { type: 'CLEAR_SEARCH' }
   | { type: 'SELECT_LISTING'; id: string | null }
   | { type: 'SET_COMPARISON'; id: string | null }
@@ -37,25 +78,30 @@ type Action =
   | { type: 'REMOVE_SAVED'; id: string }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'SET_RECENT'; recent: string[] }
-  | { type: 'SET_VIEW_MODE'; mode: 'scanner' | 'rawToPsa' };
+  | { type: 'SET_VIEW_MODE'; mode: ScannerMode }
+  // Legacy compat aliases
+  | { type: 'SEARCH_START' }
+  | { type: 'SEARCH_SUCCESS'; results: NormalizedListing[]; hasMore: boolean; page: number; append?: boolean }
+  | { type: 'SEARCH_ERROR'; error: string };
 
 const initialState: ScannerState = {
   query: '',
   recentQueries: loadRecent(),
   sortBy: 'bestOpportunity',
   filters: { ...DEFAULT_FILTERS },
-  results: [],
+  viewMode: 'scanner',
+  scanner: { ...EMPTY_SLICE },
+  rawToPsa: { ...EMPTY_SLICE },
   selectedListingId: null,
   comparisonListingId: null,
   savedSearches: loadSavedSearches(),
-  isLoading: false,
-  error: null,
-  hasMore: false,
-  currentPage: 1,
   sidebarOpen: false,
   drawerMode: null,
-  viewMode: 'scanner' as const,
 };
+
+function updateModeSlice(state: ScannerState, mode: ScannerMode, patch: Partial<ModeSlice>): ScannerState {
+  return { ...state, [mode]: { ...state[mode], ...patch } };
+}
 
 function reducer(state: ScannerState, action: Action): ScannerState {
   switch (action.type) {
@@ -65,27 +111,57 @@ function reducer(state: ScannerState, action: Action): ScannerState {
       return { ...state, sortBy: action.sortBy };
     case 'UPDATE_FILTERS':
       return { ...state, filters: { ...state.filters, ...action.filters } };
-    case 'SEARCH_START':
-      return { ...state, isLoading: true, error: null };
-    case 'SEARCH_SUCCESS':
-      return {
-        ...state,
+
+    // ── Per-mode loading/success/error ──
+    case 'MODE_LOADING':
+      return updateModeSlice(state, action.mode, { isLoading: true, error: null });
+    case 'MODE_SUCCESS': {
+      const results = action.append
+        ? [...state[action.mode].results, ...action.results]
+        : action.results;
+      return updateModeSlice(state, action.mode, {
         isLoading: false,
-        results: action.append ? [...state.results, ...action.results] : action.results,
+        results,
         hasMore: action.hasMore,
         currentPage: action.page,
         error: null,
-      };
+        hasSearched: true,
+      });
+    }
+    case 'MODE_ERROR':
+      return updateModeSlice(state, action.mode, { isLoading: false, error: action.error, hasSearched: true });
+
+    // ── Legacy compat: route to current viewMode slice ──
+    case 'SEARCH_START':
+      return updateModeSlice(state, state.viewMode, { isLoading: true, error: null });
+    case 'SEARCH_SUCCESS': {
+      const results = action.append
+        ? [...state[state.viewMode].results, ...action.results]
+        : action.results;
+      return updateModeSlice(state, state.viewMode, {
+        isLoading: false, results, hasMore: action.hasMore, currentPage: action.page, error: null, hasSearched: true,
+      });
+    }
     case 'SEARCH_ERROR':
-      return { ...state, isLoading: false, error: action.error };
+      return updateModeSlice(state, state.viewMode, { isLoading: false, error: action.error, hasSearched: true });
+
     case 'CLEAR_SEARCH':
-      return { ...state, query: '', results: [], hasMore: false, currentPage: 1, error: null, selectedListingId: null, drawerMode: null };
+      return {
+        ...state,
+        query: '',
+        scanner: { ...EMPTY_SLICE },
+        rawToPsa: { ...EMPTY_SLICE },
+        selectedListingId: null,
+        drawerMode: null,
+      };
+
     case 'SELECT_LISTING':
       return { ...state, selectedListingId: action.id, drawerMode: action.id ? 'details' : null };
     case 'SET_COMPARISON':
       return { ...state, comparisonListingId: action.id, drawerMode: action.id ? 'compare' : state.drawerMode };
     case 'SET_DRAWER_MODE':
       return { ...state, drawerMode: action.mode };
+
     case 'SAVE_SEARCH': {
       const saved = [action.preset, ...state.savedSearches.filter(s => s.id !== action.preset.id)].slice(0, 20);
       persistSavedSearches(saved);
@@ -101,6 +177,7 @@ function reducer(state: ScannerState, action: Action): ScannerState {
     case 'SET_RECENT':
       return { ...state, recentQueries: action.recent };
     case 'SET_VIEW_MODE':
+      // Preserve both mode slices — just switch active view
       return { ...state, viewMode: action.mode };
     default:
       return state;
@@ -113,6 +190,8 @@ interface ScannerContextValue {
   dispatch: Dispatch<Action>;
   runSearch: (query: string, page?: number, filtersOverride?: Partial<ScannerFilters>, sortOverride?: ScannerSort) => void;
   loadMore: () => void;
+  /** The active mode's state slice */
+  activeModeState: ModeSlice;
 }
 
 export const ScannerContext = createContext<ScannerContextValue | null>(null);
@@ -130,6 +209,9 @@ export function useScannerReducer() {
     const q = query.trim();
     if (!q) return;
 
+    const currentMode = state.viewMode;
+    console.log(`[Scanner] runSearch mode=${currentMode} query="${q}" page=${page}`);
+
     pushRecent(q);
     dispatch({ type: 'SET_RECENT', recent: loadRecent() });
     dispatch({ type: 'SET_QUERY', query: q });
@@ -138,27 +220,29 @@ export function useScannerReducer() {
     const ac = new AbortController();
     abortRef.current = ac;
 
-    dispatch({ type: 'SEARCH_START' });
+    dispatch({ type: 'MODE_LOADING', mode: currentMode });
 
     const activeFilters = { ...state.filters, ...(filtersOverride || {}) };
     if (filtersOverride) dispatch({ type: 'UPDATE_FILTERS', filters: filtersOverride });
     if (sortOverride) dispatch({ type: 'SET_SORT', sortBy: sortOverride });
 
-    // Map scanner filters to eBay API params
-    let apiSort: SortOption = 'best';
+    // Both modes use the same eBay search for raw listings
     let buyingOptions: 'ALL' | 'AUCTION' | 'FIXED_PRICE' = 'ALL';
     if (activeFilters.listingType === 'auction') buyingOptions = 'AUCTION';
     else if (activeFilters.listingType === 'bin') buyingOptions = 'FIXED_PRICE';
 
     try {
-      const response = await searchEbay({ query: q, page, limit: 48, sort: apiSort, buyingOptions });
+      const response = await searchEbay({ query: q, page, limit: 48, sort: 'best' as const, buyingOptions });
       if (ac.signal.aborted) return;
 
       const normalized = transformEbayItems(response.items, activeFilters);
       const sorted = sortResults(normalized, sortOverride || state.sortBy);
 
+      console.log(`[Scanner] ${currentMode} results: ${sorted.length} items`);
+
       dispatch({
-        type: 'SEARCH_SUCCESS',
+        type: 'MODE_SUCCESS',
+        mode: currentMode,
         results: sorted,
         hasMore: response.nextPage !== null,
         page,
@@ -166,16 +250,25 @@ export function useScannerReducer() {
       });
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      dispatch({ type: 'SEARCH_ERROR', error: err instanceof Error ? err.message : 'Search failed' });
+      const errorMsg = err instanceof Error ? err.message : 'Search failed';
+      console.error(`[Scanner] ${currentMode} search error:`, errorMsg);
+      dispatch({ type: 'MODE_ERROR', mode: currentMode, error: errorMsg });
     }
-  }, [state.filters, state.sortBy]);
+  }, [state.filters, state.sortBy, state.viewMode]);
 
   const loadMore = useCallback(() => {
-    if (state.isLoading || !state.hasMore || !state.query) return;
-    runSearch(state.query, state.currentPage + 1);
-  }, [state.isLoading, state.hasMore, state.query, state.currentPage, runSearch]);
+    const modeSlice = state[state.viewMode];
+    if (modeSlice.isLoading || !modeSlice.hasMore || !state.query) return;
+    console.log(`[Scanner] loadMore mode=${state.viewMode} nextPage=${modeSlice.currentPage + 1}`);
+    runSearch(state.query, modeSlice.currentPage + 1);
+  }, [state, runSearch]);
 
-  return { state, dispatch, runSearch, loadMore };
+  const activeModeState = useMemo(
+    () => state[state.viewMode],
+    [state],
+  );
+
+  return { state, dispatch, runSearch, loadMore, activeModeState };
 }
 
 export function useScanner() {
