@@ -83,7 +83,28 @@ export const DEFAULT_FILTERS: ScannerFilters = {
   excludedKeywords: [],
 };
 
-// ScannerState is now defined in useScannerState.ts
-// This type is kept for reference but the canonical definition lives in the hook
-export type { ScannerState } from '@/hooks/useScannerState';
+export type ScannerMode = 'scanner' | 'rawToPsa';
 
+export interface ModeSlice {
+  results: NormalizedListing[];
+  isLoading: boolean;
+  error: string | null;
+  hasSearched: boolean;
+  hasMore: boolean;
+  currentPage: number;
+}
+
+export interface ScannerState {
+  query: string;
+  recentQueries: string[];
+  sortBy: ScannerSort;
+  filters: ScannerFilters;
+  viewMode: ScannerMode;
+  scanner: ModeSlice;
+  rawToPsa: ModeSlice;
+  selectedListingId: string | null;
+  comparisonListingId: string | null;
+  savedSearches: SavedScannerPreset[];
+  sidebarOpen: boolean;
+  drawerMode: 'details' | 'compare' | null;
+}
