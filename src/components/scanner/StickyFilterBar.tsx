@@ -1,5 +1,7 @@
+import { RotateCcw } from 'lucide-react';
 import { useScanner } from '@/hooks/useScannerState';
 import { cn } from '@/lib/utils';
+import { DEFAULT_FILTERS } from '@/types/scanner';
 import type { MarketMode, ListingType, ScannerSort } from '@/types/scanner';
 
 const MARKET_MODES: { value: MarketMode; label: string }[] = [
@@ -27,6 +29,24 @@ const SORTS: { value: ScannerSort; label: string }[] = [
 export function StickyFilterBar() {
   const { state, dispatch, runSearch } = useScanner();
   const { filters, sortBy, query } = state;
+
+  // Check if any filter/sort differs from defaults (ignoring marketMode)
+  const isDirty =
+    filters.listingType !== DEFAULT_FILTERS.listingType ||
+    filters.endingSoonOnly !== DEFAULT_FILTERS.endingSoonOnly ||
+    filters.rawOnly !== DEFAULT_FILTERS.rawOnly ||
+    filters.excludeGraded !== DEFAULT_FILTERS.excludeGraded ||
+    filters.excludeLots !== DEFAULT_FILTERS.excludeLots ||
+    filters.minPrice !== DEFAULT_FILTERS.minPrice ||
+    filters.maxPrice !== DEFAULT_FILTERS.maxPrice ||
+    sortBy !== 'bestOpportunity';
+
+  const resetFilters = () => {
+    const resetted = { ...DEFAULT_FILTERS, marketMode: filters.marketMode };
+    dispatch({ type: 'UPDATE_FILTERS', filters: resetted });
+    dispatch({ type: 'SET_SORT', sortBy: 'bestOpportunity' });
+    if (query) runSearch(query, 1, resetted, 'bestOpportunity');
+  };
 
   const updateFilter = (partial: Record<string, any>) => {
     dispatch({ type: 'UPDATE_FILTERS', filters: partial });
@@ -140,6 +160,20 @@ export function StickyFilterBar() {
           value={filters.maxPrice ?? ''}
           onChange={(e) => updateFilter({ maxPrice: e.target.value ? Number(e.target.value) : null })}
         />
+        {/* Reset */}
+        {isDirty && (
+          <>
+            <div className="w-px h-5 mx-1" style={{ background: 'var(--om-border-0)' }} />
+            <button
+              onClick={resetFilters}
+              className="om-pill om-btn flex items-center gap-1 hover:text-[var(--om-accent)]"
+              title="Reset filters"
+            >
+              <RotateCcw size={12} />
+              <span className="text-[11px]">Reset</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
