@@ -100,6 +100,8 @@ function reducer(state: ScannerState, action: Action): ScannerState {
       return { ...state, sidebarOpen: !state.sidebarOpen };
     case 'SET_RECENT':
       return { ...state, recentQueries: action.recent };
+    case 'SET_VIEW_MODE':
+      return { ...state, viewMode: action.mode };
     default:
       return state;
   }
