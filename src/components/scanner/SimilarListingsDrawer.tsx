@@ -22,7 +22,7 @@ export function SimilarListingsDrawer() {
 
   return (
     <aside
-      className="w-80 shrink-0 border-l overflow-y-auto"
+      className="fixed inset-0 z-50 md:static md:z-auto md:w-80 shrink-0 md:border-l overflow-y-auto"
       style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)', height: 'calc(100vh - 72px)' }}
     >
       <div className="flex items-center justify-between px-3 py-2 sticky top-0 z-10" style={{ background: 'var(--om-bg-1)', borderBottom: '1px solid var(--om-border-0)' }}>
