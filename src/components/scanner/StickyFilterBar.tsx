@@ -1,5 +1,7 @@
+import { RotateCcw } from 'lucide-react';
 import { useScanner } from '@/hooks/useScannerState';
 import { cn } from '@/lib/utils';
+import { DEFAULT_FILTERS } from '@/types/scanner';
 import type { MarketMode, ListingType, ScannerSort } from '@/types/scanner';
 
 const MARKET_MODES: { value: MarketMode; label: string }[] = [
