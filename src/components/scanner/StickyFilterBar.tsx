@@ -174,6 +174,12 @@ export function StickyFilterBar() {
             >
               <RotateCcw size={12} />
               <span className="text-[11px]">Reset</span>
+              <span
+                className="ml-0.5 inline-flex items-center justify-center rounded-full text-[9px] font-bold leading-none min-w-[16px] h-4 px-1"
+                style={{ background: 'var(--om-accent)', color: '#fff' }}
+              >
+                {activeCount}
+              </span>
             </button>
           </>
         )}
