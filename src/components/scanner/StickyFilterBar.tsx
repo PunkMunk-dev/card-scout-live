@@ -160,6 +160,20 @@ export function StickyFilterBar() {
           value={filters.maxPrice ?? ''}
           onChange={(e) => updateFilter({ maxPrice: e.target.value ? Number(e.target.value) : null })}
         />
+        {/* Reset */}
+        {isDirty && (
+          <>
+            <div className="w-px h-5 mx-1" style={{ background: 'var(--om-border-0)' }} />
+            <button
+              onClick={resetFilters}
+              className="om-pill om-btn flex items-center gap-1 hover:text-[var(--om-accent)]"
+              title="Reset filters"
+            >
+              <RotateCcw size={12} />
+              <span className="text-[11px]">Reset</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
