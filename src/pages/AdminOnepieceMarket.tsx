@@ -103,6 +103,14 @@ export default function AdminOnepieceMarket() {
         </span>
 
         <button
+          onClick={() => runAction('fetch', 'Fetch eBay')}
+          disabled={ingest.isPending}
+          className="om-btn-sm flex items-center gap-1"
+        >
+          {ingest.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+          Fetch from eBay
+        </button>
+        <button
           onClick={() => runAction('seed', 'Seed')}
           disabled={ingest.isPending}
           className="om-btn-sm flex items-center gap-1"
