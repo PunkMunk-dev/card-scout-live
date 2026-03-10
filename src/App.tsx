@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 
 const TcgLab = lazy(() => import("./pages/TcgLab"));
 const SportsLab = lazy(() => import("./pages/SportsLab"));
+const AdminOnepieceMarket = lazy(() => import("./pages/AdminOnepieceMarket"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
                   <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
                   <Route path="/tcg" element={<ErrorBoundary><TcgLab /></ErrorBoundary>} />
                   <Route path="/sports" element={<ErrorBoundary><SportsLab /></ErrorBoundary>} />
+                  <Route path="/admin/onepiece-market" element={<ErrorBoundary><AdminOnepieceMarket /></ErrorBoundary>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
