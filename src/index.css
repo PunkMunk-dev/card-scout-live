@@ -324,27 +324,6 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  /* Hero spotlight ambient glow */
-  .omni-hero-spotlight {
-    position: absolute;
-    inset: -20%;
-    pointer-events: none;
-    background:
-      radial-gradient(circle at 50% 40%,
-        rgba(10,132,255,0.14) 0%,
-        rgba(10,132,255,0.10) 22%,
-        rgba(10,132,255,0.06) 38%,
-        transparent 62%
-      );
-    filter: blur(22px);
-    opacity: 0.9;
-    animation: omniSpotPulse 10s ease-in-out infinite;
-  }
-}
-
-@keyframes omniSpotPulse {
-  0%, 100% { opacity: 0.85; transform: translateY(0px) scale(1); }
-  50% { opacity: 1; transform: translateY(-2px) scale(1.015); }
 }
 
 @layer utilities {
