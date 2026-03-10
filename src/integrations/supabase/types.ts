@@ -130,6 +130,174 @@ export type Database = {
         }
         Relationships: []
       }
+      ebay_listing_cache: {
+        Row: {
+          condition_text: string | null
+          ebay_item_id: string | null
+          game: string | null
+          grade_value: string | null
+          grader: string | null
+          id: string
+          image_url: string | null
+          inserted_at: string | null
+          is_graded: boolean | null
+          junk_flag: boolean | null
+          language_detected: string | null
+          listing_type: string | null
+          listing_url: string | null
+          normalized_card_key: string | null
+          outlier_flag: boolean | null
+          parse_confidence: string | null
+          parsed_card_number: string | null
+          parsed_character: string | null
+          parsed_rarity: string | null
+          parsed_set_name: string | null
+          parsed_variant: string | null
+          sold_date: string | null
+          sold_price_usd: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          condition_text?: string | null
+          ebay_item_id?: string | null
+          game?: string | null
+          grade_value?: string | null
+          grader?: string | null
+          id?: string
+          image_url?: string | null
+          inserted_at?: string | null
+          is_graded?: boolean | null
+          junk_flag?: boolean | null
+          language_detected?: string | null
+          listing_type?: string | null
+          listing_url?: string | null
+          normalized_card_key?: string | null
+          outlier_flag?: boolean | null
+          parse_confidence?: string | null
+          parsed_card_number?: string | null
+          parsed_character?: string | null
+          parsed_rarity?: string | null
+          parsed_set_name?: string | null
+          parsed_variant?: string | null
+          sold_date?: string | null
+          sold_price_usd?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          condition_text?: string | null
+          ebay_item_id?: string | null
+          game?: string | null
+          grade_value?: string | null
+          grader?: string | null
+          id?: string
+          image_url?: string | null
+          inserted_at?: string | null
+          is_graded?: boolean | null
+          junk_flag?: boolean | null
+          language_detected?: string | null
+          listing_type?: string | null
+          listing_url?: string | null
+          normalized_card_key?: string | null
+          outlier_flag?: boolean | null
+          parse_confidence?: string | null
+          parsed_card_number?: string | null
+          parsed_character?: string | null
+          parsed_rarity?: string | null
+          parsed_set_name?: string | null
+          parsed_variant?: string | null
+          sold_date?: string | null
+          sold_price_usd?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      onepiece_card_market: {
+        Row: {
+          card_number: string | null
+          character: string | null
+          game: string | null
+          language: string | null
+          last_updated_at: string | null
+          match_confidence: string | null
+          multiple: number | null
+          normalized_card_key: string
+          notes: string | null
+          price_spread_usd: number | null
+          psa10_avg_price_usd: number | null
+          psa10_median_price_usd: number | null
+          psa10_prices_usd: string[] | null
+          psa10_sale_count: number | null
+          psa10_sold_dates: string[] | null
+          psa10_source_urls: string[] | null
+          rarity: string | null
+          raw_avg_price_usd: number | null
+          raw_median_price_usd: number | null
+          raw_prices_usd: string[] | null
+          raw_sale_count: number | null
+          raw_sold_dates: string[] | null
+          raw_source_urls: string[] | null
+          set_name: string | null
+          variant: string | null
+        }
+        Insert: {
+          card_number?: string | null
+          character?: string | null
+          game?: string | null
+          language?: string | null
+          last_updated_at?: string | null
+          match_confidence?: string | null
+          multiple?: number | null
+          normalized_card_key: string
+          notes?: string | null
+          price_spread_usd?: number | null
+          psa10_avg_price_usd?: number | null
+          psa10_median_price_usd?: number | null
+          psa10_prices_usd?: string[] | null
+          psa10_sale_count?: number | null
+          psa10_sold_dates?: string[] | null
+          psa10_source_urls?: string[] | null
+          rarity?: string | null
+          raw_avg_price_usd?: number | null
+          raw_median_price_usd?: number | null
+          raw_prices_usd?: string[] | null
+          raw_sale_count?: number | null
+          raw_sold_dates?: string[] | null
+          raw_source_urls?: string[] | null
+          set_name?: string | null
+          variant?: string | null
+        }
+        Update: {
+          card_number?: string | null
+          character?: string | null
+          game?: string | null
+          language?: string | null
+          last_updated_at?: string | null
+          match_confidence?: string | null
+          multiple?: number | null
+          normalized_card_key?: string
+          notes?: string | null
+          price_spread_usd?: number | null
+          psa10_avg_price_usd?: number | null
+          psa10_median_price_usd?: number | null
+          psa10_prices_usd?: string[] | null
+          psa10_sale_count?: number | null
+          psa10_sold_dates?: string[] | null
+          psa10_source_urls?: string[] | null
+          rarity?: string | null
+          raw_avg_price_usd?: number | null
+          raw_median_price_usd?: number | null
+          raw_prices_usd?: string[] | null
+          raw_sale_count?: number | null
+          raw_sold_dates?: string[] | null
+          raw_source_urls?: string[] | null
+          set_name?: string | null
+          variant?: string | null
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           id: string
