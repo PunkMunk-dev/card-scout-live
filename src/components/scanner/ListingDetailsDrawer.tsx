@@ -30,8 +30,8 @@ export function ListingDetailsDrawer() {
   const { toggleWatchlist, isInWatchlist } = useSharedWatchlist();
 
   const listing = useMemo(
-    () => state.results.find(r => r.id === state.selectedListingId) ?? null,
-    [state.results, state.selectedListingId],
+    () => state.scanner.results.find(r => r.id === state.selectedListingId) ?? null,
+    [state.scanner.results, state.selectedListingId],
   );
 
   if (!listing || state.drawerMode !== 'details') return null;

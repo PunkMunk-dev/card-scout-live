@@ -233,7 +233,7 @@ export function RawToPsaView() {
         ))}
       </div>
 
-      {sorted.length === 0 && !state.isLoading && (
+      {sorted.length === 0 && !isLoading && (
         <p className="text-center text-sm py-8" style={{ color: 'var(--om-text-3)' }}>
           No results match your filters. Try lowering the minimum sales count.
         </p>

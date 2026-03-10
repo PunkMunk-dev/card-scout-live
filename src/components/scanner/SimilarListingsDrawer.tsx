@@ -7,16 +7,16 @@ export function SimilarListingsDrawer() {
   const { state, dispatch } = useScanner();
 
   const selectedListing = useMemo(
-    () => state.results.find(r => r.id === state.comparisonListingId) ?? null,
-    [state.results, state.comparisonListingId],
+    () => state.scanner.results.find(r => r.id === state.comparisonListingId) ?? null,
+    [state.scanner.results, state.comparisonListingId],
   );
 
   const clusterMembers = useMemo(() => {
     if (!selectedListing?.activeClusterId) return [];
-    return state.results
+    return state.scanner.results
       .filter(r => r.activeClusterId === selectedListing.activeClusterId && r.id !== selectedListing.id)
       .sort((a, b) => (a.totalCost ?? Infinity) - (b.totalCost ?? Infinity));
-  }, [state.results, selectedListing]);
+  }, [state.scanner.results, selectedListing]);
 
   if (!selectedListing || state.drawerMode !== 'compare') return null;
 
