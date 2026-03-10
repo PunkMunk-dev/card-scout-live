@@ -266,8 +266,8 @@
   .om-command-bar {
     background: var(--om-bg-1);
     border: 1px solid var(--om-border-0);
-    border-radius: 1rem;
-    box-shadow: 0 20px 60px var(--glass-shadow);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px var(--glass-shadow);
   }
 
   /* OmniMarket button micro-interactions */
