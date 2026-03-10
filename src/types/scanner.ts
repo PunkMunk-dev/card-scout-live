@@ -83,20 +83,7 @@ export const DEFAULT_FILTERS: ScannerFilters = {
   excludedKeywords: [],
 };
 
-export interface ScannerState {
-  query: string;
-  recentQueries: string[];
-  sortBy: ScannerSort;
-  filters: ScannerFilters;
-  results: NormalizedListing[];
-  selectedListingId: string | null;
-  comparisonListingId: string | null;
-  savedSearches: SavedScannerPreset[];
-  isLoading: boolean;
-  error: string | null;
-  hasMore: boolean;
-  currentPage: number;
-  sidebarOpen: boolean;
-  drawerMode: 'details' | 'compare' | null;
-  viewMode: 'scanner' | 'rawToPsa';
-}
+// ScannerState is now defined in useScannerState.ts
+// This type is kept for reference but the canonical definition lives in the hook
+export type { ScannerState } from '@/hooks/useScannerState';
+
