@@ -104,6 +104,20 @@ export function useOnepieceListingDetails(normalizedCardKey: string | null) {
   });
 }
 
+export function useOnepieceDiagnostics() {
+  return useQuery({
+    queryKey: ['onepiece-diagnostics'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('onepiece-ingest', {
+        body: { action: 'counts' },
+      });
+      if (error) throw error;
+      return data as { cacheCount: number; groupedCount: number };
+    },
+    refetchInterval: false,
+  });
+}
+
 export function useOnepieceIngest() {
   const qc = useQueryClient();
   return useMutation({
@@ -116,6 +130,8 @@ export function useOnepieceIngest() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['onepiece-market'] });
+      qc.invalidateQueries({ queryKey: ['onepiece-diagnostics'] });
+      qc.invalidateQueries({ queryKey: ['onepiece-listing-details'] });
     },
   });
 }

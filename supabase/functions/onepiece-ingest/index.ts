@@ -60,7 +60,6 @@ function parseSetName(title: string): string | null {
   return m ? m[1] : null;
 }
 
-// One Piece character extraction — look for known patterns after removing noise
 const CHARACTER_RE = /(?:Monkey\s*D\.?\s*Luffy|Luffy|Roronoa\s*Zoro|Zoro|Nami|Sanji|Nico\s*Robin|Robin|Franky|Brook|Jinbe|Chopper|Usopp|Shanks|Yamato|Uta|Sabo|Ace|Portgas|Kaido|Big\s*Mom|Trafalgar|Law|Kid|Eustass|Boa\s*Hancock|Hancock|Doflamingo|Crocodile|Mihawk|Whitebeard|Buggy|Blackbeard|Teach|Akainu|Aokiji|Kizaru|Garp|Koby|Smoker|Vivi|Carrot|Perona|Katakuri|Marco|Newgate|Roger|Rayleigh)/i;
 
 function parseCharacter(title: string): string | null {
@@ -131,12 +130,28 @@ function computeConfidence(
 
   if (langConflict || variantConflict || setConflict) return "low";
 
-  // Check for missing metadata
   const allHaveCardNum = [...rawListings, ...psaListings].every((l) => l.normalized_card_key);
   if (!allHaveCardNum) return "medium";
 
   return "high";
 }
+
+// ─── Seed data ───
+const SEED_LISTINGS = [
+  // OP01-001 Luffy EN base — 2 raw + 2 PSA 10
+  { title: "One Piece TCG OP01-001 Monkey D. Luffy Romance Dawn EN", sold_price_usd: 8, sold_date: "2026-03-01T12:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-001a" },
+  { title: "OP01-001 Luffy One Piece Card Game English", sold_price_usd: 10, sold_date: "2026-03-03T14:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-001b" },
+  { title: "PSA 10 OP01-001 Monkey D. Luffy Romance Dawn EN One Piece", sold_price_usd: 45, sold_date: "2026-03-02T10:00:00Z", search_type: "psa10" as const, ebay_item_id: "seed-psa-001a" },
+  { title: "One Piece OP01-001 Luffy PSA 10 Gem Mint English", sold_price_usd: 50, sold_date: "2026-03-04T16:00:00Z", search_type: "psa10" as const, ebay_item_id: "seed-psa-001b" },
+  // OP05-119 Shanks JP alt art — 2 raw + 1 PSA 10
+  { title: "OP05-119 Shanks Alt Art JP One Piece Awakening of the New Era", sold_price_usd: 25, sold_date: "2026-03-01T09:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-119a" },
+  { title: "One Piece OP05-119 Shanks Alt Art Japanese", sold_price_usd: 30, sold_date: "2026-03-02T11:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-119b" },
+  { title: "PSA 10 OP05-119 Shanks Alt Art Japanese One Piece", sold_price_usd: 120, sold_date: "2026-03-03T13:00:00Z", search_type: "psa10" as const, ebay_item_id: "seed-psa-119a" },
+  // ST21-014 Zoro EN base — 2 raw + 1 PSA 10
+  { title: "ST21-014 Roronoa Zoro One Piece Starter Deck English", sold_price_usd: 5, sold_date: "2026-03-01T08:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-014a" },
+  { title: "One Piece ST21-014 Zoro EN Card", sold_price_usd: 6, sold_date: "2026-03-02T15:00:00Z", search_type: "raw" as const, ebay_item_id: "seed-raw-014b" },
+  { title: "PSA 10 ST21-014 Roronoa Zoro One Piece English", sold_price_usd: 35, sold_date: "2026-03-04T10:00:00Z", search_type: "psa10" as const, ebay_item_id: "seed-psa-014a" },
+];
 
 // ─── Main handler ───
 Deno.serve(async (req: Request) => {
@@ -152,8 +167,101 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action || "ingest";
 
+    // ─── SEED: insert hardcoded test data ───
+    if (action === "seed") {
+      // Process seed listings through the same parsing pipeline
+      const parsed: Array<Record<string, unknown>> = [];
+
+      for (const listing of SEED_LISTINGS) {
+        const title = listing.title;
+        const junk = isJunk(title);
+        const grade = parseGrade(title);
+
+        if (listing.search_type === "raw" && isRawExcluded(title)) continue;
+        if (listing.search_type === "psa10") {
+          if (!PSA10_REQUIRE.test(title)) continue;
+          if (isPsa10Excluded(title)) continue;
+        }
+
+        const cardNumber = parseCardNumber(title);
+        const character = parseCharacter(title);
+        const setName = parseSetName(title);
+        const variant = parseVariant(title);
+        const language = detectLanguage(title);
+        const normalizedKey = buildNormalizedCardKey({ cardNumber, character, setName, language, variant });
+
+        parsed.push({
+          ebay_item_id: listing.ebay_item_id,
+          title,
+          listing_url: `https://www.ebay.com/itm/${listing.ebay_item_id}`,
+          sold_price_usd: listing.sold_price_usd,
+          sold_date: listing.sold_date,
+          image_url: null,
+          condition_text: null,
+          is_graded: grade.isGraded,
+          grader: grade.grader,
+          grade_value: grade.gradeValue,
+          listing_type: listing.search_type,
+          game: "onepiece",
+          parsed_character: character,
+          parsed_card_number: cardNumber,
+          parsed_set_name: setName,
+          parsed_rarity: null,
+          parsed_variant: variant,
+          language_detected: language,
+          normalized_card_key: normalizedKey,
+          parse_confidence: cardNumber ? "high" : "low",
+          junk_flag: junk,
+          outlier_flag: false,
+        });
+      }
+
+      console.log(`Seed: parsed ${parsed.length} listings`);
+
+      if (parsed.length) {
+        // Delete old seed data first, then insert fresh
+        await supabase
+          .from("ebay_listing_cache")
+          .delete()
+          .like("ebay_item_id", "seed-%");
+
+        const { error: insertErr } = await supabase
+          .from("ebay_listing_cache")
+          .insert(parsed);
+        if (insertErr) {
+          console.error("Seed insert error:", insertErr);
+          return new Response(JSON.stringify({ error: insertErr.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ action: "seed", inserted: parsed.length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── COUNTS: return table row counts ───
+    if (action === "counts") {
+      const { count: cacheCount } = await supabase
+        .from("ebay_listing_cache")
+        .select("*", { count: "exact", head: true })
+        .eq("game", "onepiece");
+
+      const { count: groupedCount } = await supabase
+        .from("onepiece_card_market")
+        .select("*", { count: "exact", head: true });
+
+      return new Response(
+        JSON.stringify({ cacheCount: cacheCount || 0, groupedCount: groupedCount || 0 }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── INGEST: accept listings from caller ───
     if (action === "ingest") {
-      // Accept listings from the caller (the admin UI will send scraped/fetched listings)
       const listings: Array<{
         ebay_item_id?: string;
         title: string;
@@ -177,18 +285,12 @@ Deno.serve(async (req: Request) => {
       for (const listing of listings) {
         const title = listing.title;
         const junk = isJunk(title);
-
-        let listingType: "raw" | "psa10" | null = listing.search_type;
         const grade = parseGrade(title);
 
-        // Validate listing type matches search intent
-        if (listing.search_type === "raw" && isRawExcluded(title)) {
-          continue; // skip graded listings from raw search
-        }
+        if (listing.search_type === "raw" && isRawExcluded(title)) continue;
         if (listing.search_type === "psa10") {
-          if (!PSA10_REQUIRE.test(title)) continue; // must actually be PSA 10
+          if (!PSA10_REQUIRE.test(title)) continue;
           if (isPsa10Excluded(title)) continue;
-          listingType = "psa10";
         }
 
         const cardNumber = parseCardNumber(title);
@@ -196,7 +298,6 @@ Deno.serve(async (req: Request) => {
         const setName = parseSetName(title);
         const variant = parseVariant(title);
         const language = detectLanguage(title);
-
         const normalizedKey = buildNormalizedCardKey({ cardNumber, character, setName, language, variant });
 
         parsed.push({
@@ -210,7 +311,7 @@ Deno.serve(async (req: Request) => {
           is_graded: grade.isGraded,
           grader: grade.grader,
           grade_value: grade.gradeValue,
-          listing_type: listingType,
+          listing_type: listing.search_type,
           game: "onepiece",
           parsed_character: character,
           parsed_card_number: cardNumber,
@@ -225,7 +326,6 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      // Upsert into ebay_listing_cache
       if (parsed.length) {
         const { error: insertErr } = await supabase
           .from("ebay_listing_cache")
@@ -236,13 +336,13 @@ Deno.serve(async (req: Request) => {
       }
 
       return new Response(
-        JSON.stringify({ inserted: parsed.length, skipped: listings.length - parsed.length }),
+        JSON.stringify({ action: "ingest", inserted: parsed.length, skipped: listings.length - parsed.length }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // ─── GROUP: aggregate cache into market table ───
     if (action === "group") {
-      // Group cached listings into onepiece_card_market
       const { data: allListings, error: fetchErr } = await supabase
         .from("ebay_listing_cache")
         .select("*")
@@ -257,7 +357,8 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      // Group by normalized_card_key
+      console.log(`Group: found ${allListings?.length || 0} non-junk cached listings`);
+
       const groups = new Map<string, typeof allListings>();
       for (const l of allListings || []) {
         const key = l.normalized_card_key!;
@@ -284,7 +385,6 @@ Deno.serve(async (req: Request) => {
 
         const confidence = computeConfidence(rawListings as any, psaListings as any);
 
-        // Take identity from first listing with data
         const sample = listings[0];
 
         upsertRows.push({
@@ -316,6 +416,8 @@ Deno.serve(async (req: Request) => {
         });
       }
 
+      console.log(`Group: upserting ${upsertRows.length} grouped rows`);
+
       if (upsertRows.length) {
         const { error: upsertErr } = await supabase
           .from("onepiece_card_market")
@@ -329,7 +431,7 @@ Deno.serve(async (req: Request) => {
       }
 
       return new Response(
-        JSON.stringify({ grouped: upsertRows.length }),
+        JSON.stringify({ action: "group", grouped: upsertRows.length, cachedListings: allListings?.length || 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

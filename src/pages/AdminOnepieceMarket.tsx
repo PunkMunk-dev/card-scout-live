@@ -1,12 +1,15 @@
 import { useState, useMemo, useCallback } from 'react';
 import {
   Search, Download, RefreshCw, Play, Loader2, ChevronRight, X,
-  ExternalLink, AlertTriangle, CheckCircle2, HelpCircle,
+  ExternalLink, AlertTriangle, CheckCircle2, HelpCircle, Database, Layers,
+  Sprout,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useOnepieceMarket,
   useOnepieceIngest,
   useOnepieceListingDetails,
+  useOnepieceDiagnostics,
   exportMarketCsv,
   type OnepieceMarketRow,
   type MarketFilters,
@@ -35,14 +38,17 @@ export default function AdminOnepieceMarket() {
     cardNumberSearch: '',
     minRawSales: 2,
     minPsa10Sales: 1,
-    dateWindow: 30,
+    dateWindow: 0,
   });
 
   const [selectedRow, setSelectedRow] = useState<OnepieceMarketRow | null>(null);
   const [sortKey, setSortKey] = useState<string>('last_updated_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [lastResult, setLastResult] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const { data: rows, isLoading, error, refetch } = useOnepieceMarket(filters);
+  const { data: diagnostics, refetch: refetchDiag } = useOnepieceDiagnostics();
   const ingest = useOnepieceIngest();
 
   const sorted = useMemo(() => {
@@ -63,9 +69,23 @@ export default function AdminOnepieceMarket() {
     else { setSortKey(key); setSortDir('desc'); }
   }, [sortKey]);
 
-  const handleGroup = useCallback(() => {
-    ingest.mutate({ action: 'group' });
-  }, [ingest]);
+  const runAction = useCallback((action: string, label: string) => {
+    setLastError(null);
+    setLastResult(null);
+    ingest.mutate({ action }, {
+      onSuccess: (data: any) => {
+        const msg = JSON.stringify(data);
+        setLastResult(`${label}: ${msg}`);
+        toast.success(`${label} complete`, { description: msg });
+        refetchDiag();
+      },
+      onError: (err: any) => {
+        const msg = String(err);
+        setLastError(`${label}: ${msg}`);
+        toast.error(`${label} failed`, { description: msg });
+      },
+    });
+  }, [ingest, refetchDiag]);
 
   const updateFilter = useCallback((key: keyof MarketFilters, value: unknown) => {
     setFilters(f => ({ ...f, [key]: value }));
@@ -83,11 +103,19 @@ export default function AdminOnepieceMarket() {
         </span>
 
         <button
-          onClick={handleGroup}
+          onClick={() => runAction('seed', 'Seed')}
           disabled={ingest.isPending}
           className="om-btn-sm flex items-center gap-1"
         >
-          {ingest.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+          {ingest.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sprout className="h-3 w-3" />}
+          Seed Test Data
+        </button>
+        <button
+          onClick={() => runAction('group', 'Group')}
+          disabled={ingest.isPending}
+          className="om-btn-sm flex items-center gap-1"
+        >
+          {ingest.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Layers className="h-3 w-3" />}
           Run Grouping
         </button>
         <button onClick={() => refetch()} className="om-btn-sm flex items-center gap-1">
@@ -187,6 +215,33 @@ export default function AdminOnepieceMarket() {
         )}
       </div>
 
+      {/* Diagnostics bar */}
+      <div
+        className="px-3 py-1.5 border-b flex flex-wrap gap-4 items-center text-[11px]"
+        style={{ background: 'var(--om-bg-0)', borderColor: 'var(--om-border-0)' }}
+      >
+        <span className="flex items-center gap-1" style={{ color: 'var(--om-text-2)' }}>
+          <Database className="h-3 w-3" />
+          Cache: <strong style={{ color: 'var(--om-text-0)' }}>{diagnostics?.cacheCount ?? '—'}</strong>
+        </span>
+        <span className="flex items-center gap-1" style={{ color: 'var(--om-text-2)' }}>
+          <Layers className="h-3 w-3" />
+          Grouped: <strong style={{ color: 'var(--om-text-0)' }}>{diagnostics?.groupedCount ?? '—'}</strong>
+        </span>
+        {lastResult && (
+          <span className="flex items-center gap-1" style={{ color: 'hsl(142 71% 45%)' }}>
+            <CheckCircle2 className="h-3 w-3" />
+            {lastResult}
+          </span>
+        )}
+        {lastError && (
+          <span className="flex items-center gap-1" style={{ color: 'hsl(0 84% 60%)' }}>
+            <AlertTriangle className="h-3 w-3" />
+            {lastError}
+          </span>
+        )}
+      </div>
+
       {/* Content area */}
       <div className="flex-1 flex min-h-0">
         {/* Table */}
@@ -203,7 +258,7 @@ export default function AdminOnepieceMarket() {
             <div className="flex flex-col items-center justify-center h-full gap-2" style={{ color: 'var(--om-text-3)' }}>
               <HelpCircle className="h-6 w-6" />
               <p className="text-sm">No market data found</p>
-              <p className="text-xs">Run ingestion to populate data, then click "Run Grouping"</p>
+              <p className="text-xs">Click "Seed Test Data" → then "Run Grouping" to populate</p>
             </div>
           ) : (
             <table className="w-full text-xs" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
@@ -347,7 +402,6 @@ function DetailDrawer({ row, onClose }: { row: OnepieceMarketRow; onClose: () =>
       className="w-[420px] border-l overflow-y-auto flex-shrink-0"
       style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}
     >
-      {/* Header */}
       <div className="sticky top-0 z-10 p-3 border-b flex items-center justify-between" style={{ background: 'var(--om-bg-1)', borderColor: 'var(--om-border-0)' }}>
         <div>
           <p className="font-semibold text-sm" style={{ color: 'var(--om-text-0)' }}>
@@ -363,14 +417,12 @@ function DetailDrawer({ row, onClose }: { row: OnepieceMarketRow; onClose: () =>
       </div>
 
       <div className="p-3 space-y-4 text-xs">
-        {/* Identity */}
         <Section title="Card Identity">
           <DetailRow label="Normalized Key" value={row.normalized_card_key} />
           <DetailRow label="Confidence" value={row.match_confidence || 'N/A'} />
           {row.notes && <DetailRow label="Notes" value={row.notes} />}
         </Section>
 
-        {/* Parser explanation */}
         <Section title="Parser Details">
           <DetailRow label="Card Number" value={row.card_number || 'not detected'} />
           <DetailRow label="Language" value={row.language || 'not detected'} />
@@ -388,7 +440,6 @@ function DetailDrawer({ row, onClose }: { row: OnepieceMarketRow; onClose: () =>
           />
         </Section>
 
-        {/* Stats summary */}
         <Section title="Market Summary">
           <div className="grid grid-cols-2 gap-2">
             <StatCard label="Raw Avg" value={row.raw_avg_price_usd != null ? `$${row.raw_avg_price_usd.toFixed(2)}` : '—'} />
@@ -404,7 +455,6 @@ function DetailDrawer({ row, onClose }: { row: OnepieceMarketRow; onClose: () =>
           </div>
         </Section>
 
-        {/* Raw comps */}
         <Section title={`Raw Sold Comps (${rawListings.length})`}>
           {isLoading ? (
             <div className="flex items-center gap-1" style={{ color: 'var(--om-text-3)' }}>
@@ -419,7 +469,6 @@ function DetailDrawer({ row, onClose }: { row: OnepieceMarketRow; onClose: () =>
           )}
         </Section>
 
-        {/* PSA 10 comps */}
         <Section title={`PSA 10 Sold Comps (${psaListings.length})`}>
           {isLoading ? (
             <div className="flex items-center gap-1" style={{ color: 'var(--om-text-3)' }}>
