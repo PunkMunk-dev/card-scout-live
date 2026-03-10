@@ -83,20 +83,28 @@ export const DEFAULT_FILTERS: ScannerFilters = {
   excludedKeywords: [],
 };
 
+export type ScannerMode = 'scanner' | 'rawToPsa';
+
+export interface ModeSlice {
+  results: NormalizedListing[];
+  isLoading: boolean;
+  error: string | null;
+  hasSearched: boolean;
+  hasMore: boolean;
+  currentPage: number;
+}
+
 export interface ScannerState {
   query: string;
   recentQueries: string[];
   sortBy: ScannerSort;
   filters: ScannerFilters;
-  results: NormalizedListing[];
+  viewMode: ScannerMode;
+  scanner: ModeSlice;
+  rawToPsa: ModeSlice;
   selectedListingId: string | null;
   comparisonListingId: string | null;
   savedSearches: SavedScannerPreset[];
-  isLoading: boolean;
-  error: string | null;
-  hasMore: boolean;
-  currentPage: number;
   sidebarOpen: boolean;
   drawerMode: 'details' | 'compare' | null;
-  viewMode: 'scanner' | 'rawToPsa';
 }

@@ -29,8 +29,8 @@ function toEbayItem(l: NormalizedListing): EbayItem {
 }
 
 export function OpportunityResultsFeed() {
-  const { state, dispatch, loadMore } = useScanner();
-  const { results, isLoading, hasMore, error, sortBy } = state;
+  const { state, dispatch, loadMore, activeModeState } = useScanner();
+  const { results, isLoading, hasMore, error } = activeModeState;
   const { isInWatchlist, toggleWatchlist } = useSharedWatchlist();
 
   const visibleResults = useMemo(() => results.filter(r => !r.isLikelyJunk), [results]);

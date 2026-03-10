@@ -11,7 +11,7 @@ import { RawToPsaView } from '@/components/scanner/RawToPsaView';
 import { useScanner } from '@/hooks/useScannerState';
 
 export default function Index() {
-  const { state, runSearch } = useScanner();
+  const { state, runSearch, activeModeState } = useScanner();
   const [searchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
 
@@ -22,9 +22,12 @@ export default function Index() {
     }
   }, [urlQuery]);
 
-  const hasResults = state.results.length > 0 || state.isLoading;
-  const drawerOpen = state.drawerMode === 'details' || state.drawerMode === 'compare';
   const isRawToPsa = state.viewMode === 'rawToPsa';
+  const { results, isLoading, hasSearched } = activeModeState;
+  const hasResults = results.length > 0 || isLoading;
+  const drawerOpen = state.drawerMode === 'details' || state.drawerMode === 'compare';
+
+  console.log(`[Index] viewMode=${state.viewMode} hasSearched=${hasSearched} results=${results.length} isLoading=${isLoading}`);
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh)', background: 'var(--om-bg-0)' }}>
@@ -35,13 +38,26 @@ export default function Index() {
         <ScannerSidebar />
 
         {isRawToPsa ? (
-          <RawToPsaView />
+          hasResults ? (
+            <RawToPsaView />
+          ) : hasSearched ? (
+            <div className="flex-1 flex items-center justify-center p-8" style={{ color: 'var(--om-text-3)' }}>
+              <p className="text-sm">No raw listings found for this query</p>
+            </div>
+          ) : (
+            <ScannerEmptyState />
+          )
         ) : hasResults ? (
           <OpportunityResultsFeed />
+        ) : hasSearched ? (
+          <div className="flex-1 flex items-center justify-center p-8" style={{ color: 'var(--om-text-3)' }}>
+            <p className="text-sm">No results found</p>
+          </div>
         ) : (
           <ScannerEmptyState />
         )}
 
+        {/* Drawers only in scanner mode */}
         {!isRawToPsa && drawerOpen && state.drawerMode === 'details' && <ListingDetailsDrawer />}
         {!isRawToPsa && drawerOpen && state.drawerMode === 'compare' && <SimilarListingsDrawer />}
       </div>

@@ -5,7 +5,8 @@ import { useRawToPsa } from '@/hooks/useRawToPsa';
 import { computeMetrics, deriveConfidence } from '@/lib/computeRawToPsaMetrics';
 
 export function RawToPsaView() {
-  const { state } = useScanner();
+  const { state, activeModeState } = useScanner();
+  const { results, isLoading } = activeModeState;
 
   const [gradingCost, setGradingCost] = useState(150);
   const [sellFee, setSellFee] = useState(13);
@@ -15,8 +16,8 @@ export function RawToPsaView() {
 
   // Filter to non-junk raw listings only
   const rawListings = useMemo(
-    () => state.results.filter(r => !r.isLikelyJunk),
-    [state.results],
+    () => results.filter(r => !r.isLikelyJunk),
+    [results],
   );
 
   const psaMap = useRawToPsa(rawListings);
@@ -70,7 +71,7 @@ export function RawToPsaView() {
 
   const anyLoading = Array.from(psaMap.values()).some(p => p.isLoading);
 
-  if (!state.results.length && !state.isLoading) {
+  if (!results.length && !isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8" style={{ color: 'var(--om-text-3)' }}>
         <p className="text-sm">Search for a card to see Raw → PSA 10 analysis</p>
@@ -232,7 +233,7 @@ export function RawToPsaView() {
         ))}
       </div>
 
-      {sorted.length === 0 && !state.isLoading && (
+      {sorted.length === 0 && !isLoading && (
         <p className="text-center text-sm py-8" style={{ color: 'var(--om-text-3)' }}>
           No results match your filters. Try lowering the minimum sales count.
         </p>
