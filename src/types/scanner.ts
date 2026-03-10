@@ -98,4 +98,5 @@ export interface ScannerState {
   currentPage: number;
   sidebarOpen: boolean;
   drawerMode: 'details' | 'compare' | null;
+  viewMode: 'scanner' | 'rawToPsa';
 }

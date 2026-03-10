@@ -7,6 +7,7 @@ import { OpportunityResultsFeed } from '@/components/scanner/OpportunityResultsF
 import { ListingDetailsDrawer } from '@/components/scanner/ListingDetailsDrawer';
 import { SimilarListingsDrawer } from '@/components/scanner/SimilarListingsDrawer';
 import { ScannerEmptyState } from '@/components/scanner/ScannerEmptyState';
+import { RawToPsaView } from '@/components/scanner/RawToPsaView';
 import { useScanner } from '@/hooks/useScannerState';
 
 export default function Index() {
@@ -23,28 +24,26 @@ export default function Index() {
 
   const hasResults = state.results.length > 0 || state.isLoading;
   const drawerOpen = state.drawerMode === 'details' || state.drawerMode === 'compare';
+  const isRawToPsa = state.viewMode === 'rawToPsa';
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh)', background: 'var(--om-bg-0)' }}>
-      {/* Sticky header + filter bar are handled here instead of TabNavigation */}
       <StickyScannerHeader />
       <StickyFilterBar />
 
-      {/* Main workspace */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Sidebar */}
         <ScannerSidebar />
 
-        {/* Results or empty state */}
-        {hasResults ? (
+        {isRawToPsa ? (
+          <RawToPsaView />
+        ) : hasResults ? (
           <OpportunityResultsFeed />
         ) : (
           <ScannerEmptyState />
         )}
 
-        {/* Right drawer */}
-        {drawerOpen && state.drawerMode === 'details' && <ListingDetailsDrawer />}
-        {drawerOpen && state.drawerMode === 'compare' && <SimilarListingsDrawer />}
+        {!isRawToPsa && drawerOpen && state.drawerMode === 'details' && <ListingDetailsDrawer />}
+        {!isRawToPsa && drawerOpen && state.drawerMode === 'compare' && <SimilarListingsDrawer />}
       </div>
     </div>
   );
