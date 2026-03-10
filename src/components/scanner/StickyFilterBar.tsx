@@ -15,12 +15,13 @@ const LISTING_TYPES: { value: ListingType; label: string }[] = [
 ];
 
 const SORTS: { value: ScannerSort; label: string }[] = [
-  { value: 'bestOpportunity', label: 'Best Opportunity' },
-  { value: 'biggestActiveDiscount', label: 'Biggest Discount' },
+  { value: 'bestOpportunity', label: 'Best ROI' },
+  { value: 'biggestActiveDiscount', label: 'Biggest Spread' },
+  { value: 'priceDesc', label: 'Highest PSA 10 Premium' },
+  { value: 'relevance', label: 'Most Liquid' },
+  { value: 'priceAsc', label: 'Lowest Raw Price' },
   { value: 'endingSoon', label: 'Ending Soon' },
-  { value: 'priceAsc', label: 'Price ↑' },
-  { value: 'priceDesc', label: 'Price ↓' },
-  { value: 'relevance', label: 'Relevance' },
+  { value: 'newlyListed', label: 'Newest' },
 ];
 
 export function StickyFilterBar() {
