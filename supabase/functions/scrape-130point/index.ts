@@ -41,8 +41,11 @@ Deno.serve(async (req) => {
         url,
         formats: ['markdown'],
         onlyMainContent: true,
-        waitFor: 8000,
-        timeout: 30000,
+        waitFor: 15000,
+        timeout: 60000,
+        actions: [
+          { type: 'wait', selector: '#tabs table, .results_container table, #testBlock table', timeout: 20000 },
+        ],
       }),
     });
 

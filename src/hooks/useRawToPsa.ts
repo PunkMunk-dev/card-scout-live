@@ -16,6 +16,32 @@ export interface Psa10Data {
 // Dedupe by query to avoid redundant scrapes
 const psaCache = new Map<string, { stats: SoldStats; comps: Psa10SoldRecord[] }>();
 
+// Concurrency limiter — max 3 parallel scrapes
+const MAX_CONCURRENT = 3;
+let activeCount = 0;
+const queue: Array<() => void> = [];
+
+function acquireSlot(): Promise<void> {
+  if (activeCount < MAX_CONCURRENT) {
+    activeCount++;
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => {
+    queue.push(() => {
+      activeCount++;
+      resolve();
+    });
+  });
+}
+
+function releaseSlot() {
+  activeCount--;
+  if (queue.length > 0) {
+    const next = queue.shift()!;
+    next();
+  }
+}
+
 export function useRawToPsa(listings: NormalizedListing[]) {
   const [psaMap, setPsaMap] = useState<Map<string, Psa10Data>>(new Map());
   const inflightRef = useRef<Set<string>>(new Set());
@@ -46,6 +72,9 @@ export function useRawToPsa(listings: NormalizedListing[]) {
       return next;
     });
 
+    // Wait for a concurrency slot
+    await acquireSlot();
+
     try {
       const result = await scrape130point(queryKey);
       if (!result.success) throw new Error(result.error || 'Scrape failed');
@@ -73,6 +102,7 @@ export function useRawToPsa(listings: NormalizedListing[]) {
         return next;
       });
     } finally {
+      releaseSlot();
       inflightRef.current.delete(queryKey);
     }
   }, []);
@@ -92,7 +122,7 @@ export function useRawToPsa(listings: NormalizedListing[]) {
       queryGroups.set(query, existing);
     }
 
-    // Fire off scrapes (deduped)
+    // Fire off scrapes (deduped, concurrency-limited)
     for (const [queryKey, ids] of queryGroups) {
       fetchPsaData(queryKey, ids);
     }
