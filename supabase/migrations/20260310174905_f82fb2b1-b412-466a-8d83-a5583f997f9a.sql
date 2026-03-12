@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ebay_listing_cache_ebay_item_id ON public.ebay_listing_cache (ebay_item_id) WHERE ebay_item_id IS NOT NULL;

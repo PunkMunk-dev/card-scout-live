@@ -64,8 +64,8 @@
     /* Landing neutrals — LIGHT */
     --om-bg-0: #F5F7FA;
     --om-bg-1: #FFFFFF;
-    --om-bg-2: #F0F3F8;
-    --om-bg-3: #E6EAF2;
+    --om-bg-2: #F0F2F5;
+    --om-bg-3: #E5E8ED;
     --om-text-0: #111827;
     --om-text-1: #374151;
     --om-text-2: #6B7280;
@@ -141,10 +141,10 @@
     --sidebar-ring: 224 76% 55%;
 
     /* Landing neutrals — DARK */
-    --om-bg-0: #0B0F16;
-    --om-bg-1: #0E1420;
-    --om-bg-2: #121A28;
-    --om-bg-3: #162033;
+    --om-bg-0: #0F1521;
+    --om-bg-1: #131B2A;
+    --om-bg-2: #182233;
+    --om-bg-3: #1E2A3E;
     --om-text-0: #F5F7FF;
     --om-text-1: #B8C0D4;
     --om-text-2: #7F8AA3;
@@ -233,9 +233,9 @@
     transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   .om-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--om-border-1);
-    box-shadow: 0 30px 80px var(--glass-shadow);
+    box-shadow: 0 0 80px rgba(0,185,255,0.06);
   }
 
   /* OmniMarket toolbar */
@@ -249,7 +249,6 @@
   .om-input {
     background: var(--om-bg-2);
     border: 1px solid var(--om-border-0);
-    border-radius: 0.75rem;
     color: var(--om-text-0);
     transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -258,21 +257,20 @@
   }
   .om-input:focus {
     outline: none;
-    box-shadow: 0 0 0 4px var(--focus-ring);
-    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px var(--om-focus-ring);
+    border-color: var(--om-accent);
   }
 
   /* OmniMarket command bar */
   .om-command-bar {
     background: var(--om-bg-1);
     border: 1px solid var(--om-border-0);
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 12px var(--glass-shadow);
+    border-radius: 1rem;
   }
 
   /* OmniMarket button micro-interactions */
   .om-btn {
-    transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   .om-btn:hover {
     transform: translateY(-1px);
@@ -281,11 +279,11 @@
     transform: scale(0.98);
   }
 
-  /* OmniMarket page background — flat */
+  /* OmniMarket page background gradient */
   .om-page-bg {
-    background: var(--om-bg-0);
+    background: linear-gradient(180deg, var(--om-bg-0) 0%, var(--om-bg-1) 40%, var(--om-bg-0) 100%);
     color: var(--om-text-0);
-    min-height: calc(100vh - 44px);
+    min-height: calc(100vh - 48px);
   }
 
   /* OmniMarket dropdown panel */
@@ -314,8 +312,7 @@
   .om-pill-active {
     background: rgba(10,132,255,0.12);
     border-color: rgba(10,132,255,0.3);
-    color: var(--accent-blue);
-    box-shadow: 0 6px 20px rgba(10,132,255,0.35);
+    color: var(--om-accent);
   }
 
   /* Skeleton shimmer on dark */
@@ -324,6 +321,27 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  /* Hero spotlight ambient glow */
+  .omni-hero-spotlight {
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 40%,
+        rgba(10,132,255,0.14) 0%,
+        rgba(10,132,255,0.10) 22%,
+        rgba(10,132,255,0.06) 38%,
+        transparent 62%
+      );
+    filter: blur(22px);
+    opacity: 0.9;
+    animation: omniSpotPulse 10s ease-in-out infinite;
+  }
+}
+
+@keyframes omniSpotPulse {
+  0%, 100% { opacity: 0.85; transform: translateY(0px) scale(1); }
+  50% { opacity: 1; transform: translateY(-2px) scale(1.015); }
 }
 
 @layer utilities {

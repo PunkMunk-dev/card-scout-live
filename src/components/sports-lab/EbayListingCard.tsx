@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Copy, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SoldCompsDialog } from './SoldCompsDialog';
@@ -10,7 +10,7 @@ import type { EbayListing } from '@/types/sportsEbay';
 
 const GRADING_COST = 25;
 
-function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: EbayListing; sportKey?: string | null; isAuctionMode?: boolean }) {
+export function EbayListingCard({ listing, sportKey, isAuctionMode }: { listing: EbayListing; sportKey?: string | null; isAuctionMode?: boolean }) {
   const [showComps, setShowComps] = useState(false);
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
@@ -58,7 +58,7 @@ function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: E
           <div className="aspect-square overflow-hidden relative" style={{ background: 'var(--om-bg-3)' }}>
             {listing.imageUrl ? <img src={imageSrc || listing.imageUrl} alt={listing.title} className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]" loading="lazy" onError={handleImageError} /> :
               <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: 'var(--om-text-3)' }}>No image</div>}
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
             <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-sm">eBay</span>
             <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
               <WatchlistStar listing={listing} />
@@ -68,7 +68,7 @@ function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: E
             <div className="absolute bottom-0 left-0 right-0 p-3">
               <div className="flex items-baseline justify-between gap-2">
                 <div className="flex items-baseline gap-1.5">
-                  {listing.price !== null && <span className="text-lg font-bold text-white tabular-nums drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]">${listing.price.toFixed(2)}</span>}
+                  {listing.price !== null && <span className="text-lg font-bold text-white tabular-nums">${listing.price.toFixed(2)}</span>}
                   {listing.shippingCost !== null && listing.shippingCost > 0 && <span className="text-[11px] text-white/50">+${listing.shippingCost.toFixed(2)} ship</span>}
                 </div>
                 {isAuctionMode && isAuction && timeRemaining && <span className={cn("text-[11px] font-medium", isEndingSoon ? "text-orange-400" : "text-white/60")}>{timeRemaining}</span>}
@@ -78,7 +78,7 @@ function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: E
           <div className="p-3 space-y-2.5">
             <h3 className="text-sm font-medium leading-snug line-clamp-2 min-h-[2.5rem]" style={{ color: 'var(--om-text-0)' }}>{listing.title}</h3>
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <a href={ebaySoldUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/90 text-white hover:bg-red-500 transition-colors shadow-[0_4px_12px_rgba(255,0,0,0.25)]">PSA 10</a>
+              <a href={ebaySoldUrl} target="_blank" rel="noopener noreferrer" className="om-btn min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/80 text-white hover:bg-red-500 transition-colors">PSA 10</a>
               <GemRateBadge searchContext={listing.searchContext} fallbackUrl={gemRateUrl} />
             </div>
             {soldMarketValue !== null && (
@@ -94,7 +94,7 @@ function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: E
                 <span className={cn("font-semibold tabular-nums", expectedProfit >= 0 ? "text-green-500" : "text-red-500")}>{expectedProfit >= 0 ? '+' : ''}${expectedProfit.toFixed(0)}</span>
               </div>
             )}
-            <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid var(--om-divider)' }}>
+            <div className="flex items-center justify-end pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); await navigator.clipboard.writeText(cleanListingTitle(listing.title)); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 className="om-btn w-8 h-8 flex items-center justify-center rounded-md transition-all"
                 style={{ background: 'var(--om-bg-3)', color: 'var(--om-text-2)' }}>
@@ -108,5 +108,3 @@ function EbayListingCardInner({ listing, sportKey, isAuctionMode }: { listing: E
     </>
   );
 }
-
-export const EbayListingCard = memo(EbayListingCardInner, (prev, next) => prev.listing.itemId === next.listing.itemId && prev.sportKey === next.sportKey && prev.isAuctionMode === next.isAuctionMode);

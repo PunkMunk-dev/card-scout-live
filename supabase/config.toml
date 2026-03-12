@@ -1,4 +1,1 @@
 project_id = "fbfmkqdmluovjhresszd"
-
-[functions.onepiece-ingest]
-verify_jwt = false

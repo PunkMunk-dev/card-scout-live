@@ -11,8 +11,8 @@ interface ContextBarProps {
 
 export function ContextBar({ targetName, setName, totalCount, isLoading, game }: ContextBarProps) {
   return (
-    <div className="w-full mt-2 rounded-xl border border-[var(--om-border-0)]" style={{ background: 'var(--om-bg-1)' }}>
-      <div className="flex items-center justify-between h-8 px-4">
+    <div className="w-full border-b border-border/20 bg-secondary/10">
+      <div className="container flex items-center justify-between h-8 px-4">
         <span className="text-xs text-muted-foreground">
           Showing: <span className="text-foreground">{targetName}</span>
           {game !== 'one_piece' && (

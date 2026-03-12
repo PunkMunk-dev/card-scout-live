@@ -8,7 +8,6 @@ import { useSportsEbaySearch } from '@/hooks/useSportsEbaySearch';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { EbaySearchParams, SortOption, EbayListing } from '@/types/sportsEbay';
-import { PullToRefresh } from '@/components/PullToRefresh';
 
 function sortListings(listings: EbayListing[], sortOption: SortOption): EbayListing[] {
   const sorted = [...listings];
@@ -93,8 +92,6 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
     }
   }, [isLoading, listings.length > 0, hasMore, error]);
 
-  const handleRefresh = useCallback(async () => { retry(); }, [retry]);
-
   const sortedListings = useMemo(() => sortListings(filteredListings, sortOption), [filteredListings, sortOption]);
 
   if (isLoading) return (
@@ -107,7 +104,7 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
         <AlertCircle className="w-10 h-10 mb-4 mx-auto" style={{ color: 'var(--om-danger)' }} />
         <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--om-text-0)' }}>Search Error</h2>
         <p className="text-sm mb-6" style={{ color: 'var(--om-text-2)' }}>{error}</p>
-        <Button variant="outline" size="sm" onClick={retry} className="om-btn gap-2 border-[var(--om-border-0)]" style={{ color: 'var(--om-text-1)' }}>
+        <Button variant="outline" size="sm" onClick={retry} className="om-btn gap-2 border-white/10" style={{ color: 'var(--om-text-1)' }}>
           <RotateCcw className="h-3.5 w-3.5" />Retry
         </Button>
       </div>
@@ -122,70 +119,68 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
         </div>
         <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--om-text-0)' }}>No listings found</h2>
         <p className="text-sm mb-6" style={{ color: 'var(--om-text-2)' }}>Try adjusting filters or expanding your search.</p>
-        {onReset && <Button variant="outline" size="sm" onClick={onReset} className="om-btn gap-2 border-[var(--om-border-0)]" style={{ color: 'var(--om-text-1)' }}><RotateCcw className="h-3.5 w-3.5" />Clear filters</Button>}
+        {onReset && <Button variant="outline" size="sm" onClick={onReset} className="om-btn gap-2 border-white/10" style={{ color: 'var(--om-text-1)' }}><RotateCcw className="h-3.5 w-3.5" />Clear filters</Button>}
       </div>
     </div>
   );
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} disabled={isLoading}>
-      <div ref={ref} className="space-y-4">
-        {(isLoadingAll || isLoadingMore) && <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--om-bg-3)' }}><div className="h-full animate-pulse" style={{ width: '60%', background: 'var(--om-accent)' }} /></div>}
+    <div ref={ref} className="space-y-4">
+      {(isLoadingAll || isLoadingMore) && <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: 'var(--om-bg-3)' }}><div className="h-full animate-pulse" style={{ width: '60%', background: 'var(--om-accent)' }} /></div>}
 
-        {error && listings.length > 0 && (
-          <Alert variant="destructive" className="flex items-center justify-between border-[var(--om-border-0)]" style={{ background: 'rgba(255,92,122,0.1)' }}>
-            <AlertDescription className="flex-1">{error}</AlertDescription>
-            <Button variant="outline" size="sm" onClick={retry} className="ml-4 gap-1.5 shrink-0 om-btn border-[var(--om-border-0)]">
-              <RotateCcw className="h-3 w-3" />Retry
-            </Button>
-          </Alert>
-        )}
+      {error && listings.length > 0 && (
+        <Alert variant="destructive" className="flex items-center justify-between border-white/10" style={{ background: 'rgba(255,92,122,0.1)' }}>
+          <AlertDescription className="flex-1">{error}</AlertDescription>
+          <Button variant="outline" size="sm" onClick={retry} className="ml-4 gap-1.5 shrink-0 om-btn border-white/10">
+            <RotateCcw className="h-3 w-3" />Retry
+          </Button>
+        </Alert>
+      )}
 
-        <div className="om-toolbar px-3 py-2.5 flex items-center justify-between flex-nowrap overflow-x-auto">
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="om-pill om-pill-active tabular-nums">
-              <span className="font-semibold">{sortedListings.length}</span>
-              {listings.length !== sortedListings.length && <span style={{ color: 'var(--om-text-2)' }}> / {listings.length}</span>}
-              <span className="ml-0.5" style={{ color: 'var(--om-text-3)' }}>{isLoadingAll ? 'loading…' : hasMore ? 'loaded · more available' : 'cards'}</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2 flex-nowrap">
-            <button onClick={() => setFilterMode(filterMode === 'auction' ? 'all' : 'auction')}
-              className={cn("om-btn om-pill", filterMode === 'auction' && "om-pill-active")}>
-              Auctions
-            </button>
-            <button onClick={() => setFilterMode(filterMode === 'bin' ? 'all' : 'bin')}
-              className={cn("om-btn om-pill", filterMode === 'bin' && "om-pill-active")}>
-              Buy It Now
-            </button>
-            <Select value={priceRange} onValueChange={(v) => setPriceRange(v as PriceRange)}>
-              <SelectTrigger className="w-[100px] h-7 text-xs om-input rounded-xl border-[var(--om-border-0)]"><SelectValue placeholder="Price" /></SelectTrigger>
-              <SelectContent className="om-dropdown">{PRICE_RANGES.map(r => <SelectItem key={r.value} value={r.value} className="text-xs" style={{ color: 'var(--om-text-1)' }}>{r.label}</SelectItem>)}</SelectContent>
+      <div className="om-toolbar px-3 py-2.5 flex items-center justify-between flex-nowrap overflow-x-auto">
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <span className="om-pill om-pill-active tabular-nums">
+            <span className="font-semibold">{sortedListings.length}</span>
+            {listings.length !== sortedListings.length && <span style={{ color: 'var(--om-text-2)' }}> / {listings.length}</span>}
+            <span className="ml-0.5" style={{ color: 'var(--om-text-3)' }}>{isLoadingAll ? 'loading…' : hasMore ? 'loaded · more available' : 'cards'}</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-nowrap">
+          <button onClick={() => setFilterMode(filterMode === 'auction' ? 'all' : 'auction')}
+            className={cn("om-btn om-pill", filterMode === 'auction' && "om-pill-active")}>
+            Auctions
+          </button>
+          <button onClick={() => setFilterMode(filterMode === 'bin' ? 'all' : 'bin')}
+            className={cn("om-btn om-pill", filterMode === 'bin' && "om-pill-active")}>
+            Buy It Now
+          </button>
+          <Select value={priceRange} onValueChange={(v) => setPriceRange(v as PriceRange)}>
+            <SelectTrigger className="w-[100px] h-7 text-xs om-input rounded-full border-white/10"><SelectValue placeholder="Price" /></SelectTrigger>
+            <SelectContent className="om-dropdown">{PRICE_RANGES.map(r => <SelectItem key={r.value} value={r.value} className="text-xs" style={{ color: 'var(--om-text-1)' }}>{r.label}</SelectItem>)}</SelectContent>
+          </Select>
+          {hasMore && !isLoadingAll && !error && <button onClick={() => loadAll(() => filteredCountRef.current)} className="om-btn om-pill whitespace-nowrap">Load more</button>}
+          {isLoadingAll && <button onClick={cancelLoadAll} className="om-btn om-pill flex items-center gap-1.5 whitespace-nowrap" style={{ background: 'rgba(255,204,102,0.1)', borderColor: 'rgba(255,204,102,0.3)', color: 'var(--om-warning)' }}><Loader2 className="h-3 w-3 animate-spin" />Cancel</button>}
+          <div className="flex items-center gap-1.5">
+            <ArrowUpDown className="h-4 w-4 hidden sm:block" style={{ color: 'var(--om-text-3)' }} />
+            <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
+              <SelectTrigger className="w-[130px] h-7 text-xs om-input rounded-full border-white/10"><SelectValue /></SelectTrigger>
+              <SelectContent className="om-dropdown">
+                {filterMode === 'auction' && <SelectItem value="ending-soon" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Ending Soonest</SelectItem>}
+                <SelectItem value="newest" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Newest</SelectItem>
+                <SelectItem value="quality-high" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Best Match</SelectItem>
+                <SelectItem value="price-low" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Price: Low → High</SelectItem>
+                <SelectItem value="price-high" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Price: High → Low</SelectItem>
+              </SelectContent>
             </Select>
-            {hasMore && !isLoadingAll && !error && <button onClick={() => loadAll(() => filteredCountRef.current)} className="om-btn om-pill whitespace-nowrap">Load more</button>}
-            {isLoadingAll && <button onClick={cancelLoadAll} className="om-btn om-pill flex items-center gap-1.5 whitespace-nowrap" style={{ background: 'rgba(255,204,102,0.1)', borderColor: 'rgba(255,204,102,0.3)', color: 'var(--om-warning)' }}><Loader2 className="h-3 w-3 animate-spin" />Cancel</button>}
-            <div className="flex items-center gap-1.5">
-              <ArrowUpDown className="h-4 w-4 hidden sm:block" style={{ color: 'var(--om-text-3)' }} />
-              <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-                <SelectTrigger className="w-[130px] h-7 text-xs om-input rounded-xl border-[var(--om-border-0)]"><SelectValue /></SelectTrigger>
-                <SelectContent className="om-dropdown">
-                  {filterMode === 'auction' && <SelectItem value="ending-soon" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Ending Soonest</SelectItem>}
-                  <SelectItem value="newest" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Newest</SelectItem>
-                  <SelectItem value="quality-high" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Best Match</SelectItem>
-                  <SelectItem value="price-low" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Price: Low → High</SelectItem>
-                  <SelectItem value="price-high" className="text-xs" style={{ color: 'var(--om-text-1)' }}>Price: High → Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-          {sortedListings.map((listing, i) => <EbayListingCard key={`${listing.itemId}-${i}`} listing={listing} sportKey={sportKey} isAuctionMode={filterMode === 'auction'} />)}
-        </div>
-        {hasMore && !error && <div ref={sentinelRef} className="flex items-center justify-center py-8">
-          {isLoadingMore ? <div className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--om-accent)' }} /><span className="text-sm" style={{ color: 'var(--om-text-2)' }}>Loading more cards...</span></div> : <div className="h-8" />}
-        </div>}
       </div>
-    </PullToRefresh>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {sortedListings.map((listing, i) => <EbayListingCard key={`${listing.itemId}-${i}`} listing={listing} sportKey={sportKey} isAuctionMode={filterMode === 'auction'} />)}
+      </div>
+      {hasMore && !error && <div ref={sentinelRef} className="flex items-center justify-center py-8">
+        {isLoadingMore ? <div className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--om-accent)' }} /><span className="text-sm" style={{ color: 'var(--om-text-2)' }}>Loading more cards...</span></div> : <div className="h-8" />}
+      </div>}
+    </div>
   );
 });

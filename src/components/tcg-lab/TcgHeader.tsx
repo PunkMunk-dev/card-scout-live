@@ -95,7 +95,7 @@ export function TcgHeader({
                       <Filter className="h-3.5 w-3.5" />Filters
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl om-surface-1 border-t border-[var(--om-border-0)]">
+                  <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-xl om-surface-1 border-t border-white/10">
                     <SheetHeader><SheetTitle className="text-[var(--om-text-0)]">TCG Filters</SheetTitle></SheetHeader>
                     <div className="py-4 space-y-4">{guidedFilters}</div>
                   </SheetContent>
@@ -130,7 +130,7 @@ export function TcgHeader({
               </div>
               <SearchModeToggle mode={mode} onModeChange={onModeChange} />
               {hasActiveQuery && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium tabular-nums" style={{ background: 'var(--om-bg-2)', border: '1px solid var(--om-border-0)', color: 'var(--om-text-0)' }}>{totalCount} cards</span>
+                <span className="om-pill om-pill-active tabular-nums">{totalCount} cards</span>
               )}
             </div>
             <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end flex-wrap">

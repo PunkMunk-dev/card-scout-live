@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { EbayItem, WatchlistItem } from '@/types/ebay';
 
 interface WatchlistContextValue {
@@ -18,8 +18,6 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const idSet = useMemo(() => new Set(watchlist.map(i => i.itemId)), [watchlist]);
-
   useEffect(() => {
     try {
       const stored = localStorage.getItem(WATCHLIST_KEY);
@@ -33,7 +31,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist)); } catch {}
   }, [watchlist, isInitialized]);
 
-  const isInWatchlist = useCallback((itemId: string) => idSet.has(itemId), [idSet]);
+  const isInWatchlist = useCallback((itemId: string) => watchlist.some(i => i.itemId === itemId), [watchlist]);
 
   const addToWatchlist = useCallback((item: EbayItem) => {
     setWatchlist(prev => prev.some(i => i.itemId === item.itemId) ? prev : [...prev, { ...item, addedAt: Date.now() }]);
@@ -44,13 +42,12 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleWatchlist = useCallback((item: EbayItem) => {
-    setWatchlist(prev => {
-      if (prev.some(i => i.itemId === item.itemId)) {
-        return prev.filter(i => i.itemId !== item.itemId);
-      }
-      return [...prev, { ...item, addedAt: Date.now() }];
-    });
-  }, []);
+    if (watchlist.some(i => i.itemId === item.itemId)) {
+      removeFromWatchlist(item.itemId);
+    } else {
+      addToWatchlist(item);
+    }
+  }, [watchlist, addToWatchlist, removeFromWatchlist]);
 
   const clearWatchlist = useCallback(() => setWatchlist([]), []);
 

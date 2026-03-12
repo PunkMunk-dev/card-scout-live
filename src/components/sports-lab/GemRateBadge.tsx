@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSportsGemRate } from '@/hooks/useSportsGemRate';
 import type { EbayListing } from '@/types/sportsEbay';
 
 interface GemRateBadgeProps { searchContext: EbayListing['searchContext']; fallbackUrl: string; }
 
-export const GemRateBadge = memo(function GemRateBadge({ searchContext, fallbackUrl }: GemRateBadgeProps) {
+export function GemRateBadge({ searchContext, fallbackUrl }: GemRateBadgeProps) {
   const containerRef = useRef<HTMLAnchorElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
@@ -30,8 +30,7 @@ export const GemRateBadge = memo(function GemRateBadge({ searchContext, fallback
       <Tooltip>
         <TooltipTrigger asChild>
           <a ref={containerRef} href={displayUrl} target="_blank" rel="noopener noreferrer"
-            className={`min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide transition-colors shadow-[0_4px_12px_rgba(10,132,255,0.25)] ${isLoading ? 'text-white/70 cursor-wait' : 'text-white hover:opacity-90'}`}
-            style={{ background: isLoading ? 'rgba(10,132,255,0.5)' : 'var(--accent-blue)' }}
+            className={`min-w-[52px] text-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide transition-colors ${isLoading ? 'bg-blue-500/50 text-white/70 cursor-wait' : 'bg-blue-500/80 text-white hover:bg-blue-500'}`}
             onClick={(e) => isLoading && e.preventDefault()}>
             {displayText}
           </a>
@@ -48,4 +47,4 @@ export const GemRateBadge = memo(function GemRateBadge({ searchContext, fallback
       </Tooltip>
     </TooltipProvider>
   );
-});
+}

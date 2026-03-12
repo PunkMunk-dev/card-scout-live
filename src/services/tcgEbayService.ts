@@ -80,8 +80,11 @@ export async function searchActiveListings(
   const total: number = data?.total ?? items.length;
   const hasMore: boolean = data?.hasMore ?? false;
 
+  const filtered = filterListings(items, filters);
+  const sorted = sortListings(filtered, filters.sort);
+
   return {
-    listings: items,
+    listings: sorted,
     total,
     hasMore,
     nextOffset: offset + limit,
