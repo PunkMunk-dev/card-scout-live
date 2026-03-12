@@ -267,9 +267,9 @@ function MobileCard({
       style={{ border: '1px solid var(--om-border-0)' }}
     >
       {listing.imageUrl ? (
-        <img src={listing.imageUrl} alt="" className="w-14 h-14 rounded object-cover shrink-0" style={{ background: 'var(--om-bg-3)' }} />
+        <img src={listing.imageUrl} alt="" className="w-20 h-20 rounded object-cover shrink-0" style={{ background: 'var(--om-bg-3)' }} />
       ) : (
-        <div className="w-14 h-14 rounded shrink-0" style={{ background: 'var(--om-bg-3)' }} />
+        <div className="w-20 h-20 rounded shrink-0" style={{ background: 'var(--om-bg-3)' }} />
       )}
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-medium truncate" style={{ color: 'var(--om-text-0)' }}>{listing.normalizedLabel}</p>
