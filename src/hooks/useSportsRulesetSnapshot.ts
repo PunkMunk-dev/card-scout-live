@@ -6,7 +6,7 @@ export function useSportsRulesetSnapshot() {
   return useQuery({
     queryKey: ['sports-ruleset-snapshot'],
     queryFn: async (): Promise<RulesetSnapshot> => {
-      const { data, error } = await supabase.rpc('get_published_ruleset_snapshot' as any);
+      const { data, error } = await supabase.rpc('get_published_ruleset_snapshot' as Parameters<typeof supabase.rpc>[0]);
       if (error) throw error;
       const snapshot = data as unknown as RulesetSnapshot;
       return {

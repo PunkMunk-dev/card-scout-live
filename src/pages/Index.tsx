@@ -29,7 +29,7 @@ function pushRecentSearch(term: string) {
     const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || "[]") as string[];
     const next = [t, ...existing.filter((x) => x !== t)].slice(0, 12);
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
-  } catch {}
+  } catch (_e) { /* localStorage unavailable */ }
 }
 
 export default function Index() {

@@ -11,6 +11,8 @@ import type { SearchFilters } from '@/types/tcg';
 
 export type PriceRange = 'all' | '10-50' | '50-100' | '100-250' | '250-500' | '500+';
 
+// PRICE_RANGES is tightly coupled to this toolbar — co-locating intentionally.
+// eslint-disable-next-line react-refresh/only-export-components
 export const PRICE_RANGES: { value: PriceRange; label: string; min: number; max: number }[] = [
   { value: 'all', label: '$10+', min: 10, max: 0 },
   { value: '10-50', label: '$10–$50', min: 10, max: 50 },

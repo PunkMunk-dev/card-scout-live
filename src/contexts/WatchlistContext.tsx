@@ -22,13 +22,13 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     try {
       const stored = localStorage.getItem(WATCHLIST_KEY);
       if (stored) setWatchlist(JSON.parse(stored));
-    } catch {}
+    } catch (_e) { /* localStorage unavailable */ }
     setIsInitialized(true);
   }, []);
 
   useEffect(() => {
     if (!isInitialized) return;
-    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist)); } catch {}
+    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist)); } catch (_e) { /* localStorage unavailable */ }
   }, [watchlist, isInitialized]);
 
   const isInWatchlist = useCallback((itemId: string) => watchlist.some(i => i.itemId === itemId), [watchlist]);
@@ -58,6 +58,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSharedWatchlist() {
   const context = useContext(WatchlistContext);
   if (!context) throw new Error('useSharedWatchlist must be used within WatchlistProvider');

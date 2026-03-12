@@ -16,7 +16,7 @@ export function cleanListingTitle(title: string): string {
   cleaned = cleaned.replace(/\b(graded|slab|slabbed|authenticated|gem\s*mint|gem-mint)\b/gi, '');
 
   // Remove population data
-  cleaned = cleaned.replace(/\b(low\s+)?pop(ulation)?[:\s]*\d+(\s*[\/]\s*\d+)?(\s+of\s+\d+)?\b/gi, '');
+  cleaned = cleaned.replace(/\b(low\s+)?pop(ulation)?[:\s]*\d+(\s*[/]\s*\d+)?(\s+of\s+\d+)?\b/gi, '');
 
   // Remove currency symbols and price-like patterns
   cleaned = cleaned.replace(/\$+/g, '');

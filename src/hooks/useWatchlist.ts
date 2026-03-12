@@ -25,7 +25,7 @@ export function useWatchlist() {
     } catch (error) {
       console.error("Failed to save watchlist to localStorage:", error);
     }
-  }, []);
+  }, [watchlist]);
 
   const addToWatchlist = useCallback((item: EbayItem) => {
     setWatchlist((prev) => {

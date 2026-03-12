@@ -23,4 +23,12 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  // shadcn/ui generated components legitimately co-export variants/helpers
+  // alongside components — suppress the fast-refresh warning for that folder only
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );

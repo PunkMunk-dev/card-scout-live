@@ -86,11 +86,15 @@ export const EbayResultsPanel = React.forwardRef<HTMLDivElement, EbayResultsPane
   }, [listings, filterMode, priceRange, traitLabels]);
 
   useEffect(() => {
-    if (!isLoading && listings.length > 0 && hasMore && !isLoadingAll && !loadAllTriggeredRef.current && !error) {
+    const hasListings = listings.length > 0;
+    if (!isLoading && hasListings && hasMore && !isLoadingAll && !loadAllTriggeredRef.current && !error) {
       loadAllTriggeredRef.current = true;
       loadAll(() => filteredCountRef.current);
     }
-  }, [isLoading, listings.length > 0, hasMore, error]);
+    // isLoadingAll and loadAll are intentionally omitted — they're guarded by
+    // loadAllTriggeredRef so re-running on their changes would cause duplicate loads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, listings.length, hasMore, error]);
 
   const sortedListings = useMemo(() => sortListings(filteredListings, sortOption), [filteredListings, sortOption]);
 

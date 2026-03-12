@@ -18,6 +18,9 @@ export function SearchBar({ onSearch, onClear, isLoading, showClear, externalQue
     if (externalQuery !== undefined && externalQuery !== query) {
       setQuery(externalQuery);
     }
+    // query is intentionally omitted — this effect only syncs inward from the parent;
+    // adding query would cause an infinite update loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalQuery]);
 
   const handleSubmit = (e: React.FormEvent) => {
