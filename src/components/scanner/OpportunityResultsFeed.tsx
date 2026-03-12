@@ -149,9 +149,9 @@ function ResultRow({
       {/* Thumbnail */}
       <td className="px-2 py-1.5">
         {listing.imageUrl ? (
-          <img src={listing.imageUrl} alt="" className="w-10 h-10 rounded object-cover" style={{ background: 'var(--om-bg-3)' }} />
+          <img src={listing.imageUrl} alt="" className="w-14 h-14 rounded object-cover" style={{ background: 'var(--om-bg-3)' }} />
         ) : (
-          <div className="w-10 h-10 rounded" style={{ background: 'var(--om-bg-3)' }} />
+          <div className="w-14 h-14 rounded" style={{ background: 'var(--om-bg-3)' }} />
         )}
       </td>
 
