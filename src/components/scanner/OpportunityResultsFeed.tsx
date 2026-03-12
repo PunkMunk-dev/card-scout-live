@@ -74,7 +74,7 @@ export function OpportunityResultsFeed() {
         <table className="w-full text-[11px]" style={{ color: 'var(--om-text-1)' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--om-border-0)', color: 'var(--om-text-3)' }}>
-              <th className="text-left font-medium px-2 py-1.5 w-12"></th>
+              <th className="text-left font-medium px-2 py-1.5 w-16"></th>
               <th className="text-left font-medium px-2 py-1.5">Title</th>
               <th className="text-left font-medium px-2 py-1.5 w-16">Type</th>
               <th className="text-right font-medium px-2 py-1.5 w-16">Price</th>
